@@ -1,5 +1,5 @@
 [package]
-name = "specify-client"
+name = "specify"
 version = "0.1.0"
 edition = "2021"
 
