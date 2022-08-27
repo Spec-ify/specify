@@ -49,14 +49,7 @@ pub const BAD_PROCESSES: &[&str] = &[
     "TaskbarX",
 ];
 
-<<<<<<< HEAD
-pub const BAD_KEYS: &[(HKEY, &str)] = &[(
-    HKEY_LOCAL_MACHINE,
-    r"SOFTWARE\Policies\Microsoft\Windows\PreviewBuilds\",
-)];
-=======
 pub const BAD_KEYS: &[(HKEY, &str)] = &[
     (HKEY_LOCAL_MACHINE, r"SOFTWARE\Policies\Microsoft\Windows\PreviewBuilds\"),
     (HKEY_LOCAL_MACHINE, r"SYSTEM\Setup\LabConfig")
 ];
->>>>>>> dca83557bea4bc421ac6206f9df442efcb8cdde4
