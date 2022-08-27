@@ -4,7 +4,7 @@ use std::{
     vec,
 };
 use windows::Win32::{System::{Com::{self, COINIT_MULTITHREADED, VARIANT}, TaskScheduler::{self, ITaskService, TaskScheduler, IEnumWorkItems, TASK_ENUM_HIDDEN}}, Foundation::BSTR};
-
+use winreg::{RegKey, enums::HKEY_LOCAL_MACHINE};
 use wmi::*;
 
 type WMIMap = HashMap<String, Variant>;
@@ -75,6 +75,15 @@ pub fn get_cpu() -> DumbResult<HashMap<String, Variant>> {
     }
 
     Ok(cpu_info)
+}
+
+pub fn get_key() -> DumbResult<Vec<u8>> {
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let cver: RegKey = hklm.open_subkey(r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")?;
+
+    let product_id = cver.get_raw_value("DigitalProductId")?;
+
+    Ok(product_id.bytes)
 }
 
 /**
