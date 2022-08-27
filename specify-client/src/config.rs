@@ -1,7 +1,6 @@
 /**
-Hardcoded configs (badlists, etc) 
+Hardcoded configs (badlists, etc)
 */
-
 use winreg::{enums::HKEY_LOCAL_MACHINE, HKEY};
 
 pub static BAD_SOFTWARE: &[&str] = &[
@@ -28,7 +27,7 @@ pub static BAD_SOFTWARE: &[&str] = &[
     "AVG*",
     "Avast*",
     "salad*",
-    "McAfee*"
+    "McAfee*",
 ];
 
 pub const BAD_STARTUP: &[&str] = &[
@@ -36,7 +35,7 @@ pub const BAD_STARTUP: &[&str] = &[
     "kmspico",
     "McAfee Remediation",
     "KMS_VL_ALL",
-    "WallpaperEngine"
+    "WallpaperEngine",
 ];
 
 pub const BAD_PROCESSES: &[&str] = &[
@@ -47,9 +46,10 @@ pub const BAD_PROCESSES: &[&str] = &[
     "Service_KMS.exe",
     "iTopVPN",
     "wallpaper32",
-    "TaskbarX"
+    "TaskbarX",
 ];
 
-pub const BAD_KEYS: &[(HKEY, &str)] = &[
-    (HKEY_LOCAL_MACHINE, r"SOFTWARE\Policies\Microsoft\Windows\PreviewBuilds\")
-];
+pub const BAD_KEYS: &[(HKEY, &str)] = &[(
+    HKEY_LOCAL_MACHINE,
+    r"SOFTWARE\Policies\Microsoft\Windows\PreviewBuilds\",
+)];
