@@ -86,10 +86,10 @@ pub fn get_tasks() -> DumbResult<()> {
         Com::CoInitializeEx(std::ptr::null_mut(), COINIT_MULTITHREADED)?;
 
         let ts: ITaskService = Com::CoCreateInstance(&TaskScheduler, None, Com::CLSCTX_ALL)?;
-        ts.Connect(Com::VARIANT::default(), Com::VARIANT::default(), Com::VARIANT::default(), Com::VARIANT::default())?;
+        ts.Connect(None, None, None, None)?;
 
-        let rootFolder = ts.GetFolder(&BSTR::from(r"\"))?;
-        let tasks = rootFolder.GetTasks(0)?;
+        let root_folder = ts.GetFolder(&BSTR::from(r"\"))?;
+        let tasks = root_folder.GetTasks(0)?;
 
         println!("{:#?}", tasks);
 
