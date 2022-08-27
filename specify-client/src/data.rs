@@ -3,6 +3,7 @@ use std::{
     collections::{hash_map, HashMap},
     vec,
 };
+use windows::Win32::{System::{Com::{self, COINIT_MULTITHREADED, VARIANT}, TaskScheduler::{self, ITaskService, TaskScheduler, IEnumWorkItems, TASK_ENUM_HIDDEN}}, Foundation::BSTR};
 
 use wmi::*;
 
@@ -74,4 +75,25 @@ pub fn get_cpu() -> DumbResult<HashMap<String, Variant>> {
     }
 
     Ok(cpu_info)
+}
+
+/**
+ * Get tasks
+ * Inspired from https://github.com/j-hc/windows-taskscheduler-api-rust
+ */
+pub fn get_tasks() -> DumbResult<()> {
+    unsafe {
+        Com::CoInitializeEx(std::ptr::null_mut(), COINIT_MULTITHREADED)?;
+
+        let ts: ITaskService = Com::CoCreateInstance(&TaskScheduler, None, Com::CLSCTX_ALL)?;
+        ts.Connect(Com::VARIANT::default(), Com::VARIANT::default(), Com::VARIANT::default(), Com::VARIANT::default())?;
+
+        let rootFolder = ts.GetFolder(&BSTR::from(r"\"))?;
+        let tasks = rootFolder.GetTasks(0)?;
+
+        println!("{:#?}", tasks);
+
+        //Com::CoFreeAllLibraries();
+        Ok(())
+    }
 }
