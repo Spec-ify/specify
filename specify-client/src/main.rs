@@ -1,5 +1,5 @@
-mod data;
 mod config;
+mod data;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{:#?}", data::get_cimos()?);

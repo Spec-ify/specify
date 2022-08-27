@@ -14,8 +14,8 @@ thread_local!(static COM_CON: COMLibrary = wmi::COMLibrary::new().unwrap());
  */
 fn get_wmi_con() -> DumbResult<WMIConnection> {
     COM_CON.with(|com_con| {
-    let wmi_con = WMIConnection::new(*com_con)?;
-    return Ok(wmi_con);
+        let wmi_con = WMIConnection::new(*com_con)?;
+        return Ok(wmi_con);
     })
 }
 
@@ -25,8 +25,8 @@ fn get_wmi_con() -> DumbResult<WMIConnection> {
  */
 fn get_wmi_con_namespace(namespace: &str) -> DumbResult<WMIConnection> {
     COM_CON.with(|com_con| {
-    let wmi_con = WMIConnection::with_namespace_path(namespace, *com_con)?;
-    return Ok(wmi_con);
+        let wmi_con = WMIConnection::with_namespace_path(namespace, *com_con)?;
+        return Ok(wmi_con);
     })
 }
 
@@ -34,13 +34,12 @@ pub fn get_cimos() -> DumbResult<WMIMap> {
     let wmi_con = get_wmi_con()?;
 
     let results: WMIVec = wmi_con.raw_query("SELECT * FROM Win32_OperatingSystem")?;
-    
+
     let mut this_one: WMIMap = HashMap::new();
     // We know that there will be only one at most
     for os in results {
         this_one = os;
     }
-
 
     Ok(this_one)
 }
