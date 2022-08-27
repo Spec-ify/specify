@@ -6,6 +6,7 @@ type WMIMap = HashMap<String, Variant>;
 type WMIVec = Vec<WMIMap>;
 type DumbResult<T> = Result<T, Box<dyn std::error::Error>>;
 
+//We use a thread local here to make sure every access happens on the same thread, preventing memory corruption
 thread_local!(static COM_CON: COMLibrary = wmi::COMLibrary::new().unwrap());
 
 /**
@@ -24,6 +25,7 @@ fn get_wmi_con() -> DumbResult<WMIConnection> {
  * This exists to prevent typing it out all the time.
  */
 fn get_wmi_con_namespace(namespace: &str) -> DumbResult<WMIConnection> {
+    // wrapping wmi connections in a local thread
     COM_CON.with(|com_con| {
     let wmi_con = WMIConnection::with_namespace_path(namespace, *com_con)?;
     return Ok(wmi_con);
@@ -32,10 +34,9 @@ fn get_wmi_con_namespace(namespace: &str) -> DumbResult<WMIConnection> {
 
 pub fn get_cimos() -> DumbResult<WMIMap> {
     let wmi_con = get_wmi_con()?;
-
     let results: WMIVec = wmi_con.raw_query("SELECT * FROM Win32_OperatingSystem")?;
-    
     let mut this_one: WMIMap = HashMap::new();
+    
     // We know that there will be only one at most
     for os in results {
         this_one = os;
