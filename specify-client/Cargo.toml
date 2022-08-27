@@ -8,3 +8,10 @@ edition = "2021"
 [dependencies]
 winreg = "0.10.1"
 wmi = "0.11.1"
+
+# optimizing for size, see https://github.com/johnthagen/min-sized-rust
+[profile.release]
+strip = true #strip symbols from bianary
+opt-level = "z" # tell the compiler to optimize for size
+lto = true # enable link time optimization
+codegen-units = 1 # default of 16, this will slow compile times but allow more size reduction
