@@ -6,30 +6,17 @@ type WMIMap = HashMap<String, Variant>;
 type WMIVec = Vec<WMIMap>;
 type DumbResult<T> = Result<T, Box<dyn std::error::Error>>;
 
-static mut com_con: Option<COMLibrary> = None;
-
-/**
- * Inits/creates com_con
- * Sadly, this is required or we get a weird HResultError
- * :(
- */
-fn get_com_con() -> wmi::COMLibrary {
-    unsafe {
-        if com_con.is_none() {
-            com_con = Some(wmi::COMLibrary::new().unwrap());
-        }
-
-        return com_con.unwrap();
-    }
-}
+thread_local!(static COM_CON: COMLibrary = wmi::COMLibrary::new().unwrap());
 
 /**
  * Makes a WMI connection, using the default namespace (probably ROOT).
- *This exists to prevent typing it out all the time.
+ *This exists to prevent typing it out all the time
  */
 fn get_wmi_con() -> DumbResult<WMIConnection> {
-    let wmi_con = WMIConnection::new(get_com_con().into())?;
+    COM_CON.with(|com_con| {
+    let wmi_con = WMIConnection::new(*com_con)?;
     return Ok(wmi_con);
+    })
 }
 
 /**
@@ -37,8 +24,10 @@ fn get_wmi_con() -> DumbResult<WMIConnection> {
  * This exists to prevent typing it out all the time.
  */
 fn get_wmi_con_namespace(namespace: &str) -> DumbResult<WMIConnection> {
-    let wmi_con = WMIConnection::with_namespace_path(namespace, get_com_con().into())?;
+    COM_CON.with(|com_con| {
+    let wmi_con = WMIConnection::with_namespace_path(namespace, *com_con)?;
     return Ok(wmi_con);
+    })
 }
 
 pub fn get_cimos() -> DumbResult<WMIMap> {
