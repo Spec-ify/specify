@@ -73,10 +73,5 @@ pub fn get_cpu() -> DumbResult<HashMap<String, Variant>> {
         cpu_info = i;
     }
 
-    for i in result{
-        cpu_info = i;
-    }
-    
- Ok(cpu_info)
-
+    Ok(cpu_info)
 }
