@@ -5,7 +5,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{:#?}", data::get_cimos()?);
     println!("{:#?}", data::get_avfw()?);
 
-    println!("{:#?}", config::BAD_PROCESSES);
+    //println!("{:#?}", config::BAD_PROCESSES);
 
     Ok(())
 }
