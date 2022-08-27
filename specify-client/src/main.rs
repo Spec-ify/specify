@@ -6,6 +6,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // println!("{:#?}", data::get_avfw()?);
     // println!("{:#?}", data::get_cpu()?);
     //println!("{:#?}", config::BAD_PROCESSES);
+    // println!("{:#?}", data::get_key()?);
 
     Ok(())
 }
