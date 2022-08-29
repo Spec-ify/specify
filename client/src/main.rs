@@ -1,3 +1,7 @@
+/*
+* implement functions from other files
+*/
+
 mod config;
 mod data;
 
