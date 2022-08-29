@@ -1,10 +1,20 @@
+/*
+* Functions that get data from the system in a managable format
+*/
+
 use std::{
     array,
     collections::{hash_map, HashMap},
     vec,
 };
-use windows::Win32::{System::{Com::{self, COINIT_MULTITHREADED, VARIANT}, TaskScheduler::{self, ITaskService, TaskScheduler, IEnumWorkItems, TASK_ENUM_HIDDEN}}, Foundation::BSTR};
-use winreg::{RegKey, enums::HKEY_LOCAL_MACHINE};
+use windows::Win32::{
+    Foundation::BSTR,
+    System::{
+        Com::{self, COINIT_MULTITHREADED, VARIANT},
+        TaskScheduler::{self, IEnumWorkItems, ITaskService, TaskScheduler, TASK_ENUM_HIDDEN},
+    },
+};
+use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 use wmi::*;
 
 type WMIMap = HashMap<String, Variant>;
