@@ -7,6 +7,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // println!("{:#?}", data::get_cpu()?);
     //println!("{:#?}", config::BAD_PROCESSES);
     // println!("{:#?}", data::get_key()?);
+    // println!("{:#?}", data::get_cim_startups()?);
 
     Ok(())
 }
