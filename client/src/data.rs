@@ -1,11 +1,11 @@
-/*
+/**
 * Functions that get data from the system in a managable format
 */
 
 use std::{
     array,
     collections::{hash_map, HashMap},
-    vec, hash::Hash, io::Error,
+    vec, hash::Hash, io::Error, fmt::Pointer,
 };
 use windows::Win32::{
     Foundation::BSTR,
@@ -136,8 +136,32 @@ pub fn get_key() -> DumbResult<(String, String, String, String, String)> {
     ))
 }
 
+pub fn get_audio() -> DumbResult<Vec<HashMap<String, String>>> {
+    let wmi_con = get_wmi_con()?;
+    let results: Vec<HashMap<String, Variant>> = wmi_con.raw_query("SELECT name, productname FROM win32_sounddevice")?;
+    let mut output: Vec<HashMap<String, String>> = Vec::new();
+
+    for result in results {
+        let mut new_hash: HashMap<String, String> = HashMap::new();
+        for (k, v) in result {
+            let f = format!("{:?}", v);
+            new_hash.insert(k, f[8..(f.len()-2)].to_string());
+        }
+        output.push(new_hash);
+    }
+
+    Ok(output)
+}
+
+pub fn get_cim_startups() -> DumbResult<Vec<String>> {
+    let wmi_con = get_wmi_con()?;
+    let results: Vec<HashMap<String, String>> = wmi_con.raw_query("SELECT Caption FROM Win32_StartupCommand")?;
+    let caption_list: Vec<String> = results.iter().map(|e| e.get("Caption").unwrap().clone()).collect();
+
+    Ok(caption_list)
+}
+
 /**
- * Get tasks
  * Inspired from https://github.com/j-hc/windows-taskscheduler-api-rust
  */
 pub fn get_ts_startups() -> DumbResult<()> {
@@ -150,17 +174,9 @@ pub fn get_ts_startups() -> DumbResult<()> {
         let root_folder = ts.GetFolder(&BSTR::from(r"\"))?;
         let tasks = root_folder.GetTasks(0)?;
 
-        println!("{:#?}", tasks);
+        //println!("{:#?}", tasks.get_Item(0 as usize)?);
 
-        //Com::CoFreeAllLibraries();
+        Com::CoFreeAllLibraries();
         Ok(())
     }
-}
-
-pub fn get_cim_startups() -> DumbResult<Vec<String>> {
-    let wmi_con = get_wmi_con()?;
-    let results: Vec<HashMap<String, String>> = wmi_con.raw_query("SELECT Caption FROM Win32_StartupCommand")?;
-    let caption_list: Vec<String> = results.iter().map(|e| e.get("Caption").unwrap().clone()).collect();
-
-    Ok(caption_list)
 }
