@@ -50,6 +50,9 @@ pub const BAD_PROCESSES: &[&str] = &[
 ];
 
 pub const BAD_KEYS: &[(HKEY, &str)] = &[
-    (HKEY_LOCAL_MACHINE, r"SOFTWARE\Policies\Microsoft\Windows\PreviewBuilds\"),
-    (HKEY_LOCAL_MACHINE, r"SYSTEM\Setup\LabConfig")
+    (
+        HKEY_LOCAL_MACHINE,
+        r"SOFTWARE\Policies\Microsoft\Windows\PreviewBuilds\",
+    ),
+    (HKEY_LOCAL_MACHINE, r"SYSTEM\Setup\LabConfig"),
 ];
