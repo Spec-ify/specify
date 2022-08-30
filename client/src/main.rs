@@ -12,6 +12,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //println!("{:#?}", config::BAD_PROCESSES);
     // println!("{:#?}", data::get_key()?);
     // println!("{:#?}", data::get_cim_startups()?);
+    println!("{:#?}", data::get_audio()?);
 
     Ok(())
 }
