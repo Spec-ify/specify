@@ -1,7 +1,7 @@
 use std::{
     array,
     collections::{hash_map, HashMap},
-    vec,
+    vec, hash::Hash, io::Error,
 };
 use windows::Win32::{System::{Com::{self, COINIT_MULTITHREADED, VARIANT}, TaskScheduler::{self, ITaskService, TaskScheduler, IEnumWorkItems, TASK_ENUM_HIDDEN}}, Foundation::BSTR};
 use winreg::{RegKey, enums::HKEY_LOCAL_MACHINE};
@@ -77,20 +77,60 @@ pub fn get_cpu() -> DumbResult<HashMap<String, Variant>> {
     Ok(cpu_info)
 }
 
-pub fn get_key() -> DumbResult<Vec<u8>> {
+pub fn get_key() -> DumbResult<(String, String, String, String, String)> {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
     let cver: RegKey = hklm.open_subkey(r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")?;
 
-    let product_id = cver.get_raw_value("DigitalProductId")?;
+    let mut product_id: Vec<u16> = cver.get_raw_value("DigitalProductId")?.bytes.iter().map(|e| e.clone() as u16).collect();
 
-    Ok(product_id.bytes)
+    let mut key_output = String::new();
+    let key_offset = 52;
+
+    let is_win10 = (product_id[66] / 6) & 1;
+    product_id[66] = (product_id[66] & 0xF7) | ((is_win10 & 2) * 4);
+    let mut i = 24; let mut last: u16;
+    let maps: Vec<char> = Vec::from("BCDFGHJKMPQRTVWXY2346789").iter().map(|e| e.clone() as char).collect();
+    while {
+        let mut current = 0;
+        let mut j: i16 = 14;
+        while {
+            current = current * 256;
+            current = product_id[(j + key_offset) as usize] + current;
+            product_id[(j + key_offset) as usize] = current / 24;
+            current = current % 24;
+            j -= 1;
+
+            j >= 0
+        } {}
+
+        i -= 1;
+        let slice = maps[current as usize];
+        key_output = slice.to_string() + &key_output;
+        last = current;
+
+        i >= 0
+    } {}
+
+    if is_win10 == 1 {
+        let keypart1 = &key_output[1 as usize..(last+1) as usize];
+        let keypart2 = &key_output[(last + 1) as usize..(key_output.len()) as usize];
+        key_output = keypart1.to_string() + "N" + keypart2;
+    }
+
+    Ok((
+        String::from(&key_output[0..5]),
+        String::from(&key_output[5..10]),
+        String::from(&key_output[10..15]),
+        String::from(&key_output[15..20]), 
+        String::from(&key_output[20..25])
+    ))
 }
 
 /**
  * Get tasks
  * Inspired from https://github.com/j-hc/windows-taskscheduler-api-rust
  */
-pub fn get_tasks() -> DumbResult<()> {
+pub fn get_ts_startups() -> DumbResult<()> {
     unsafe {
         Com::CoInitializeEx(std::ptr::null_mut(), COINIT_MULTITHREADED)?;
 
@@ -105,4 +145,12 @@ pub fn get_tasks() -> DumbResult<()> {
         //Com::CoFreeAllLibraries();
         Ok(())
     }
+}
+
+pub fn get_cim_startups() -> DumbResult<Vec<String>> {
+    let wmi_con = get_wmi_con()?;
+    let results: Vec<HashMap<String, String>> = wmi_con.raw_query("SELECT Caption FROM Win32_StartupCommand")?;
+    let caption_list: Vec<String> = results.iter().map(|e| e.get("Caption").unwrap().clone()).collect();
+
+    Ok(caption_list)
 }
