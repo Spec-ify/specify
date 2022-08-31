@@ -5,8 +5,9 @@
 use std::{
     array,
     collections::{hash_map, HashMap},
-    vec, hash::Hash, io::Error, fmt::Pointer,
+    vec, hash::Hash, io::Error, fmt::{Pointer, Debug},
 };
+use serde::Deserialize;
 use windows::Win32::{
     Foundation::BSTR,
     System::{
@@ -75,7 +76,7 @@ pub fn get_avfw() -> DumbResult<(WMIVec, WMIVec)> {
 /**
 * Obtaining cpu information as a hashmap
 */
-pub fn get_cpu() -> DumbResult<HashMap<String, Variant>> {
+pub fn get_cpu() -> DumbResult<WMIMap> {
     let wmi_con = get_wmi_con_namespace(r"Root\CIMV2")?;
     let result: Vec<HashMap<String, Variant>> =
         wmi_con.raw_query("SELECT * FROM Win32_Processor")?;
@@ -136,21 +137,38 @@ pub fn get_key() -> DumbResult<(String, String, String, String, String)> {
     ))
 }
 
-pub fn get_audio() -> DumbResult<Vec<HashMap<String, String>>> {
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename = "SoftwareLicensingProduct")]
+#[serde(rename_all = "PascalCase")]
+pub struct CIMLicense {
+    name: String,
+    product_key_channel: Option<String>,
+    license_family: String,
+    license_status: i32,
+    partial_product_key: Option<String>
+}
+
+pub fn get_licenses() -> DumbResult<Vec<CIMLicense>> {
     let wmi_con = get_wmi_con()?;
-    let results: Vec<HashMap<String, Variant>> = wmi_con.raw_query("SELECT name, productname FROM win32_sounddevice")?;
-    let mut output: Vec<HashMap<String, String>> = Vec::new();
+    let all_licenses: Vec<CIMLicense> = wmi_con.query()?;
+    let existing_licenses: Vec<CIMLicense> = all_licenses.iter().map(|e| e.clone()).filter(|e| !e.partial_product_key.is_none()).collect();
 
-    for result in results {
-        let mut new_hash: HashMap<String, String> = HashMap::new();
-        for (k, v) in result {
-            let f = format!("{:?}", v);
-            new_hash.insert(k, f[8..(f.len()-2)].to_string());
-        }
-        output.push(new_hash);
-    }
+    Ok(existing_licenses)
+}
 
-    Ok(output)
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename = "win32_sounddevice")]
+#[serde(rename_all = "PascalCase")]
+pub struct CIMAudio {
+    name: String,
+    product_name: String
+}
+
+pub fn get_audio() -> DumbResult<Vec<CIMAudio>> {
+    let wmi_con = get_wmi_con()?;
+    let results: Vec<CIMAudio> = wmi_con.query()?;
+
+    Ok(results)
 }
 
 pub fn get_cim_startups() -> DumbResult<Vec<String>> {
