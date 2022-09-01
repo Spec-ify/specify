@@ -1,17 +1,24 @@
+use serde::Deserialize;
 /**
 * Functions that get data from the system in a managable format
 */
-
 use std::{
     array,
     collections::{hash_map, HashMap},
-    vec, hash::Hash, io::Error, fmt::{Pointer, Debug},
+    fmt::{Debug, Pointer},
+    hash::Hash,
+    io::Error,
+    num, vec, mem::size_of,
 };
-use serde::Deserialize;
 use windows::Win32::{
-    Foundation::BSTR,
+    Foundation::{GetLastError, BOOL, BSTR, ERROR_INSUFFICIENT_BUFFER},
     System::{
         Com::{self, COINIT_MULTITHREADED, VARIANT},
+        Services::{
+            self, EnumServicesStatusA, EnumServicesStatusExW, EnumServicesStatusW,
+            ENUM_SERVICE_STATUSW, SC_ENUM_PROCESS_INFO, SC_MANAGER_ENUMERATE_SERVICE,
+            SERVICE_STATE_ALL, SERVICE_STATUS, SERVICE_WIN32,
+        },
         TaskScheduler::{self, IEnumWorkItems, ITaskService, TaskScheduler, TASK_ENUM_HIDDEN},
     },
 };
@@ -92,15 +99,24 @@ pub fn get_key() -> DumbResult<(String, String, String, String, String)> {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
     let cver: RegKey = hklm.open_subkey(r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")?;
 
-    let mut product_id: Vec<u16> = cver.get_raw_value("DigitalProductId")?.bytes.iter().map(|e| e.clone() as u16).collect();
+    let mut product_id: Vec<u16> = cver
+        .get_raw_value("DigitalProductId")?
+        .bytes
+        .iter()
+        .map(|e| e.clone() as u16)
+        .collect();
 
     let mut key_output = String::new();
     let key_offset = 52;
 
     let is_win10 = (product_id[66] / 6) & 1;
     product_id[66] = (product_id[66] & 0xF7) | ((is_win10 & 2) * 4);
-    let mut i = 24; let mut last: u16;
-    let maps: Vec<char> = Vec::from("BCDFGHJKMPQRTVWXY2346789").iter().map(|e| e.clone() as char).collect();
+    let mut i = 24;
+    let mut last: u16;
+    let maps: Vec<char> = Vec::from("BCDFGHJKMPQRTVWXY2346789")
+        .iter()
+        .map(|e| e.clone() as char)
+        .collect();
     while {
         let mut current = 0;
         let mut j: i16 = 14;
@@ -123,7 +139,7 @@ pub fn get_key() -> DumbResult<(String, String, String, String, String)> {
     } {}
 
     if is_win10 == 1 {
-        let keypart1 = &key_output[1 as usize..(last+1) as usize];
+        let keypart1 = &key_output[1 as usize..(last + 1) as usize];
         let keypart2 = &key_output[(last + 1) as usize..(key_output.len()) as usize];
         key_output = keypart1.to_string() + "N" + keypart2;
     }
@@ -132,26 +148,30 @@ pub fn get_key() -> DumbResult<(String, String, String, String, String)> {
         String::from(&key_output[0..5]),
         String::from(&key_output[5..10]),
         String::from(&key_output[10..15]),
-        String::from(&key_output[15..20]), 
-        String::from(&key_output[20..25])
+        String::from(&key_output[15..20]),
+        String::from(&key_output[20..25]),
     ))
 }
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename = "SoftwareLicensingProduct")]
 #[serde(rename_all = "PascalCase")]
-pub struct CIMLicense {
+pub struct WMILicense {
     name: String,
     product_key_channel: Option<String>,
     license_family: String,
     license_status: i32,
-    partial_product_key: Option<String>
+    partial_product_key: Option<String>,
 }
 
-pub fn get_licenses() -> DumbResult<Vec<CIMLicense>> {
+pub fn get_licenses() -> DumbResult<Vec<WMILicense>> {
     let wmi_con = get_wmi_con()?;
-    let all_licenses: Vec<CIMLicense> = wmi_con.query()?;
-    let existing_licenses: Vec<CIMLicense> = all_licenses.iter().map(|e| e.clone()).filter(|e| !e.partial_product_key.is_none()).collect();
+    let all_licenses: Vec<WMILicense> = wmi_con.query()?;
+    let existing_licenses: Vec<WMILicense> = all_licenses
+        .iter()
+        .map(|e| e.clone())
+        .filter(|e| !e.partial_product_key.is_none())
+        .collect();
 
     Ok(existing_licenses)
 }
@@ -159,22 +179,26 @@ pub fn get_licenses() -> DumbResult<Vec<CIMLicense>> {
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename = "win32_sounddevice")]
 #[serde(rename_all = "PascalCase")]
-pub struct CIMAudio {
+pub struct WMIAudio {
     name: String,
-    product_name: String
+    product_name: String,
 }
 
-pub fn get_audio() -> DumbResult<Vec<CIMAudio>> {
+pub fn get_audio() -> DumbResult<Vec<WMIAudio>> {
     let wmi_con = get_wmi_con()?;
-    let results: Vec<CIMAudio> = wmi_con.query()?;
+    let results: Vec<WMIAudio> = wmi_con.query()?;
 
     Ok(results)
 }
 
-pub fn get_cim_startups() -> DumbResult<Vec<String>> {
+pub fn get_wmi_startups() -> DumbResult<Vec<String>> {
     let wmi_con = get_wmi_con()?;
-    let results: Vec<HashMap<String, String>> = wmi_con.raw_query("SELECT Caption FROM Win32_StartupCommand")?;
-    let caption_list: Vec<String> = results.iter().map(|e| e.get("Caption").unwrap().clone()).collect();
+    let results: Vec<HashMap<String, String>> =
+        wmi_con.raw_query("SELECT Caption FROM Win32_StartupCommand")?;
+    let caption_list: Vec<String> = results
+        .iter()
+        .map(|e| e.get("Caption").unwrap().clone())
+        .collect();
 
     Ok(caption_list)
 }
@@ -197,4 +221,20 @@ pub fn get_ts_startups() -> DumbResult<()> {
         Com::CoFreeAllLibraries();
         Ok(())
     }
+}
+
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename = "win32_service")]
+#[serde(rename_all = "PascalCase")]
+pub struct WMIService {
+    display_name: String,
+    state: String
+}
+
+pub fn get_services() -> DumbResult<Vec<WMIService>> {
+    let wmi_con = get_wmi_con()?;
+    let mut result: Vec<WMIService> = wmi_con.query()?;
+    result.sort_by(|a, b| a.display_name.cmp(&b.display_name));
+
+    Ok(result)
 }
