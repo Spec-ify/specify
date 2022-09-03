@@ -15,6 +15,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // println!("{:#?}", data::get_audio()?);
     // println!("{:#?}", data::get_licenses()?);
     // println!("{:#?}", data::get_services()?);
+    // data::get_ts_startups()?;
 
     Ok(())
 }

@@ -1,3 +1,5 @@
+#![cfg_attr(debug_assertions, allow(dead_code, unused_imports))]
+
 use serde::Deserialize;
 /**
 * Functions that get data from the system in a managable format
@@ -39,7 +41,7 @@ thread_local!(static COM_CON: COMLibrary = wmi::COMLibrary::new().unwrap());
 fn get_wmi_con() -> DumbResult<WMIConnection> {
     COM_CON.with(|com_con| {
         let wmi_con = WMIConnection::new(*com_con)?;
-        return Ok(wmi_con);
+        Ok(wmi_con)
     })
 }
 
@@ -51,7 +53,7 @@ fn get_wmi_con_namespace(namespace: &str) -> DumbResult<WMIConnection> {
     // wrapping wmi connections in a local thread
     COM_CON.with(|com_con| {
         let wmi_con = WMIConnection::with_namespace_path(namespace, *com_con)?;
-        return Ok(wmi_con);
+        Ok(wmi_con)
     })
 }
 
@@ -103,7 +105,7 @@ pub fn get_key() -> DumbResult<(String, String, String, String, String)> {
         .get_raw_value("DigitalProductId")?
         .bytes
         .iter()
-        .map(|e| e.clone() as u16)
+        .map(|e| *e as u16)
         .collect();
 
     let mut key_output = String::new();
@@ -115,16 +117,16 @@ pub fn get_key() -> DumbResult<(String, String, String, String, String)> {
     let mut last: u16;
     let maps: Vec<char> = Vec::from("BCDFGHJKMPQRTVWXY2346789")
         .iter()
-        .map(|e| e.clone() as char)
+        .map(|e| *e as char)
         .collect();
     while {
         let mut current = 0;
         let mut j: i16 = 14;
         while {
-            current = current * 256;
-            current = product_id[(j + key_offset) as usize] + current;
+            current *= 256;
+            current += product_id[(j + key_offset) as usize];
             product_id[(j + key_offset) as usize] = current / 24;
-            current = current % 24;
+            current %= 24;
             j -= 1;
 
             j >= 0
@@ -139,7 +141,7 @@ pub fn get_key() -> DumbResult<(String, String, String, String, String)> {
     } {}
 
     if is_win10 == 1 {
-        let keypart1 = &key_output[1 as usize..(last + 1) as usize];
+        let keypart1 = &key_output[1..(last + 1) as usize];
         let keypart2 = &key_output[(last + 1) as usize..(key_output.len()) as usize];
         key_output = keypart1.to_string() + "N" + keypart2;
     }
@@ -168,9 +170,8 @@ pub fn get_licenses() -> DumbResult<Vec<WMILicense>> {
     let wmi_con = get_wmi_con()?;
     let all_licenses: Vec<WMILicense> = wmi_con.query()?;
     let existing_licenses: Vec<WMILicense> = all_licenses
-        .iter()
-        .map(|e| e.clone())
-        .filter(|e| !e.partial_product_key.is_none())
+        .iter().cloned()
+        .filter(|e| e.partial_product_key.is_some())
         .collect();
 
     Ok(existing_licenses)
@@ -191,7 +192,7 @@ pub fn get_audio() -> DumbResult<Vec<WMIAudio>> {
     Ok(results)
 }
 
-pub fn get_wmi_startups() -> DumbResult<Vec<String>> {
+pub fn get_command_startups() -> DumbResult<Vec<String>> {
     let wmi_con = get_wmi_con()?;
     let results: Vec<HashMap<String, String>> =
         wmi_con.raw_query("SELECT Caption FROM Win32_StartupCommand")?;
@@ -203,24 +204,21 @@ pub fn get_wmi_startups() -> DumbResult<Vec<String>> {
     Ok(caption_list)
 }
 
-/**
- * Inspired from https://github.com/j-hc/windows-taskscheduler-api-rust
- */
+
+#[derive(Deserialize, Debug)]
+#[serde(rename = "MSFT_ScheduledTask")]
+#[serde(rename_all = "PascalCase")]
+struct WMITask {
+    task_name: String,
+    triggers: Variant
+}
+
 pub fn get_ts_startups() -> DumbResult<()> {
-    unsafe {
-        Com::CoInitializeEx(std::ptr::null_mut(), COINIT_MULTITHREADED)?;
+    let wmi_con = get_wmi_con_namespace(r"ROOT\Microsoft\Windows\TaskScheduler")?;
+    let results: Vec<HashMap<String, Variant>> = wmi_con.raw_query("SELECT * FROM MSFT_ScheduledTask")?;
 
-        let ts: ITaskService = Com::CoCreateInstance(&TaskScheduler, None, Com::CLSCTX_ALL)?;
-        ts.Connect(None, None, None, None)?;
-
-        let root_folder = ts.GetFolder(&BSTR::from(r"\"))?;
-        let tasks = root_folder.GetTasks(0)?;
-
-        //println!("{:#?}", tasks.get_Item(0 as usize)?);
-
-        Com::CoFreeAllLibraries();
-        Ok(())
-    }
+    println!("{:#?}", results);
+    Ok(())
 }
 
 #[derive(Deserialize, Clone, Debug)]
