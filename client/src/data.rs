@@ -86,7 +86,7 @@ pub fn get_avfw() -> DumbResult<(WMIVec, WMIVec)> {
 * Obtaining cpu information as a hashmap
 */
 pub fn get_cpu() -> DumbResult<WMIMap> {
-    let wmi_con = get_wmi_con_namespace(r"Root\CIMV2")?;
+    let wmi_con:WMIConnection = get_wmi_con_namespace(r"Root\CIMV2")?;
     let result: Vec<HashMap<String, Variant>> =
         wmi_con.raw_query("SELECT * FROM Win32_Processor")?;
     let mut cpu_info: HashMap<String, Variant> = HashMap::new();
@@ -96,6 +96,15 @@ pub fn get_cpu() -> DumbResult<WMIMap> {
 
     Ok(cpu_info)
 }
+
+
+pub fn get_ram() -> DumbResult<WMIVec>{
+    let wmi_con:WMIConnection = get_wmi_con_namespace(r"ROOT\CIMV2")?;
+    let results: WMIVec = wmi_con.raw_query("SELECT * FROM Win32_PhysicalMemory")?;
+    Ok(results)
+
+}
+
 
 pub fn get_key() -> DumbResult<(String, String, String, String, String)> {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
@@ -236,3 +245,4 @@ pub fn get_services() -> DumbResult<Vec<WMIService>> {
 
     Ok(result)
 }
+
