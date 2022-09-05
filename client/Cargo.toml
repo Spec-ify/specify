@@ -3,9 +3,14 @@ name = "specify"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+proc_macro = true
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+proc-macro2 = "1.0.43"
+quote = "1.0.21"
 serde = "1.0.144"
 windows = {version = "0.39.0", features = ["Win32_System_Com", "Win32_System_TaskScheduler", "Win32_System_Ole", "Win32_Foundation", "Win32_System_Services", "Win32_Security"] }
 winreg = "0.10.1"

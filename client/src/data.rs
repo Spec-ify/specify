@@ -1,6 +1,7 @@
 #![cfg_attr(debug_assertions, allow(dead_code, unused_imports))]
 
 use serde::Deserialize;
+use specify::dumb_attributes;
 /**
 * Functions that get data from the system in a managable format
 */
@@ -97,10 +98,19 @@ pub fn get_cpu() -> DumbResult<WMIMap> {
     Ok(cpu_info)
 }
 
+#[dumb_attributes("Win32_PhysicalMemory")]
+pub struct WMIRam {
+    manufacturer: String,
+    configured_clock_speed: i32,
+    device_locator: String,
+    capacity: i64,
+    serial_number: String,
+    part_number: String
+}
 
-pub fn get_ram() -> DumbResult<WMIVec>{
+pub fn get_ram() -> DumbResult<Vec<WMIRam>>{
     let wmi_con:WMIConnection = get_wmi_con_namespace(r"ROOT\CIMV2")?;
-    let results: WMIVec = wmi_con.raw_query("SELECT * FROM Win32_PhysicalMemory")?;
+    let results: Vec<WMIRam> = wmi_con.query()?;
     Ok(results)
 
 }
@@ -164,9 +174,7 @@ pub fn get_key() -> DumbResult<(String, String, String, String, String)> {
     ))
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename = "SoftwareLicensingProduct")]
-#[serde(rename_all = "PascalCase")]
+#[dumb_attributes("SoftwareLicensingProduct")]
 pub struct WMILicense {
     name: String,
     product_key_channel: Option<String>,
@@ -186,9 +194,7 @@ pub fn get_licenses() -> DumbResult<Vec<WMILicense>> {
     Ok(existing_licenses)
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename = "win32_sounddevice")]
-#[serde(rename_all = "PascalCase")]
+#[dumb_attributes("win32_sounddevice")]
 pub struct WMIAudio {
     name: String,
     product_name: String,
@@ -214,6 +220,9 @@ pub fn get_command_startups() -> DumbResult<Vec<String>> {
 }
 
 
+// Cannot use dumb_attributes here because variant can't have the Copy trait
+// we haven't found any type that can work (including variant) so we will use
+// it for debugging purposes
 #[derive(Deserialize, Debug)]
 #[serde(rename = "MSFT_ScheduledTask")]
 #[serde(rename_all = "PascalCase")]
@@ -230,9 +239,7 @@ pub fn get_ts_startups() -> DumbResult<()> {
     Ok(())
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename = "win32_service")]
-#[serde(rename_all = "PascalCase")]
+#[dumb_attributes("win32_service")]
 pub struct WMIService {
     display_name: String,
     state: String
@@ -245,4 +252,3 @@ pub fn get_services() -> DumbResult<Vec<WMIService>> {
 
     Ok(result)
 }
-
