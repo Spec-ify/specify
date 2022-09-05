@@ -5,7 +5,9 @@
 use proc_macro::TokenStream;
 use quote::quote;
 
-
+/**
+ * Credit to https://stackoverflow.com/a/73603644/
+ */
 #[proc_macro_attribute]
 pub fn dumb_attributes(attr: TokenStream, item: TokenStream) -> TokenStream {
     let attr = proc_macro2::TokenStream::from(attr);
