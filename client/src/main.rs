@@ -2,8 +2,11 @@
 * implement functions from other files
 */
 
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
+
 mod config;
 mod data;
+mod gui;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // println!("{:#?}", data::get_cimos()?);
@@ -17,5 +20,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // println!("{:#?}", data::get_services()?);
     // data::get_ts_startups()?;
     // println!("{:#?}", data::get_ram()?);
+
+    gui::run()?;
+
     Ok(())
 }
