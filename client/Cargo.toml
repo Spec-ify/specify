@@ -9,6 +9,7 @@ proc_macro = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+iced = { git = "https://github.com/iced-rs/iced", rev = "cb395ab" }
 proc-macro2 = "1.0.43"
 quote = "1.0.21"
 serde = "1.0.144"
