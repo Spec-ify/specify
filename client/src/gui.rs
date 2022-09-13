@@ -1,6 +1,6 @@
 use iced::application::{StyleSheet, Appearance};
-use iced::widget::{button, column, container, row, text};
-use iced::{Alignment, Element, Length, Sandbox, Settings, window, Theme, Color, Background};
+use iced::widget::{button, column, container, row, text, Column};
+use iced::{Alignment, Element, Length, Sandbox, Settings, window, Theme, Color, Background, Command};
 
 pub fn run() -> iced::Result {
     let settings: Settings<()> = Settings {
@@ -14,9 +14,26 @@ pub fn run() -> iced::Result {
     SpecifyGUI::run(settings)
 }
 
-#[derive(Default)]
+#[derive(Debug, Clone, Copy)]
+enum SpecifyView {
+    Intro,
+    Settings,
+    Progress,
+    Finish
+}
+
 struct SpecifyGUI {
-    exit: bool
+    exit: bool,
+    view: SpecifyView
+}
+
+impl Default for SpecifyGUI {
+    fn default() -> Self {
+        Self {
+            exit: false,
+            view: SpecifyView::Intro
+        }        
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -44,7 +61,7 @@ impl Sandbox for SpecifyGUI {
         match message {
             Message::Start => {
                 println!("lol started lmfao imagine");
-                self.exit = true;
+                self.view = SpecifyView::Progress
             }
             Message::Exit => {
                 self.exit = true;
@@ -53,6 +70,24 @@ impl Sandbox for SpecifyGUI {
     }
 
     fn view(&self) -> Element<Message> {
+        match self.view {
+            SpecifyView::Intro => {
+                self.view_start()
+            }
+            _ => self.view_default()
+        }
+    }
+
+    fn style(&self) -> iced::theme::Application {
+        iced::theme::Application::Custom( |_t| Appearance {
+            background_color: Color::from_rgb8(0x2e, 0x34, 0x40),
+            text_color: Color::from_rgb8(0xec, 0xef, 0xf4)
+        })
+    }
+}
+
+impl SpecifyGUI {
+    fn view_start(&self) -> Element<Message> {
         let heading = text("Specify").size(32);
         let description = text(
             "This tool gathers information about your computer. It does not gather any private information, other than perhaps your username."
@@ -60,7 +95,7 @@ impl Sandbox for SpecifyGUI {
         let start = button(text("Start").horizontal_alignment(iced::alignment::Horizontal::Center)).on_press(Message::Start).width(iced::Length::Units(100)).style(iced::theme::Button::Primary);
         let exit = button(text("Exit").horizontal_alignment(iced::alignment::Horizontal::Center)).on_press(Message::Exit).width(iced::Length::Units(100)).style(iced::theme::Button::Secondary);
 
-        let content = column![
+        let content: Column<Message> = column![
             heading,
             description,
             row![
@@ -82,10 +117,17 @@ impl Sandbox for SpecifyGUI {
             .into()
     }
 
-    fn style(&self) -> iced::theme::Application {
-        iced::theme::Application::Custom( |_t| Appearance {
-            background_color: Color::from_rgb8(0x2e, 0x34, 0x40),
-            text_color: Color::from_rgb8(0xec, 0xef, 0xf4)
-        })
+    fn view_default(&self) -> Element<Message> {
+        let content: Column<Message> = column![
+            "Not implemented yet :("
+        ];
+        
+        container(content)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .padding(20)
+            .center_x()
+            .center_y()
+            .into()
     }
 }
