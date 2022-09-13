@@ -17,6 +17,9 @@ windows = {version = "0.39.0", features = ["Win32_System_Com", "Win32_System_Tas
 winreg = "0.10.1"
 wmi = "0.11.1"
 
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1.12"
+
 # optimizing for size, see https://github.com/johnthagen/min-sized-rust
 [profile.release]
 strip = true #strip symbols from bianary
