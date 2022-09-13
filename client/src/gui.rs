@@ -1,12 +1,15 @@
 use iced::application::{StyleSheet, Appearance};
 use iced::widget::{button, column, container, row, text, Column};
-use iced::{Alignment, Element, Length, Sandbox, Settings, window, Theme, Color, Background, Command};
+use iced::{Alignment, Element, Length, Sandbox, Settings, window, Theme, Color, Background, Command, window::Icon};
 
 pub fn run() -> iced::Result {
+    let ico = include_bytes!("../assets/SNOO_256.rgba");
+    //println!("{:#?}", ico);
     let settings: Settings<()> = Settings {
         window: window::Settings {
             min_size: Some((520, 400)),
             max_size: Some((520, 400)),
+            icon: Some(Icon::from_rgba(ico.to_vec(), 256, 256).unwrap()),
             ..Default::default()
         },
         ..Default::default()
