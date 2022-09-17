@@ -13,6 +13,7 @@ iced = { git = "https://github.com/iced-rs/iced", rev = "cb395ab" }
 proc-macro2 = "1.0.43"
 quote = "1.0.21"
 serde = "1.0.144"
+serde_json = "1.0.85"
 windows = {version = "0.39.0", features = ["Win32_System_Com", "Win32_System_TaskScheduler", "Win32_System_Ole", "Win32_Foundation", "Win32_System_Services", "Win32_Security"] }
 winreg = "0.10.1"
 wmi = "0.11.1"

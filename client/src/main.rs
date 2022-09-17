@@ -4,12 +4,15 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-mod config;
-mod data;
-mod gui;
+pub mod config;
+pub mod data;
+pub mod gui;
+pub mod monolith;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // println!("{:#?}", data::get_cimos()?);
+    //println!("{:#?}", data::get_cimos()?);
+    //println!("{}", data::get_bootmode()?);
+    //println!("{:#?}", monolith::MonolithBasicInfo::create()?);
     // println!("{:#?}", data::get_avfw()?);
     // println!("{:#?}", data::get_cpu()?);
     //println!("{:#?}", config::BAD_PROCESSES);

@@ -1,6 +1,10 @@
 use iced::application::{StyleSheet, Appearance};
+use iced::futures::FutureExt;
 use iced::widget::{button, column, container, row, text, Column};
 use iced::{Alignment, Element, Length, Sandbox, Settings, window, Theme, Color, Background, Command, window::Icon};
+
+use crate::*;
+use crate::monolith::assemble_monolith;
 
 pub fn run() -> iced::Result {
     let ico = include_bytes!("../assets/SNOO_256.rgba");
@@ -42,6 +46,7 @@ impl Default for SpecifyGUI {
 #[derive(Debug, Clone, Copy)]
 enum Message {
     Start,
+    Finish,
     Exit
 }
 
@@ -63,13 +68,18 @@ impl Sandbox for SpecifyGUI {
     fn update(&mut self, message: Message) {
         match message {
             Message::Start => {
+                self.view = SpecifyView::Progress;
                 println!("lol started lmfao imagine");
-                self.view = SpecifyView::Progress
+
+                std::thread::spawn(assemble_monolith);
+            }
+            Message::Finish => {
+                println!("hi");
             }
             Message::Exit => {
                 self.exit = true;
             }
-        }
+        };
     }
 
     fn view(&self) -> Element<Message> {

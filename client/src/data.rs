@@ -11,7 +11,7 @@ use std::{
     fmt::{Debug, Pointer},
     hash::Hash,
     io::Error,
-    num, vec, mem::size_of,
+    num, vec, mem::size_of, env::VarError,
 };
 use windows::Win32::{
     Foundation::{GetLastError, BOOL, BSTR, ERROR_INSUFFICIENT_BUFFER},
@@ -30,7 +30,7 @@ use wmi::*;
 
 type WMIMap = HashMap<String, Variant>;
 type WMIVec = Vec<WMIMap>;
-type DumbResult<T> = Result<T, Box<dyn std::error::Error>>;
+pub type DumbResult<T> = Result<T, Box<dyn std::error::Error>>;
 
 //We use a thread local here to make sure every access happens on the same thread, preventing memory corruption
 thread_local!(static COM_CON: COMLibrary = wmi::COMLibrary::new().unwrap());
@@ -40,7 +40,9 @@ thread_local!(static COM_CON: COMLibrary = wmi::COMLibrary::new().unwrap());
  *This exists to prevent typing it out all the time
  */
 fn get_wmi_con() -> DumbResult<WMIConnection> {
+    println!("Getting wmi_con");
     COM_CON.with(|com_con| {
+        println!("Got inside com_con");
         let wmi_con = WMIConnection::new(*com_con)?;
         Ok(wmi_con)
     })
@@ -58,10 +60,18 @@ fn get_wmi_con_namespace(namespace: &str) -> DumbResult<WMIConnection> {
     })
 }
 
-pub fn get_cimos() -> DumbResult<WMIMap> {
+#[dumb_attributes("Win32_OperatingSystem")]
+pub struct WMICimOS {
+    pub caption: String,
+    //pub csname: String,
+    //pub install_date: String,
+    //pub last_boot_up_time: String
+}
+
+pub fn get_cimos() -> DumbResult<WMICimOS> {
     let wmi_con = get_wmi_con()?;
-    let results: WMIVec = wmi_con.raw_query("SELECT * FROM Win32_OperatingSystem")?;
-    let mut this_one: WMIMap = HashMap::new();
+    let results: Vec<WMICimOS> = wmi_con.query()?;
+    let mut this_one: WMICimOS = WMICimOS::default();
 
     // We know that there will be only one at most
     for os in results {
@@ -69,6 +79,31 @@ pub fn get_cimos() -> DumbResult<WMIMap> {
     }
 
     Ok(this_one)
+}
+
+#[dumb_attributes("Win32_ComputerSystem")]
+pub struct WMISystem {
+    pub bootup_state: String,
+    pub caption: String,
+    pub domain: String
+}
+
+pub fn get_system() -> DumbResult<WMISystem> {
+    let wmi_con = get_wmi_con()?;
+    let results: Vec<WMISystem> = wmi_con.query()?;
+    println!("{:#?}", results);
+    let mut this_one: WMISystem = WMISystem::default();
+
+    // We know that there will be only one at most
+    for os in results {
+        this_one = os;
+    }
+
+    Ok(this_one)
+}
+
+pub fn get_bootmode() -> Result<String, VarError> {
+    std::env::var("firmware_type")
 }
 
 /**
@@ -100,12 +135,12 @@ pub fn get_cpu() -> DumbResult<WMIMap> {
 
 #[dumb_attributes("Win32_PhysicalMemory")]
 pub struct WMIRam {
-    manufacturer: String,
-    configured_clock_speed: i32,
-    device_locator: String,
-    capacity: i64,
-    serial_number: String,
-    part_number: String
+    pub manufacturer: String,
+    pub configured_clock_speed: i32,
+    pub device_locator: String,
+    pub capacity: i64,
+    pub serial_number: String,
+    pub part_number: String
 }
 
 pub fn get_ram() -> DumbResult<Vec<WMIRam>>{
@@ -176,11 +211,11 @@ pub fn get_key() -> DumbResult<(String, String, String, String, String)> {
 
 #[dumb_attributes("SoftwareLicensingProduct")]
 pub struct WMILicense {
-    name: String,
-    product_key_channel: Option<String>,
-    license_family: String,
-    license_status: i32,
-    partial_product_key: Option<String>,
+    pub name: String,
+    pub product_key_channel: Option<String>,
+    pub license_family: String,
+    pub license_status: i32,
+    pub partial_product_key: Option<String>,
 }
 
 pub fn get_licenses() -> DumbResult<Vec<WMILicense>> {
@@ -196,8 +231,8 @@ pub fn get_licenses() -> DumbResult<Vec<WMILicense>> {
 
 #[dumb_attributes("win32_sounddevice")]
 pub struct WMIAudio {
-    name: String,
-    product_name: String,
+    pub name: String,
+    pub product_name: String,
 }
 
 pub fn get_audio() -> DumbResult<Vec<WMIAudio>> {
@@ -227,8 +262,8 @@ pub fn get_command_startups() -> DumbResult<Vec<String>> {
 #[serde(rename = "MSFT_ScheduledTask")]
 #[serde(rename_all = "PascalCase")]
 struct WMITask {
-    task_name: String,
-    triggers: Variant
+    pub task_name: String,
+    pub triggers: Variant
 }
 
 pub fn get_ts_startups() -> DumbResult<()> {
@@ -241,8 +276,8 @@ pub fn get_ts_startups() -> DumbResult<()> {
 
 #[dumb_attributes("win32_service")]
 pub struct WMIService {
-    display_name: String,
-    state: String
+    pub display_name: String,
+    pub state: String
 }
 
 pub fn get_services() -> DumbResult<Vec<WMIService>> {

@@ -13,7 +13,7 @@ pub fn dumb_attributes(attr: TokenStream, item: TokenStream) -> TokenStream {
     let attr = proc_macro2::TokenStream::from(attr);
     let item = proc_macro2::TokenStream::from(item);
     quote! {
-        #[derive(Deserialize, Clone, Debug)]
+        #[derive(Default, serde::Serialize, serde::Deserialize, Clone, Debug)]
         #[serde(rename = #attr)]
         #[serde(rename_all = "PascalCase")]
         #item
