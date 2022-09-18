@@ -81,7 +81,12 @@ public class Data
      */
     public static string CimToIsoDate(string cim)
     {
-        return ManagementDateTimeConverter.ToDateTime(cim).ToString("yyyy-MM-ddTHH:mm:sszzz");
+        return DateTimeToIsoDate(ManagementDateTimeConverter.ToDateTime(cim));
+    }
+
+    public static string DateTimeToIsoDate(DateTime d)
+    {
+        return d.ToString("yyyy-MM-ddTHH:mm:sszzz");
     }
 }
 
