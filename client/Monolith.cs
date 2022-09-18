@@ -25,14 +25,14 @@ public struct MonolithBasicInfo
 
     public static MonolithBasicInfo Create()
     {
-        var os = Data.GetWmi("Win32_OperatingSystem").First();
-        var cs = Data.GetWmi("Win32_ComputerSystem").First();
+        var os = DataCache.Os;
+        var cs = DataCache.Cs;
 
         return new MonolithBasicInfo
         {
             Edition = (string) os["Caption"],
             Version = (string) os["Version"],
-            InstallDate = Data.CimToISODate((string) os["InstallDate"]),
+            InstallDate = Data.CimToIsoDate((string) os["InstallDate"]),
             Uptime = (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string) os["InstallDate"])).ToString("g"),
             Hostname = Dns.GetHostName(),
             Domain = Environment.GetEnvironmentVariable("userdomain"),

@@ -32,6 +32,12 @@ public class Data
         return res;
     }
     
+    /**
+     * Gets tasks from Task Scheduler that satisfy all of the following conditions:
+     *  - Author isn't Microsoft
+     *  - State is Ready or Running
+     *  - Triggered at boot or login
+     */
     public static List<Microsoft.Win32.TaskScheduler.Task> GetTsStartupTasks()
     {
         var ts = new TaskService();
@@ -69,9 +75,21 @@ public class Data
         return res;
     }
 
-    public static string CimToISODate(string cim)
+    /**
+     * Convert a CIM date (what would be gotten from WMI) into an ISO date
+     * See https://learn.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime
+     */
+    public static string CimToIsoDate(string cim)
     {
-        return ManagementDateTimeConverter.ToDateTime((string)Data.GetWmi("Win32_OperatingSystem")
-            .First()["LastBootUpTime"]).ToString("yyyy-MM-ddTHH:mm:sszzz");
+        return ManagementDateTimeConverter.ToDateTime(cim).ToString("yyyy-MM-ddTHH:mm:sszzz");
     }
+}
+
+/**
+ * Cache of values so they don't have to be called multiple times
+ */
+public static class DataCache
+{
+    public static Dictionary<string, object> Os { get; } = Data.GetWmi("Win32_OperatingSystem").First();
+    public static Dictionary<string, object> Cs { get; } = Data.GetWmi("Win32_ComputerSystem").First();
 }
