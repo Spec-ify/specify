@@ -1,4 +1,4 @@
-﻿using Microsoft.Management.Infrastructure;
+﻿using Newtonsoft.Json;
 
 namespace specify_client;
 
@@ -6,14 +6,16 @@ public class Program
 {
     static void Main()
     {
-        var d = new Data();
-
-        var e = d.GetWmi();
-
-        foreach (CimProperty p in e)
+        foreach (var task in Data.GetTsStartupTasks())
         {
-            Console.WriteLine("{0} = {1}", p.Name, p.Value);
+            Console.WriteLine(task.Path);
         }
     }
-}
 
+    static void PrettyPrintObject(object o)
+    {
+        var jsonString = JsonConvert.SerializeObject(o, Formatting.Indented);
+
+        Console.WriteLine(jsonString);
+    }
+}

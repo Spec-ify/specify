@@ -9,7 +9,7 @@ nupkg/
 .vscode
 
 # Rider
-.idea
+.idea/
 
 # User-specific files
 *.suo
