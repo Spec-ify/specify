@@ -33,7 +33,7 @@ public struct MonolithBasicInfo
             Edition = (string) os["Caption"],
             Version = (string) os["Version"],
             InstallDate = Data.CimToIsoDate((string) os["InstallDate"]),
-            Uptime = (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string) os["InstallDate"])).ToString("g"),
+            Uptime = (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string) os["LastBootUpTime"])).ToString("g"),
             Hostname = Dns.GetHostName(),
             Domain = Environment.GetEnvironmentVariable("userdomain"),
             BootMode = Environment.GetEnvironmentVariable("firmware_type"),
