@@ -10,7 +10,10 @@ public class Program
         PrettyPrintObject(MonolithBasicInfo.Create());
     }
 
-    static void PrettyPrintObject(object o)
+    /**
+     * System.Text.Json doesn't work, so I'm using Newtonsoft.Json
+     */
+    public static void PrettyPrintObject(object o)
     {
         var jsonString = JsonConvert.SerializeObject(o, Formatting.Indented);
 
