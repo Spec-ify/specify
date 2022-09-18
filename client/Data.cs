@@ -68,5 +68,10 @@ public class Data
 
         return res;
     }
-    
+
+    public static string CimToISODate(string cim)
+    {
+        return ManagementDateTimeConverter.ToDateTime((string)Data.GetWmi("Win32_OperatingSystem")
+            .First()["LastBootUpTime"]).ToString("yyyy-MM-ddTHH:mm:sszzz");
+    }
 }
