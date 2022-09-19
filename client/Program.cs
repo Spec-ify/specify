@@ -1,18 +1,12 @@
-﻿using System.Management;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
-using System.Runtime.InteropServices;
 
 namespace specify_client;
 
 public class Program
 {
-    static void Main()
-    {
-        //Console.WriteLine("Last boot up time: " + Data.CimToIsoDate((string) DataCache.Os["LastBootUpTime"]));
-        //Console.WriteLine("Time now: " + Data.DateTimeToIsoDate(DateTime.Now));
-        PrettyPrintObject(MonolithBasicInfo.Create());
-    }
-
     /**
      * System.Text.Json doesn't work, so I'm using Newtonsoft.Json
      */
