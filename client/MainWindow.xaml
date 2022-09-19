@@ -6,20 +6,19 @@
         xmlns:local="clr-namespace:specify_client"
         mc:Ignorable="d"
         Title="Specify" Height="480" Width="640" ResizeMode="CanMinimize"
-        WindowStartupLocation="CenterScreen" WindowStyle="None">
+        WindowStartupLocation="CenterScreen" WindowStyle="None" BorderBrush="#4c566a" BorderThickness="1">
     <Grid>
-        
-        <Grid Height="16" VerticalAlignment="Top" MouseDown="TitleBar_OnMouseDown">
-            <Button Background="Transparent" ToolTip="Close Window" Width="16" Height="16" Margin="0,0,2,0"
-                    HorizontalAlignment="Right" VerticalAlignment="Top" Click="OnCloseClick" BorderThickness="0"
-                    Grid.ZIndex="10">
+        <Grid Height="24" VerticalAlignment="Top" MouseDown="TitleBar_OnMouseDown">
+            <Button Width="20" Height="20" Margin="0, 0,2, 0" BorderThickness="0" Grid.ZIndex="10"
+                    HorizontalAlignment="Right" VerticalAlignment="Center"  Click="OnCloseClick" Name="CloseButton">
                 <Path
-                    SnapsToDevicePixels="True" Margin="2" Stretch="Fill" Fill="#bf616a"
+                    SnapsToDevicePixels="True" Margin="2" Stretch="Fill" Fill="#bf616a" Name="ClosePath"
                     Data="F1 M 26.9166,22.1667L 37.9999,33.25L 49.0832,22.1668L 53.8332,26.9168L 42.7499,38L 53.8332,49.0834L 49.0833,53.8334L 37.9999,42.75L 26.9166,53.8334L 22.1666,49.0833L 33.25,38L 22.1667,26.9167L 26.9166,22.1667 Z "
-                />
+                >
+                </Path>
             </Button>
             
-            <TextBlock HorizontalAlignment="Left" Text="Specify" FontSize="10" Margin="2, 0, 0,0" />
+            <TextBlock HorizontalAlignment="Left" Text="Specify" FontSize="14" VerticalAlignment="Center" Margin="4, 0, 0,0" />
                 
             <Grid.Background>
                 <SolidColorBrush Color="#262b35" />
@@ -27,7 +26,13 @@
         </Grid>
          
         <Grid Margin="10" Height="464">
-            <Label Name="Test" FontFamily="Courier New" />
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+            </Grid.RowDefinitions>
+            
+            <Label Margin="0 10 0 0" HorizontalAlignment="Center" Content="Specify" FontSize="48" FontFamily="./assets/#Rubik Bold" FontWeight="Bold" />
+            <Label Grid.Row="1" Name="Test" FontFamily="./assets/#Hack" FontSize="16" Margin="0, 10" />
         </Grid>
         
         <Grid.Background>
