@@ -1,5 +1,8 @@
-﻿using System.Management;
+﻿using System;
+using System.Management;
 using Microsoft.Win32.TaskScheduler;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace specify_client;
 

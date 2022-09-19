@@ -1,0 +1,11 @@
+﻿<Application x:Class="specify_client.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:specify_client"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+         <Style TargetType="{x:Type Label}">
+             <Setter Property="Foreground" Value="#eceff4" />
+         </Style>
+    </Application.Resources>
+</Application>
