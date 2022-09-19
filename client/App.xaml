@@ -7,5 +7,8 @@
          <Style TargetType="{x:Type Label}">
              <Setter Property="Foreground" Value="#eceff4" />
          </Style>
+        <Style TargetType="{x:Type TextBlock}">
+            <Setter Property="Foreground" Value="#eceff4" />
+        </Style>
     </Application.Resources>
 </Application>
