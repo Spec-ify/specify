@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:specify_client"
-        mc:Ignorable="d"
+        mc:Ignorable="d" Icon="./assets/Icon.ico"
         Title="Specify" Height="480" Width="640" ResizeMode="CanMinimize"
         WindowStartupLocation="CenterScreen" WindowStyle="None" BorderBrush="#4c566a" BorderThickness="1">
     <Grid>
@@ -17,7 +17,6 @@
                 >
                 </Path>
             </Button>
-            
             <TextBlock HorizontalAlignment="Left" Text="Specify" FontSize="14" VerticalAlignment="Center" Margin="4, 0, 0,0" />
                 
             <Grid.Background>
@@ -28,11 +27,22 @@
         <Grid Margin="10" Height="464">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
                 <RowDefinition Height="Auto"></RowDefinition>
             </Grid.RowDefinitions>
             
-            <Label Margin="0 10 0 0" HorizontalAlignment="Center" Content="Specify" FontSize="48" FontFamily="./assets/#Rubik Bold" FontWeight="Bold" />
-            <Label Grid.Row="1" Name="Test" FontFamily="./assets/#Hack" FontSize="16" Margin="0, 10" />
+            <Grid Margin="0 30 0 0" HorizontalAlignment="Center" Width="275">
+                <Label HorizontalAlignment="Right" Content="Specify" FontSize="48"
+                       FontFamily="./assets/#Rubik Bold" FontWeight="Bold" />
+                <Image Source="./assets/Icon.ico" Width="64" Height="64" HorizontalAlignment="Left"/>
+            </Grid>
+            <TextBlock Grid.Row="1" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
+                       Margin="0, 10" FontSize="14" MaxWidth="480">
+                This tool gathers information about your computer. It does not collect any private information, other
+                than perhaps your username.
+            </TextBlock>
+            
+                <Label Grid.Row="2" Name="Test" FontFamily="./assets/#Hack" FontSize="16" Margin="0, 10" />
         </Grid>
         
         <Grid.Background>
