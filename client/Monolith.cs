@@ -1,16 +1,27 @@
 ﻿using System;
 using System.Management;
 using System.Net;
+using Newtonsoft.Json;
 
 namespace specify_client;
 
 
 /**
- * The big structure of all the things
+ * The big structure of all the things.
+ * We will probably not make a Create() method here, because we want to get feedback about the process of creating
+ *  the children
  */
 public class Monolith
 {
     public MonolithBasicInfo BasicInfo;
+
+    /**
+     * Debating making this static, because I don't like OOP
+     */
+    public string Serialize()
+    {
+        return JsonConvert.SerializeObject(this, Formatting.Indented);
+    }
 }
 
 public struct MonolithBasicInfo
