@@ -7,6 +7,39 @@
         mc:Ignorable="d" Icon="./assets/Icon.ico"
         Title="Specify" Height="480" Width="640" ResizeMode="CanMinimize"
         WindowStartupLocation="CenterScreen" WindowStyle="None" BorderBrush="#4c566a" BorderThickness="1">
+    <Window.Resources>
+        <ControlTemplate x:Key="StartView">
+            <Grid Margin="10" Height="464">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                    </Grid.RowDefinitions>
+                
+                    <Grid Margin="0 30 0 0" HorizontalAlignment="Center" Width="275">
+                        <Label HorizontalAlignment="Right" Content="Specify" FontSize="48"
+                               FontFamily="./assets/#Rubik Bold" FontWeight="Bold" />
+                        <Image Source="./assets/Icon.ico" Width="64" Height="64" HorizontalAlignment="Left"/>
+                    </Grid>
+                    <TextBlock Grid.Row="1" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
+                               Margin="0, 10" FontSize="14" MaxWidth="480">
+                        This tool gathers information about your computer. It does not collect any private information, other
+                        than perhaps your username.
+                    </TextBlock>
+                
+                    <Label Grid.Row="2" Name="Test" FontFamily="./assets/#Hack" FontSize="16" Margin="0, 10" 
+                           Content="{Binding TestContent}" />
+                </Grid>
+            </Grid>
+        </ControlTemplate>
+    </Window.Resources>
+    
     <Grid>
         <Grid Height="24" VerticalAlignment="Top" MouseDown="TitleBar_OnMouseDown">
             <Button Width="20" Height="20" Margin="0, 0,2, 0" BorderThickness="0" Grid.ZIndex="10"
@@ -24,26 +57,7 @@
             </Grid.Background>
         </Grid>
          
-        <Grid Margin="10" Height="464">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"></RowDefinition>
-                <RowDefinition Height="*"></RowDefinition>
-                <RowDefinition Height="Auto"></RowDefinition>
-            </Grid.RowDefinitions>
-            
-            <Grid Margin="0 30 0 0" HorizontalAlignment="Center" Width="275">
-                <Label HorizontalAlignment="Right" Content="Specify" FontSize="48"
-                       FontFamily="./assets/#Rubik Bold" FontWeight="Bold" />
-                <Image Source="./assets/Icon.ico" Width="64" Height="64" HorizontalAlignment="Left"/>
-            </Grid>
-            <TextBlock Grid.Row="1" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
-                       Margin="0, 10" FontSize="14" MaxWidth="480">
-                This tool gathers information about your computer. It does not collect any private information, other
-                than perhaps your username.
-            </TextBlock>
-            
-                <Label Grid.Row="2" Name="Test" FontFamily="./assets/#Hack" FontSize="16" Margin="0, 10" />
-        </Grid>
+        <Control x:Name="Control" />
         
         <Grid.Background>
             <SolidColorBrush Color="#2e3440" />
