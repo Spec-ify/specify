@@ -42,13 +42,35 @@
     
     <Grid>
         <Grid Height="24" VerticalAlignment="Top" MouseDown="TitleBar_OnMouseDown">
-            <Button Width="20" Height="20" Margin="0, 0,2, 0" BorderThickness="0" Grid.ZIndex="10"
-                    HorizontalAlignment="Right" VerticalAlignment="Center"  Click="OnCloseClick" Name="CloseButton">
+            <Button Width="24" Height="24" Padding="2" BorderThickness="0" Grid.ZIndex="10"
+                    HorizontalAlignment="Right" VerticalAlignment="Center"  Click="OnCloseClick" Name="CloseButton"
+                    MouseEnter="CloseButton_OnMouseEnter" MouseLeave="CloseButton_OnMouseLeave">
                 <Path
                     SnapsToDevicePixels="True" Margin="2" Stretch="Fill" Fill="#bf616a" Name="ClosePath"
                     Data="F1 M 26.9166,22.1667L 37.9999,33.25L 49.0832,22.1668L 53.8332,26.9168L 42.7499,38L 53.8332,49.0834L 49.0833,53.8334L 37.9999,42.75L 26.9166,53.8334L 22.1666,49.0833L 33.25,38L 22.1667,26.9167L 26.9166,22.1667 Z "
                 >
                 </Path>
+                
+                <Button.Style>
+                    <Style TargetType="{x:Type Button}">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="DumbCloseButtonBorder" Background="Transparent">
+                                        <ContentPresenter Margin="{TemplateBinding Padding}"  />
+                                    </Border>
+                                    
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="DumbCloseButtonBorder" Property="Background"
+                                                    Value="#bf616a" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Button.Style>
             </Button>
             <TextBlock HorizontalAlignment="Left" Text="Specify" FontSize="14" VerticalAlignment="Center" Margin="4, 0, 0,0" />
                 

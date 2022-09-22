@@ -33,7 +33,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         Control.Template = (ControlTemplate) Resources["StartView"];
         CloseButton.Background = Brushes.Transparent;
-        
+
         DataContext = new MainWindowViewModel();
     }
 
@@ -51,13 +51,11 @@ public partial class MainWindow : Window
 
     private void CloseButton_OnMouseEnter(object sender, MouseEventArgs e)
     {
-        CloseButton.Background = Red;
         ClosePath.Fill = Nord6;
     }
 
     private void CloseButton_OnMouseLeave(object sender, MouseEventArgs e)
     {
-        CloseButton.Background = Brushes.Transparent;
         ClosePath.Fill = Red;
     }
 }
