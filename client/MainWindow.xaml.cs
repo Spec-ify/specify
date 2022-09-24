@@ -1,21 +1,26 @@
-﻿using System.Windows;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using Newtonsoft.Json;
 
 namespace specify_client;
 
 public class MainWindowViewModel
 {
     public string TestContent { get; set; }
+    public ProgressList PList { get; set; }
+    public List<ProgressStatus> PListList => PList.Items.Values.ToList();
 
     public MainWindowViewModel()
     {
-        TestContent = (new Monolith
-        {
-            BasicInfo = MonolithBasicInfo.Create()
-        }).Serialize();
+        // TestContent = (new Monolith
+        // {
+        //     BasicInfo = MonolithBasicInfo.Create()
+        // }).Serialize();
+        PList = new ProgressList();
     }
 }
 
@@ -35,6 +40,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         Control.Template = (ControlTemplate) Resources["StartView"];
         CloseButton.Background = Brushes.Transparent;
+        Console.WriteLine(GetContext().PList.Items.Count);
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e)
@@ -72,5 +78,6 @@ public partial class MainWindow : Window
     private void ShowMoreDetails_OnClick(object sender, RoutedEventArgs e)
     {
         Control.Template = (ControlTemplate) Resources["VerboseView"];
+        GetContext().PList.RunItem("DummyTimer");
     }
 }

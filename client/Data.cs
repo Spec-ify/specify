@@ -3,6 +3,8 @@ using System.Management;
 using Microsoft.Win32.TaskScheduler;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using Action = System.Action;
 
 namespace specify_client;
 
@@ -98,6 +100,25 @@ public class Data
  */
 public static class DataCache
 {
-    public static Dictionary<string, object> Os { get; } = Data.GetWmi("Win32_OperatingSystem").First();
-    public static Dictionary<string, object> Cs { get; } = Data.GetWmi("Win32_ComputerSystem").First();
+    public static Dictionary<string, object> Os { get; private set; }
+    public static Dictionary<string, object> Cs { get; private set; }
+
+    public static void MakeMainData(Action then)
+    {
+        new Thread(() =>
+        {
+            Os = Data.GetWmi("Win32_OperatingSystem").First();
+            Cs = Data.GetWmi("Win32_ComputerSystem").First();
+            then();
+        }).Start();
+    }
+
+    public static void DummyTimer(Action then)
+    {
+        new Thread(() =>
+        {
+            Thread.Sleep(10000);
+            then();
+        }).Start();
+    }
 }
