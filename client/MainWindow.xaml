@@ -3,13 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
         xmlns:local="clr-namespace:specify_client"
         mc:Ignorable="d" Icon="./assets/Icon.ico"
         Title="Specify" Height="480" Width="640" ResizeMode="CanMinimize"
-        WindowStartupLocation="CenterScreen" WindowStyle="None" BorderBrush="#4c566a" BorderThickness="1">
+        WindowStartupLocation="CenterScreen" WindowStyle="None" BorderBrush="#262b35" BorderThickness="1">
     <Window.Resources>
         <ControlTemplate x:Key="StartView">
-            <Grid Margin="10" Height="464">
+            <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"></RowDefinition>
                     <RowDefinition Height="Auto"></RowDefinition>
@@ -23,8 +24,8 @@
                     </Grid.RowDefinitions>
                 
                     <Grid Margin="0 30 0 0" HorizontalAlignment="Center" Width="275">
-                        <Label HorizontalAlignment="Right" Content="Specify" FontSize="48"
-                               FontFamily="./assets/#Rubik Bold" FontWeight="Bold" />
+                        <TextBlock HorizontalAlignment="Right" FontSize="48" FontFamily="./assets/#Rubik Bold"
+                                   FontWeight="Bold">Specify</TextBlock>
                         <Image Source="./assets/Icon.ico" Width="64" Height="64" HorizontalAlignment="Left"/>
                     </Grid>
                     <TextBlock Grid.Row="1" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
@@ -33,15 +34,116 @@
                         than perhaps your username.
                     </TextBlock>
                 
-                    <Label Grid.Row="2" Name="Test" FontFamily="./assets/#Hack" FontSize="16" Margin="0, 10" 
-                           Content="{Binding TestContent}" />
+                    <Button Grid.Row="2" Width="100" Height="50" Background="#3b4252" Margin="20" Name="StartButton"
+                            Click="StartButton_OnClick" >
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
+                                   FontSize="30" x:Name="StartButtonText"
+                                   Foreground="#2e3440">
+                            Start
+                        </TextBlock>
+                        
+                        <Button.Style>
+                            <Style TargetType="{x:Type Button}">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="DumbStartButtonBorder" Background="#88c0d0"
+                                                    BorderBrush="#434c5e" BorderThickness="1" CornerRadius="5">
+                                                <ContentPresenter Margin="{TemplateBinding Padding}"  />
+                                            </Border>
+                                    
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="DumbStartButtonBorder" Property="Background"
+                                                            Value="#5E81AC" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </Grid>
+            </Grid>
+        </ControlTemplate>
+        
+        <ControlTemplate x:Key="StartedView">
+            <Grid VerticalAlignment="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                
+                <Grid Margin="0 0 0 20" HorizontalAlignment="Center" Width="275">
+                    <TextBlock HorizontalAlignment="Right" FontSize="48" FontFamily="./assets/#Rubik Bold"
+                               FontWeight="Bold">Specify</TextBlock>
+                    <Image Source="./assets/Icon.ico" Width="64" Height="64" HorizontalAlignment="Left"/>
+                </Grid>
+                
+                <!-- <TextBlock Grid.Row="1" FontSize="20" HorizontalAlignment="Center">Working on it ... </TextBlock> -->
+                <Image Grid.Row="1" gif:ImageBehavior.AnimatedSource="assets/truth.gif" Width="300" />
+                <!-- From SO https://stackoverflow.com/a/780763 -->
+                <Button Grid.Row="2" Margin="5" Cursor="Hand" Name="ShowMoreDetails" Click="ShowMoreDetails_OnClick"
+                        HorizontalAlignment="Center">
+                    <TextBlock Foreground="#88c0d0">
+                        More details
+                        <TextBlock.TextDecorations>
+                            <TextDecoration Location="Underline">
+                                <TextDecoration.Pen>
+                                    <Pen Brush="#88c0d0" />
+                                </TextDecoration.Pen>
+                            </TextDecoration>
+                        </TextBlock.TextDecorations>
+                    </TextBlock>
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <ContentPresenter />
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </ControlTemplate>
+        
+        <ControlTemplate x:Key="VerboseView">
+            <Grid Margin="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                
+                <TextBlock >
+                    Doing stuff ...
+                </TextBlock>
+                
+                <Border Grid.Row="1" BorderBrush="#d8dee9" BorderThickness="1" Background="#3b4252" Margin="20"
+                        Padding="10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock>Main data</TextBlock>
+                        <TextBlock Grid.Column="1" Foreground="#a3be8c">Complete</TextBlock>
+                        <TextBlock Grid.Row="1">SMART</TextBlock>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Foreground="#88c0d0">Processing</TextBlock>
+                    </Grid>
+                </Border>
             </Grid>
         </ControlTemplate>
     </Window.Resources>
     
-    <Grid>
-        <Grid Height="24" VerticalAlignment="Top" MouseDown="TitleBar_OnMouseDown">
+    <Grid Background="#2e3440">
+        <Grid Height="24" VerticalAlignment="Top" MouseDown="TitleBar_OnMouseDown" Background="#262b35">
             <Button Width="24" Height="24" Padding="2" BorderThickness="0" Grid.ZIndex="10"
                     HorizontalAlignment="Right" VerticalAlignment="Center"  Click="OnCloseClick" Name="CloseButton"
                     MouseEnter="CloseButton_OnMouseEnter" MouseLeave="CloseButton_OnMouseLeave">
@@ -53,7 +155,7 @@
                 
                 <Button.Style>
                     <Style TargetType="{x:Type Button}">
-                        <Setter Property="Template">
+                        <Setter Property="Template">  
                             <Setter.Value>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="DumbCloseButtonBorder" Background="Transparent">
@@ -73,16 +175,12 @@
                 </Button.Style>
             </Button>
             <TextBlock HorizontalAlignment="Left" Text="Specify" FontSize="14" VerticalAlignment="Center" Margin="4, 0, 0,0" />
-                
-            <Grid.Background>
-                <SolidColorBrush Color="#262b35" />
-            </Grid.Background>
         </Grid>
          
-        <Control x:Name="Control" />
-        
-        <Grid.Background>
-            <SolidColorBrush Color="#2e3440" />
-        </Grid.Background>
+        <Control x:Name="Control" Height="456" VerticalAlignment="Bottom" />
     </Grid>
+    
+    <Window.DataContext>
+        <local:MainWindowViewModel />
+    </Window.DataContext>
 </Window>
