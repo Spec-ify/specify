@@ -12,11 +12,13 @@
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
       <PackageReference Include="System.Management" Version="6.0.0" />
       <PackageReference Include="TaskScheduler" Version="2.10.1" />
+      <PackageReference Include="WpfAnimatedGif" Version="2.0.2" />
     </ItemGroup>
     
     <ItemGroup>
         <Resource Include="assets\Hack-Regular.ttf" />
         <Resource Include="assets\Rubik-Bold.ttf" />
         <Resource Include="assets\Icon.ico" />
+        <Resource Include="assets\truth.gif" />
     </ItemGroup>
 </Project>

@@ -6,9 +6,11 @@
     <Application.Resources>
          <Style TargetType="{x:Type Label}">
              <Setter Property="Foreground" Value="#eceff4" />
+             <Setter Property="FontSize" Value="14" />
          </Style>
         <Style TargetType="{x:Type TextBlock}">
             <Setter Property="Foreground" Value="#eceff4" />
+            <Setter Property="FontSize" Value="14" />
         </Style>
     </Application.Resources>
 </Application>

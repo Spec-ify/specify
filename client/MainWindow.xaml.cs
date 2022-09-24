@@ -24,8 +24,10 @@ public class MainWindowViewModel
 /// </summary>
 public partial class MainWindow : Window
 {
+    public static SolidColorBrush Nord0 = new SolidColorBrush(Color.FromRgb(0x2e, 0x34, 0x40));
     public static SolidColorBrush Red = new SolidColorBrush(Color.FromRgb(0xbf, 0x61, 0x6a));
     public static SolidColorBrush Nord6 = new SolidColorBrush(Color.FromRgb(0xec, 0xef, 0xf4));
+    public static SolidColorBrush Nord8 = new SolidColorBrush(Color.FromRgb(0x88, 0xc0, 0xd0));
     private string TestContent { get; set; }
 
     public MainWindow()
@@ -33,8 +35,6 @@ public partial class MainWindow : Window
         InitializeComponent();
         Control.Template = (ControlTemplate) Resources["StartView"];
         CloseButton.Background = Brushes.Transparent;
-
-        DataContext = new MainWindowViewModel();
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e)
@@ -57,5 +57,20 @@ public partial class MainWindow : Window
     private void CloseButton_OnMouseLeave(object sender, MouseEventArgs e)
     {
         ClosePath.Fill = Red;
+    }
+
+    private MainWindowViewModel GetContext()
+    {
+        return (MainWindowViewModel) DataContext;
+    }
+
+    private void StartButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        Control.Template = (ControlTemplate) Resources["StartedView"];
+    }
+
+    private void ShowMoreDetails_OnClick(object sender, RoutedEventArgs e)
+    {
+        Control.Template = (ControlTemplate) Resources["VerboseView"];
     }
 }
