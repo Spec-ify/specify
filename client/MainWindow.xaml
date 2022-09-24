@@ -122,21 +122,22 @@
                 
                 <Border Grid.Row="1" BorderBrush="#d8dee9" BorderThickness="1" Background="#3b4252" Margin="20"
                         Padding="10">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        
-                        <TextBlock>Main data</TextBlock>
-                        <TextBlock Grid.Column="1" Foreground="#a3be8c">Complete</TextBlock>
-                        <TextBlock Grid.Row="1">SMART</TextBlock>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Foreground="#88c0d0">Processing</TextBlock>
-                    </Grid>
+                    <ItemsControl ItemsSource="{Binding PList.Items.Values}" Background="Transparent"
+                              BorderThickness="0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <TextBlock Text="{Binding Name}" />
+                                    <TextBlock Grid.Column="1" Foreground="{Binding StatusColor}" Text="{Binding Status}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </Border>
             </Grid>
         </ControlTemplate>
