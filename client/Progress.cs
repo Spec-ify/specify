@@ -1,64 +1,71 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Media;
+using System.Threading;
 
-namespace specify_client;
-
-public enum ProgressType
+namespace specify_client
 {
-    Queued,
-    Processing,
-    Complete,
-    Failed
-}
-
-public class ProgressStatus
-{
-    public string Name { get; }
-    public ProgressType Status { get; set; }
-    public Action<Action> Action { get; set; }
-
-    public SolidColorBrush StatusColor => Status switch
+    public enum ProgressType
     {
-        ProgressType.Queued => (SolidColorBrush)new BrushConverter().ConvertFrom("#b48ead"),
-        ProgressType.Processing => (SolidColorBrush)new BrushConverter().ConvertFrom("#88c0d0"),
-        ProgressType.Complete => (SolidColorBrush)new BrushConverter().ConvertFrom("#a3be8c"),
-        ProgressType.Failed => (SolidColorBrush)new BrushConverter().ConvertFrom("#bf616a"),
-        _ => throw new Exception("Bad progress status!")
-    };
-
-    public ProgressStatus(string name, Action<Action> a)
-    {
-        Name = name;
-        Status = ProgressType.Queued;
-        Action = a;
+        Queued,
+        Processing,
+        Complete,
+        Failed
     }
-}
 
-/**
+    public class ProgressStatus
+    {
+        public string Name { get; }
+        public ProgressType Status { get; set; }
+        public Action Action { get; set; }
+        public List<string> Dependencies { get; set; }
+
+        public ProgressStatus(string name, Action a, List<string> deps = null)
+        {
+            Name = name;
+            Status = ProgressType.Queued;
+            Action = a;
+            Dependencies = deps ?? new List<string>();
+        }
+    }
+
+    /**
  * Things for progress, will be called by the GUI
  */
-public class ProgressList
-{
-    public Dictionary<string, ProgressStatus> Items { get; set; }
-
-    public ProgressList()
+    public class ProgressList
     {
-        Items = new Dictionary<string, ProgressStatus>(){
-            { "MainData", new ProgressStatus("Main Data", DataCache.MakeMainData) },
-            { "DummyTimer", new ProgressStatus("Dummy 5 second timer", DataCache.DummyTimer) }
-        };
-    }
+        public Dictionary<string, ProgressStatus> Items { get; set; }
 
-    public void RunItem(string key)
-    {
-        var item = Items[key];
-        item.Status = ProgressType.Processing;
-        item.Action(() =>
+        public ProgressList()
         {
-            item.Status = ProgressType.Complete;
-            Console.WriteLine(key + " is now " + Items[key].Status);
-        });
+            Items = new Dictionary<string, ProgressStatus>(){
+                { "MainData", new ProgressStatus("Main Data", DataCache.MakeMainData) },
+                { "DummyTimer", new ProgressStatus("Dummy 5 second timer", DataCache.DummyTimer) },
+                { "Test", new ProgressStatus("Test thing", () => Program.PrettyPrintObject(MonolithBasicInfo.Create()), new List<string>(){"MainData"}) }
+            };
+        }
+
+        public void RunItem(string key)
+        {
+            var item = Items[key] ?? throw new ArgumentNullException(nameof(key));
+            
+            new Thread(() =>
+            {
+                item.Status = ProgressType.Processing;
+
+                foreach (var k in item.Dependencies)
+                {
+                    var dep = Items[k] ?? throw new Exception("Dependency " + k + " of " + key + " does not exist!");
+                    while (dep.Status != ProgressType.Complete)
+                    {
+                        Thread.Sleep(0);
+                    }
+                }
+
+                item.Action();
+                
+                item.Status = ProgressType.Complete;
+            }).Start();
+        }
     }
 }
