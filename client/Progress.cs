@@ -17,15 +17,17 @@ namespace specify_client
     {
         public string Name { get; }
         public ProgressType Status { get; set; }
-        public Action Action { get; set; }
-        public List<string> Dependencies { get; set; }
+        public Action Action { get; }
+        public List<string> Dependencies { get; }
+        public bool SkipProgressWait { get; }
 
-        public ProgressStatus(string name, Action a, List<string> deps = null)
+        public ProgressStatus(string name, Action a, List<string> deps = null, bool skipProgressWait = false)
         {
             Name = name;
             Status = ProgressType.Queued;
             Action = a;
             Dependencies = deps ?? new List<string>();
+            SkipProgressWait = skipProgressWait;
         }
     }
 
@@ -41,7 +43,12 @@ namespace specify_client
             Items = new Dictionary<string, ProgressStatus>(){
                 { "MainData", new ProgressStatus("Main Data", DataCache.MakeMainData) },
                 { "DummyTimer", new ProgressStatus("Dummy 5 second timer", DataCache.DummyTimer) },
-                { "Test", new ProgressStatus("Test thing", () => Program.PrettyPrintObject(MonolithBasicInfo.Create()), new List<string>(){"MainData"}) }
+                {
+                    "Test",
+                    new ProgressStatus("Test thing", () => Program.PrettyPrintObject(MonolithBasicInfo.Create()),
+                        new List<string>(){"MainData"},
+                        skipProgressWait: true)
+                }
             };
         }
 
@@ -66,6 +73,62 @@ namespace specify_client
                 
                 item.Status = ProgressType.Complete;
             }).Start();
+        }
+
+        public void PrintStatuses()
+        {
+            new Thread(() =>
+            {
+                var allComplete = true;
+                var cPos = new List<int>();
+                var oldStatus = new List<ProgressType>();
+
+                for (var i = 0; i < Items.Count; i++)
+                {
+                    var item = Items.ElementAt(i).Value;
+                    Console.Write(item.Name + " - " + item.Status);
+                    cPos.Add(Console.CursorTop);
+                    oldStatus.Add(item.Status);
+                    Console.WriteLine();
+                }
+
+                do
+                {
+                    allComplete = true;
+                    
+                    for (var i = 0; i < Items.Count; i++)
+                    {
+                        var item = Items.ElementAt(i).Value;
+                        if (!item.SkipProgressWait && item.Status != ProgressType.Complete)
+                        {
+                            allComplete = false;
+                        }
+
+                        if (item.Status == oldStatus[i]) continue;
+                        
+                        Console.SetCursorPosition(0, cPos[i]);
+                        ClearCurrentConsoleLine();
+                        Console.WriteLine(item.Name + " - " + item.Status);
+                        oldStatus[i] = item.Status;
+                    }
+                    
+                    Console.SetCursorPosition(0, cPos.Last() + 1);
+                    Thread.Sleep(100);
+                } while (!allComplete);
+                
+                Console.SetCursorPosition(0, cPos.Last() + 1);
+            }).Start();
+        }
+        
+        /**
+         * From https://stackoverflow.com/a/8946847 and a comment
+         */
+        public static void ClearCurrentConsoleLine()
+        {
+            var currentLineCursor = Console.CursorTop;
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write(new string(' ', Console.BufferWidth)); 
+            Console.SetCursorPosition(0, currentLineCursor);
         }
     }
 }
