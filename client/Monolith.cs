@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Management;
 using System.Net;
+using Newtonsoft.Json;
 
 namespace specify_client
 {
@@ -10,6 +12,28 @@ namespace specify_client
     public class Monolith
     {
         public MonolithBasicInfo BasicInfo;
+        
+        /**
+         * Debating making this static, because I don't like OOP
+         */
+        public string Serialize()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented) + Environment.NewLine;
+        }
+
+        public static void WriteFile()
+        {
+            var m = new Monolith
+            {
+                BasicInfo = MonolithCache.BasicInfo
+            };
+            File.WriteAllText("specify_specs.json", m.Serialize());
+        }
+
+        private static void CacheError(object thing)
+        {
+            throw new Exception("MonolithCache item doesn't exist: " + nameof(thing));
+        }
     }
 
     public struct MonolithBasicInfo
@@ -39,6 +63,16 @@ namespace specify_client
                 BootMode = Environment.GetEnvironmentVariable("firmware_type"),
                 BootState = (string) cs["BootupState"]
             };
+        }
+    }
+
+    public static class MonolithCache
+    {
+        public static MonolithBasicInfo BasicInfo { get; private set; }
+
+        public static void CreateBasicInfo()
+        {
+            BasicInfo = MonolithBasicInfo.Create();
         }
     }
 }

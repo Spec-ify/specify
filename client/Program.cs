@@ -12,9 +12,9 @@ namespace specify_client
         {
             var pList = new ProgressList();
             pList.PrintStatuses();
-            pList.RunItem("Test");
+            pList.RunItem("WriteFile");
+            pList.RunItem("BasicInfo");
             pList.RunItem("MainData");
-            Thread.Sleep(1000);
             pList.RunItem("DummyTimer");
             // pList.RunItem("MainData");
 
