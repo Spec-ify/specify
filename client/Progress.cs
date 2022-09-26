@@ -32,8 +32,8 @@ namespace specify_client
     }
 
     /**
- * Things for progress, will be called by the GUI
- */
+     * Things for progress, will be called by the GUI
+     */
     public class ProgressList
     {
         public Dictionary<string, ProgressStatus> Items { get; set; }
@@ -44,10 +44,13 @@ namespace specify_client
                 { "MainData", new ProgressStatus("Main Data", DataCache.MakeMainData) },
                 { "DummyTimer", new ProgressStatus("Dummy 5 second timer", DataCache.DummyTimer) },
                 {
-                    "Test",
-                    new ProgressStatus("Test thing", () => Program.PrettyPrintObject(MonolithBasicInfo.Create()),
-                        new List<string>(){"MainData"},
-                        skipProgressWait: true)
+                    "BasicInfo",
+                    new ProgressStatus("Assemble basic info", MonolithCache.CreateBasicInfo,
+                        new List<string>(){"MainData"})
+                },
+                {
+                    "WriteFile",
+                    new ProgressStatus("Write the file", Monolith.WriteFile, new List<string>(){ "BasicInfo" })
                 }
             };
         }
@@ -107,8 +110,7 @@ namespace specify_client
                         if (item.Status == oldStatus[i]) continue;
                         
                         Console.SetCursorPosition(0, cPos[i]);
-                        ClearCurrentConsoleLine();
-                        Console.WriteLine(item.Name + " - " + item.Status);
+                        Console.WriteLine((item.Name + " - " + item.Status).PadRight(Console.BufferWidth));
                         oldStatus[i] = item.Status;
                     }
                     
