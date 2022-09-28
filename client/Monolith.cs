@@ -11,6 +11,7 @@ namespace specify_client
      */
     public class Monolith
     {
+        public MonolithMeta Meta;
         public MonolithBasicInfo BasicInfo;
         
         /**
@@ -23,8 +24,14 @@ namespace specify_client
 
         public static void WriteFile()
         {
+            Program.time.Stop();
+
             var m = new Monolith
             {
+                Meta = new MonolithMeta
+                {
+                    ElapsedTime = Program.time.ElapsedMilliseconds
+                },
                 BasicInfo = MonolithCache.BasicInfo
             };
             File.WriteAllText("specify_specs.json", m.Serialize());
@@ -66,6 +73,11 @@ namespace specify_client
         }
     }
 
+    public struct MonolithMeta
+    {
+        public long ElapsedTime;
+    }
+    
     public static class MonolithCache
     {
         public static MonolithBasicInfo BasicInfo { get; private set; }

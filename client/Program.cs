@@ -2,14 +2,20 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Diagnostics;
 using Newtonsoft.Json;
 
 namespace specify_client
 {
     public class Program
     {
+        public static Stopwatch time;
+        
         static void Main()
         {
+            time = new Stopwatch();
+            time.Start();
+
             var pList = new ProgressList();
             pList.PrintStatuses();
             pList.RunItem("WriteFile");
