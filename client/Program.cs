@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Diagnostics;
 using Newtonsoft.Json;
 
@@ -13,6 +12,37 @@ namespace specify_client
         
         static void Main()
         {
+            var initialConsoleFg = Console.ForegroundColor;
+            var initialConsoleBg = Console.BackgroundColor;
+            Console.WriteLine("Specify");
+            Console.WriteLine("This tool gathers information about your computer.  It does not collect any sensitive information.");
+            
+            while (true)
+            {
+                Console.Write("[Enter] - continue, [q] - quit, ");
+                if (Settings.RedactUsername)
+                {
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    Console.BackgroundColor = ConsoleColor.White;
+                }
+                Console.Write("[1] - Toggle Redact username");
+                Console.ForegroundColor = initialConsoleFg;
+                Console.BackgroundColor = initialConsoleBg;
+                var key = Console.ReadKey(true);
+                if (key.Key == ConsoleKey.Q)
+                {
+                    Console.WriteLine("\nGoodbye!");
+                    return;
+                }
+                if (key.Key == ConsoleKey.Enter) break;
+                if (key.Key == ConsoleKey.D1 || key.Key == ConsoleKey.NumPad1)
+                    Settings.RedactUsername = !Settings.RedactUsername;
+                
+                Console.Write("\r");
+            }
+
+            Console.WriteLine("\n");
+
             time = new Stopwatch();
             time.Start();
 

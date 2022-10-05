@@ -50,6 +50,7 @@ namespace specify_client
         public string InstallDate;
         public string Uptime;
         public string Hostname;
+        public string Username;
         public string Domain;
         public string BootMode;
         public string BootState;
@@ -66,6 +67,7 @@ namespace specify_client
                 InstallDate = Data.CimToIsoDate((string) os["InstallDate"]),
                 Uptime = (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string) os["LastBootUpTime"])).ToString("g"),
                 Hostname = Dns.GetHostName(),
+                Username = DataCache.Username,
                 Domain = Environment.GetEnvironmentVariable("userdomain"),
                 BootMode = Environment.GetEnvironmentVariable("firmware_type"),
                 BootState = (string) cs["BootupState"]

@@ -50,7 +50,7 @@ namespace specify_client
                 },
                 {
                     "WriteFile",
-                    new ProgressStatus("Write the file", Monolith.WriteFile, new List<string>(){ "BasicInfo", "DummyTimer" })
+                    new ProgressStatus("Write the file", Monolith.WriteFile, new List<string>(){ "BasicInfo" })
                 }
             };
         }
