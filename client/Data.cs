@@ -103,6 +103,8 @@ namespace specify_client
         public static Dictionary<string, object> Os { get; private set; }
         public static Dictionary<string, object> Cs { get; private set; }
 
+        public static string Username => Settings.RedactUsername ? "[REDACTED]" : Environment.UserName;
+
         public static void MakeMainData()
         {
             Os = Data.GetWmi("Win32_OperatingSystem").First();
