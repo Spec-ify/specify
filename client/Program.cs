@@ -49,9 +49,10 @@ namespace specify_client
             var pList = new ProgressList();
             pList.PrintStatuses();
             pList.RunItem("WriteFile");
-            pList.RunItem("BasicInfo");
             pList.RunItem("MainData");
             pList.RunItem("DummyTimer");
+            pList.RunItem("SystemData");
+            pList.RunItem("Assemble");
             // pList.RunItem("MainData");
 
             //Console.WriteLine("Last boot up time: " + Data.CimToIsoDate((string) DataCache.Os["LastBootUpTime"]));

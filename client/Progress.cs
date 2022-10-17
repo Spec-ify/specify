@@ -42,38 +42,37 @@ namespace specify_client
         {
             Items = new Dictionary<string, ProgressStatus>(){
                 { "MainData", new ProgressStatus("Main Data", DataCache.MakeMainData) },
+                { "SystemData", new ProgressStatus("System Data", DataCache.MakeSystemData) },
                 { "DummyTimer", new ProgressStatus("Dummy 5 second timer", DataCache.DummyTimer) },
                 {
-                    "BasicInfo",
-                    new ProgressStatus("Assemble basic info", MonolithCache.CreateBasicInfo,
-                        new List<string>(){"MainData"})
+                    "Assemble",
+                    new ProgressStatus("Monolith ... Assemble", MonolithCache.AssembleCache,
+                        new List<string>(){"MainData", "SystemData"})
                 },
                 {
                     "WriteFile",
-                    new ProgressStatus("Write the file", Monolith.WriteFile, new List<string>(){ "BasicInfo" })
+                    new ProgressStatus("Write the file", Monolith.WriteFile, new List<string>(){ "Assemble" })
                 }
             };
         }
 
         public void RunItem(string key)
         {
-            var item = Items[key] ?? throw new ArgumentNullException(nameof(key));
+            var item = Items.ContainsKey(key) ? Items[key] : throw new ArgumentNullException(nameof(key));
             
             new Thread(() =>
             {
-                item.Status = ProgressType.Processing;
-
                 foreach (var k in item.Dependencies)
                 {
-                    var dep = Items[k] ?? throw new Exception("Dependency " + k + " of " + key + " does not exist!");
+                    var dep = Items.ContainsKey(k) ? Items[k] : throw new Exception("Dependency " + k + " of " + key + " does not exist!");
                     while (dep.Status != ProgressType.Complete)
                     {
                         Thread.Sleep(0);
                     }
                 }
-
-                item.Action();
                 
+                item.Status = ProgressType.Processing;
+                item.Action();
                 item.Status = ProgressType.Complete;
             }).Start();
         }
