@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Management;
 using Microsoft.Win32.TaskScheduler;
 using System.Collections.Generic;
@@ -102,8 +103,10 @@ namespace specify_client
     {
         public static Dictionary<string, object> Os { get; private set; }
         public static Dictionary<string, object> Cs { get; private set; }
+        public static IDictionary SystemVariables { get; private set; }
+        public static IDictionary UserVariables { get; private set; }
 
-        public static string Username => Settings.RedactUsername ? "[REDACTED]" : Environment.UserName;
+        public static string Username => Environment.UserName;
 
         public static void MakeMainData()
         {
@@ -114,6 +117,12 @@ namespace specify_client
         public static void DummyTimer()
         {
             Thread.Sleep(5000);
+        }
+
+        public static void MakeSystemData()
+        {
+            SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
+            UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
         }
     }
 }

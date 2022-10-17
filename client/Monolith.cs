@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Management;
 using System.Net;
@@ -13,7 +15,9 @@ namespace specify_client
     {
         public MonolithMeta Meta;
         public MonolithBasicInfo BasicInfo;
-        
+        public IDictionary UserVariables;
+        public IDictionary SystemVariables;
+
         /**
          * Debating making this static, because I don't like OOP
          */
@@ -26,15 +30,14 @@ namespace specify_client
         {
             Program.time.Stop();
 
-            var m = new Monolith
+            var serialized = MonolithCache.Monolith.Serialize();
+
+            if (Settings.RedactUsername)
             {
-                Meta = new MonolithMeta
-                {
-                    ElapsedTime = Program.time.ElapsedMilliseconds
-                },
-                BasicInfo = MonolithCache.BasicInfo
-            };
-            File.WriteAllText("specify_specs.json", m.Serialize());
+                serialized = serialized.Replace(DataCache.Username, "[REDACTED]");
+            }
+            
+            File.WriteAllText("specify_specs.json", serialized);
         }
 
         private static void CacheError(object thing)
@@ -42,7 +45,12 @@ namespace specify_client
             throw new Exception("MonolithCache item doesn't exist: " + nameof(thing));
         }
     }
-
+    
+    public struct MonolithMeta
+    {
+        public long ElapsedTime;
+    }
+    
     public struct MonolithBasicInfo
     {
         public string Edition;
@@ -75,18 +83,22 @@ namespace specify_client
         }
     }
 
-    public struct MonolithMeta
-    {
-        public long ElapsedTime;
-    }
-    
     public static class MonolithCache
     {
-        public static MonolithBasicInfo BasicInfo { get; private set; }
+        public static Monolith Monolith { get; private set; }
 
-        public static void CreateBasicInfo()
+        public static void AssembleCache()
         {
-            BasicInfo = MonolithBasicInfo.Create();
+            Monolith = new Monolith
+            {
+                Meta = new MonolithMeta
+                {
+                    ElapsedTime = Program.time.ElapsedMilliseconds
+                },
+                BasicInfo = MonolithBasicInfo.Create(),
+                UserVariables = DataCache.UserVariables,
+                SystemVariables = DataCache.SystemVariables
+            };
         }
     }
 }
