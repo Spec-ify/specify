@@ -3,6 +3,7 @@ using System.Collections;
 using System.Management;
 using Microsoft.Win32.TaskScheduler;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Action = System.Action;
@@ -105,6 +106,7 @@ namespace specify_client
         public static Dictionary<string, object> Cs { get; private set; }
         public static IDictionary SystemVariables { get; private set; }
         public static IDictionary UserVariables { get; private set; }
+        public static List<OutputProcess> RunningProcesses { get; private set; }
 
         public static string Username => Environment.UserName;
 
@@ -123,6 +125,36 @@ namespace specify_client
         {
             SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
             UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
+
+            RunningProcesses = new List<OutputProcess>();
+            var rawProcesses = Data.GetWmi("Win32_Process");
+            var rawProcessesForm = Data.GetWmi("Win32_PerfFormattedData_PerfProc_Process");
+            foreach (var rawProcessForm in rawProcessesForm)
+            {
+                var rawProcessMatching = 
+                    (from o in rawProcesses where o["ProcessId"].Equals(rawProcessForm["IDProcess"]) select o)
+                    .ToList();
+                if (rawProcessMatching.Count == 0) continue;
+                var rawProcess = rawProcessMatching.First();
+                
+                RunningProcesses.Add(new OutputProcess
+                {
+                    ProcessName = (string)rawProcessForm["Name"],
+                    ExeName = (string)rawProcess["Name"],
+                    Id = (uint)rawProcessForm["IDProcess"],
+                    WorkingSet = (ulong)rawProcessForm["WorkingSet"],
+                    CpuPercent = (ulong)rawProcessForm["PercentProcessorTime"]
+                });
+            }
         }
+    }
+
+    public class OutputProcess
+    {
+        public string ProcessName;
+        public string ExeName;
+        public uint Id;
+        public ulong WorkingSet;
+        public ulong CpuPercent;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Management;
 using System.Net;
@@ -17,6 +18,7 @@ namespace specify_client
         public MonolithBasicInfo BasicInfo;
         public IDictionary UserVariables;
         public IDictionary SystemVariables;
+        public List<OutputProcess> RunningProcesses;
 
         /**
          * Debating making this static, because I don't like OOP
@@ -97,7 +99,8 @@ namespace specify_client
                 },
                 BasicInfo = MonolithBasicInfo.Create(),
                 UserVariables = DataCache.UserVariables,
-                SystemVariables = DataCache.SystemVariables
+                SystemVariables = DataCache.SystemVariables,
+                RunningProcesses = DataCache.RunningProcesses
             };
         }
     }
