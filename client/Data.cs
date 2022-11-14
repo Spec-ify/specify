@@ -17,12 +17,12 @@ namespace specify_client
          * Microsoft recommends using the CIM libraries (Microsoft.Management.Infrastructure)
          * However, some classes can't be called in CIM and only in WMI (e.g. Win32_PhysicalMemory)
          */
-        public static List<Dictionary<string, object>> GetWmi(string cls, string ns = @"root\cimv2")
+        public static List<Dictionary<string, object>> GetWmi(string cls, string selected = "*", string ns = @"root\cimv2")
         {
             var scope = new ManagementScope(ns);
             scope.Connect();
             
-            var query = new ObjectQuery("SELECT * FROM " + cls);
+            var query = new ObjectQuery("SELECT " + selected + " FROM " + cls);
             var collection = new ManagementObjectSearcher(scope, query).Get();
             var res = new List<Dictionary<string, object>>();
 
@@ -108,6 +108,7 @@ namespace specify_client
         public static IDictionary SystemVariables { get; private set; }
         public static IDictionary UserVariables { get; private set; }
         public static List<OutputProcess> RunningProcesses { get; private set; }
+        public static List<Dictionary<string, object>> Services { get; private set; }
 
         public static string Username => Environment.UserName;
 
@@ -126,6 +127,7 @@ namespace specify_client
         {
             SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
             UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
+            Services = Data.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
 
             RunningProcesses = new List<OutputProcess>();
             var rawProcesses = Process.GetProcesses();
@@ -163,6 +165,8 @@ namespace specify_client
                     CpuPercent = cpuPercent
                 });
             }
+            
+            
         }
     }
 
@@ -173,5 +177,14 @@ namespace specify_client
         public int Id;
         public long WorkingSet;
         public double CpuPercent;
+    }
+
+    public class WMIService
+    {
+        public string Name;
+        public string Caption;
+        public string PathName;
+        public string State;
+        public string StartMode;
     }
 }
