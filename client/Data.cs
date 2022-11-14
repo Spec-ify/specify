@@ -3,6 +3,7 @@ using System.Collections;
 using System.Management;
 using Microsoft.Win32.TaskScheduler;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -127,23 +128,39 @@ namespace specify_client
             UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
 
             RunningProcesses = new List<OutputProcess>();
-            var rawProcesses = Data.GetWmi("Win32_Process");
-            var rawProcessesForm = Data.GetWmi("Win32_PerfFormattedData_PerfProc_Process");
-            foreach (var rawProcessForm in rawProcessesForm)
+            var rawProcesses = Process.GetProcesses();
+            foreach (var rawProcess in rawProcesses)
             {
-                var rawProcessMatching = 
-                    (from o in rawProcesses where o["ProcessId"].Equals(rawProcessForm["IDProcess"]) select o)
-                    .ToList();
-                if (rawProcessMatching.Count == 0) continue;
-                var rawProcess = rawProcessMatching.First();
-                
+                double cpuPercent = -1.0; // TODO: make this actually work properly
+                var exePath = "";
+                /*try
+                {
+                    var counter = new PerformanceCounter("Process", "% Processor Time", rawProcess.ProcessName);
+                    counter.NextValue();
+                    Thread.Sleep(100);
+                    cpuPercent = counter.NextValue();
+                }
+                catch (Win32Exception e)
+                {
+                    cpuPercent = -1;
+                }*/
+
+                try
+                {
+                    exePath = rawProcess.MainModule?.FileName;
+                }
+                catch (Win32Exception e)
+                {
+                    exePath = "<unknown>";
+                }
+
                 RunningProcesses.Add(new OutputProcess
                 {
-                    ProcessName = (string)rawProcessForm["Name"],
-                    ExeName = (string)rawProcess["Name"],
-                    Id = (uint)rawProcessForm["IDProcess"],
-                    WorkingSet = (ulong)rawProcessForm["WorkingSet"],
-                    CpuPercent = (ulong)rawProcessForm["PercentProcessorTime"]
+                    ProcessName = rawProcess.ProcessName,
+                    ExePath = exePath,
+                    Id = rawProcess.Id,
+                    WorkingSet = rawProcess.WorkingSet64,
+                    CpuPercent = cpuPercent
                 });
             }
         }
@@ -152,9 +169,9 @@ namespace specify_client
     public class OutputProcess
     {
         public string ProcessName;
-        public string ExeName;
-        public uint Id;
-        public ulong WorkingSet;
-        public ulong CpuPercent;
+        public string ExePath;
+        public int Id;
+        public long WorkingSet;
+        public double CpuPercent;
     }
 }
