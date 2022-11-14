@@ -19,6 +19,7 @@ namespace specify_client
         public IDictionary UserVariables;
         public IDictionary SystemVariables;
         public List<OutputProcess> RunningProcesses;
+        public List<Dictionary<string, object>> Services;
 
         /**
          * Debating making this static, because I don't like OOP
@@ -100,7 +101,8 @@ namespace specify_client
                 BasicInfo = MonolithBasicInfo.Create(),
                 UserVariables = DataCache.UserVariables,
                 SystemVariables = DataCache.SystemVariables,
-                RunningProcesses = DataCache.RunningProcesses
+                RunningProcesses = DataCache.RunningProcesses,
+                Services = DataCache.Services
             };
         }
     }
