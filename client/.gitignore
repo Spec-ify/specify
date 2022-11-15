@@ -4,7 +4,8 @@ project.lock.json
 .DS_Store
 *.pyc
 nupkg/
-
+# resulting specs
+specify_specs.json
 # Visual Studio Code
 .vscode
 
