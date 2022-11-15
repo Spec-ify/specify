@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Microsoft.Win32;
 using Action = System.Action;
 
 namespace specify_client
@@ -111,6 +112,7 @@ namespace specify_client
         public static List<Dictionary<string, object>> Services { get; private set; }
         public static List<string> AvList { get; private set; }
         public static List<string> FwList { get; private set; }
+        public static bool UacEnabled { get; private set; }
 
         public static string Username => Environment.UserName;
 
@@ -175,6 +177,17 @@ namespace specify_client
                 .Select(x => (string)x["displayName"]).ToList();
             FwList = Data.GetWmi("FirewallProduct", "displayName", @"root\SecurityCenter2")
                 .Select(x => (string)x["displayName"]).ToList();
+
+
+            var key = Registry.LocalMachine
+                .OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System");
+
+            if (key != null)
+            {
+                var enableLua = key.GetValue("EnableLUA");
+                UacEnabled = (int)enableLua == 1;
+            }
+
         }
     }
 

@@ -89,11 +89,13 @@ namespace specify_client
     {
         public List<string> AvList;
         public List<string> FwList;
+        public bool UacEnabled;
 
         public MonolithSecurity()
         {
             AvList = DataCache.AvList;
             FwList = DataCache.FwList;
+            UacEnabled = DataCache.UacEnabled;
         }
     }
 
