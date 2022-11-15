@@ -1,4 +1,5 @@
-﻿using System;
+﻿// everything that handles actual data collection to be passed over to the monolith
+using System;
 using System.Collections;
 using System.Management;
 using Microsoft.Win32.TaskScheduler;
@@ -111,6 +112,10 @@ namespace specify_client
         public static List<Dictionary<string, object>> Services { get; private set; }
 
         public static string Username => Environment.UserName;
+        // all the hardware stuff
+        //each item in the list is a stick of ram
+        public static List<Dictionary<String, Object>> Ram {get; private set;}
+
 
         public static void MakeMainData()
         {
@@ -128,6 +133,7 @@ namespace specify_client
             SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
             UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
             Services = Data.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
+            Ram = Data.GetWmi("Win32_PhysicalMemory", "DeviceLocator, Capacity, ConfiguredClockSpeed, Manufacturer, PartNumber, SerialNumber");
 
             RunningProcesses = new List<OutputProcess>();
             var rawProcesses = Process.GetProcesses();

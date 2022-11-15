@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Management;
 using System.Net;
 using Newtonsoft.Json;
@@ -20,6 +22,7 @@ namespace specify_client
         public IDictionary SystemVariables;
         public List<OutputProcess> RunningProcesses;
         public List<Dictionary<string, object>> Services;
+        public MonolithHardware Hardware;
 
         /**
          * Debating making this static, because I don't like OOP
@@ -39,7 +42,7 @@ namespace specify_client
             {
                 serialized = serialized.Replace(DataCache.Username, "[REDACTED]");
             }
-            
+
             File.WriteAllText("specify_specs.json", serialized);
         }
 
@@ -48,12 +51,13 @@ namespace specify_client
             throw new Exception("MonolithCache item doesn't exist: " + nameof(thing));
         }
     }
-    
+
     public struct MonolithMeta
     {
         public long ElapsedTime;
     }
-    
+
+    //this is a lot of the basic info you would get, comparative to the basic info section of get-specs
     public struct MonolithBasicInfo
     {
         public string Edition;
@@ -68,23 +72,35 @@ namespace specify_client
 
         public static MonolithBasicInfo Create()
         {
+            //win32 operating system class
             var os = DataCache.Os;
+            //win32 computersystem wim class
             var cs = DataCache.Cs;
+            //win32 physicalmemory class
+            var Ram = DataCache.Ram;
+
 
             return new MonolithBasicInfo
             {
-                Edition = (string) os["Caption"],
-                Version = (string) os["Version"],
-                InstallDate = Data.CimToIsoDate((string) os["InstallDate"]),
-                Uptime = (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string) os["LastBootUpTime"])).ToString("g"),
+                Edition = (string)os["Caption"],
+                Version = (string)os["Version"],
+                InstallDate = Data.CimToIsoDate((string)os["InstallDate"]),
+                Uptime =
+                    (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"])).ToString("g"),
                 Hostname = Dns.GetHostName(),
                 Username = DataCache.Username,
                 Domain = Environment.GetEnvironmentVariable("userdomain"),
                 BootMode = Environment.GetEnvironmentVariable("firmware_type"),
-                BootState = (string) cs["BootupState"]
+                BootState = (string)cs["BootupState"]
             };
         }
     }
+
+    public struct MonolithHardware
+    {
+        public List<Dictionary<String, Object>> Ram;
+    }
+
 
     public static class MonolithCache
     {
@@ -102,7 +118,12 @@ namespace specify_client
                 UserVariables = DataCache.UserVariables,
                 SystemVariables = DataCache.SystemVariables,
                 RunningProcesses = DataCache.RunningProcesses,
-                Services = DataCache.Services
+                Services = DataCache.Services,
+                Hardware = new MonolithHardware
+                {
+                    Ram = DataCache.Ram
+                },
+                Security = new MonolithSecurity()
             };
         }
     }
