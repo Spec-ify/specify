@@ -23,7 +23,7 @@ namespace specify_client
             var scope = new ManagementScope(ns);
             scope.Connect();
             
-            var query = new ObjectQuery("SELECT " + selected + " FROM " + cls);
+            var query = new ObjectQuery($"SELECT {selected} FROM {cls}");
             var collection = new ManagementObjectSearcher(scope, query).Get();
             var res = new List<Dictionary<string, object>>();
 
@@ -110,6 +110,8 @@ namespace specify_client
         public static IDictionary UserVariables { get; private set; }
         public static List<OutputProcess> RunningProcesses { get; private set; }
         public static List<Dictionary<string, object>> Services { get; private set; }
+        public static List<string> AvList { get; private set; }
+        public static List<string> FwList { get; private set; }
 
         public static string Username => Environment.UserName;
         // all the hardware stuff
@@ -171,8 +173,14 @@ namespace specify_client
                     CpuPercent = cpuPercent
                 });
             }
-            
-            
+        }
+
+        public static void MakeSecurityData()
+        {
+            AvList = Data.GetWmi("AntivirusProduct", "displayName", @"root\SecurityCenter2")
+                .Select(x => (string)x["displayName"]).ToList();
+            FwList = Data.GetWmi("FirewallProduct", "displayName", @"root\SecurityCenter2")
+                .Select(x => (string)x["displayName"]).ToList();
         }
     }
 

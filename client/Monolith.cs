@@ -23,6 +23,7 @@ namespace specify_client
         public List<OutputProcess> RunningProcesses;
         public List<Dictionary<string, object>> Services;
         public MonolithHardware Hardware;
+        public MonolithSecurity Security;
 
         /**
          * Debating making this static, because I don't like OOP
@@ -57,8 +58,9 @@ namespace specify_client
         public long ElapsedTime;
     }
 
-    //this is a lot of the basic info you would get, comparative to the basic info section of get-specs
-    public struct MonolithBasicInfo
+
+
+    public class MonolithBasicInfo
     {
         public string Edition;
         public string Version;
@@ -70,7 +72,7 @@ namespace specify_client
         public string BootMode;
         public string BootState;
 
-        public static MonolithBasicInfo Create()
+        public MonolithBasicInfo()
         {
             //win32 operating system class
             var os = DataCache.Os;
@@ -80,19 +82,28 @@ namespace specify_client
             var Ram = DataCache.Ram;
 
 
-            return new MonolithBasicInfo
-            {
-                Edition = (string)os["Caption"],
-                Version = (string)os["Version"],
-                InstallDate = Data.CimToIsoDate((string)os["InstallDate"]),
-                Uptime =
-                    (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"])).ToString("g"),
-                Hostname = Dns.GetHostName(),
-                Username = DataCache.Username,
-                Domain = Environment.GetEnvironmentVariable("userdomain"),
-                BootMode = Environment.GetEnvironmentVariable("firmware_type"),
-                BootState = (string)cs["BootupState"]
-            };
+            Edition = (string)os["Caption"];
+            Version = (string)os["Version"];
+            InstallDate = Data.CimToIsoDate((string)os["InstallDate"]);
+            Uptime = (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"]))
+                .ToString("g");
+            Hostname = Dns.GetHostName();
+            Username = DataCache.Username;
+            Domain = Environment.GetEnvironmentVariable("userdomain");
+            BootMode = Environment.GetEnvironmentVariable("firmware_type");
+            BootState = (string)cs["BootupState"];
+        }
+    }
+
+    public class MonolithSecurity
+    {
+        public List<string> AvList;
+        public List<string> FwList;
+
+        public MonolithSecurity()
+        {
+            AvList = DataCache.AvList;
+            FwList = DataCache.FwList;
         }
     }
 
@@ -114,7 +125,7 @@ namespace specify_client
                 {
                     ElapsedTime = Program.time.ElapsedMilliseconds
                 },
-                BasicInfo = MonolithBasicInfo.Create(),
+                BasicInfo = new MonolithBasicInfo(),
                 UserVariables = DataCache.UserVariables,
                 SystemVariables = DataCache.SystemVariables,
                 RunningProcesses = DataCache.RunningProcesses,
