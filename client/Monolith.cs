@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Management;
 using System.Net;
 using Newtonsoft.Json;
@@ -20,6 +22,7 @@ namespace specify_client
         public IDictionary SystemVariables;
         public List<OutputProcess> RunningProcesses;
         public List<Dictionary<string, object>> Services;
+        public MonolithHardware Hardware;
         public MonolithSecurity Security;
 
         /**
@@ -40,7 +43,7 @@ namespace specify_client
             {
                 serialized = serialized.Replace(DataCache.Username, "[REDACTED]");
             }
-            
+
             File.WriteAllText("specify_specs.json", serialized);
         }
 
@@ -49,12 +52,14 @@ namespace specify_client
             throw new Exception("MonolithCache item doesn't exist: " + nameof(thing));
         }
     }
-    
+
     public struct MonolithMeta
     {
         public long ElapsedTime;
     }
-    
+
+
+
     public class MonolithBasicInfo
     {
         public string Edition;
@@ -69,7 +74,9 @@ namespace specify_client
 
         public MonolithBasicInfo()
         {
+            //win32 operating system class
             var os = DataCache.Os;
+            //win32 computersystem wim class
             var cs = DataCache.Cs;
 
             Edition = (string)os["Caption"];
@@ -99,6 +106,15 @@ namespace specify_client
         }
     }
 
+    public struct MonolithHardware
+    {
+        public List<Dictionary<String, Object>> Ram;
+        public Dictionary<String, Object> Cpu;
+        public List<Dictionary<String, Object>> Gpu;
+    }
+
+
+
     public static class MonolithCache
     {
         public static Monolith Monolith { get; private set; }
@@ -116,6 +132,12 @@ namespace specify_client
                 SystemVariables = DataCache.SystemVariables,
                 RunningProcesses = DataCache.RunningProcesses,
                 Services = DataCache.Services,
+                Hardware = new MonolithHardware
+                {
+                    Ram = DataCache.Ram,
+                    Cpu = DataCache.Cpu,
+                    Gpu = DataCache.Gpu,
+                },
                 Security = new MonolithSecurity()
             };
         }

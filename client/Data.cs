@@ -1,4 +1,5 @@
-﻿using System;
+﻿// everything that handles actual data collection to be passed over to the monolith
+using System;
 using System.Collections;
 using System.Management;
 using Microsoft.Win32.TaskScheduler;
@@ -115,11 +116,19 @@ namespace specify_client
         public static bool UacEnabled { get; private set; }
 
         public static string Username => Environment.UserName;
-
+        // all the hardware stuff
+        //each item in the list is a stick of ram
+        public static List<Dictionary<String, Object>> Ram {get; private set;}
+        public static Dictionary<String, Object> Cpu {get; private set;}
+        public static List<Dictionary<String, Object>> Gpu {get; private set;}
         public static void MakeMainData()
         {
             Os = Data.GetWmi("Win32_OperatingSystem").First();
             Cs = Data.GetWmi("Win32_ComputerSystem").First();
+
+            Ram = Data.GetWmi("Win32_PhysicalMemory", "DeviceLocator, Capacity, ConfiguredClockSpeed, Manufacturer, PartNumber, SerialNumber");
+            Cpu = Data.GetWmi("Win32_Processor", "CurrentClockSpeed, Manufacturer, Name, SocketDesignation").First();
+            Gpu = Data.GetWmi("Win32_VideoController", "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, CurrentRefreshRate, CurrentBitsPerPixel");
         }
 
         public static void DummyTimer()
