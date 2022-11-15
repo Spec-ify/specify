@@ -44,10 +44,11 @@ namespace specify_client
                 { "MainData", new ProgressStatus("Main Data", DataCache.MakeMainData) },
                 { "SystemData", new ProgressStatus("System Data", DataCache.MakeSystemData) },
                 { "DummyTimer", new ProgressStatus("Dummy 5 second timer", DataCache.DummyTimer) },
+                { "Security", new ProgressStatus("Security Info", DataCache.MakeSecurityData) },
                 {
                     "Assemble",
                     new ProgressStatus("Monolith ... Assemble", MonolithCache.AssembleCache,
-                        new List<string>(){"MainData", "SystemData"})
+                        new List<string>(){"MainData", "SystemData", "Security"})
                 },
                 {
                     "WriteFile",
