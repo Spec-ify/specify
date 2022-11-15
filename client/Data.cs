@@ -117,12 +117,16 @@ namespace specify_client
         // all the hardware stuff
         //each item in the list is a stick of ram
         public static List<Dictionary<String, Object>> Ram {get; private set;}
-
-
+        public static Dictionary<String, Object> Cpu {get; private set;}
+        public static List<Dictionary<String, Object>> Gpu {get; private set;}
         public static void MakeMainData()
         {
             Os = Data.GetWmi("Win32_OperatingSystem").First();
             Cs = Data.GetWmi("Win32_ComputerSystem").First();
+
+            Ram = Data.GetWmi("Win32_PhysicalMemory", "DeviceLocator, Capacity, ConfiguredClockSpeed, Manufacturer, PartNumber, SerialNumber");
+            Cpu = Data.GetWmi("Win32_Processor", "CurrentClockSpeed, Manufacturer, Name, SocketDesignation").First();
+            Gpu = Data.GetWmi("Win32_VideoController", "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, CurrentRefreshRate, CurrentBitsPerPixel");
         }
 
         public static void DummyTimer()
@@ -135,7 +139,6 @@ namespace specify_client
             SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
             UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
             Services = Data.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
-            Ram = Data.GetWmi("Win32_PhysicalMemory", "DeviceLocator, Capacity, ConfiguredClockSpeed, Manufacturer, PartNumber, SerialNumber");
 
             RunningProcesses = new List<OutputProcess>();
             var rawProcesses = Process.GetProcesses();

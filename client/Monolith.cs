@@ -78,9 +78,6 @@ namespace specify_client
             var os = DataCache.Os;
             //win32 computersystem wim class
             var cs = DataCache.Cs;
-            //win32 physicalmemory class
-            var Ram = DataCache.Ram;
-
 
             Edition = (string)os["Caption"];
             Version = (string)os["Version"];
@@ -110,7 +107,10 @@ namespace specify_client
     public struct MonolithHardware
     {
         public List<Dictionary<String, Object>> Ram;
+        public Dictionary<String, Object> Cpu;
+        public List<Dictionary<String, Object>> Gpu;
     }
+
 
 
     public static class MonolithCache
@@ -132,7 +132,9 @@ namespace specify_client
                 Services = DataCache.Services,
                 Hardware = new MonolithHardware
                 {
-                    Ram = DataCache.Ram
+                    Ram = DataCache.Ram,
+                    Cpu = DataCache.Cpu,
+                    Gpu = DataCache.Gpu,
                 },
                 Security = new MonolithSecurity()
             };
