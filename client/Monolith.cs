@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Management;
 using System.Net;
 using Newtonsoft.Json;
@@ -16,14 +13,24 @@ namespace specify_client
      */
     public class Monolith
     {
+        // it will say these are never used, but they are serialized
         public MonolithMeta Meta;
         public MonolithBasicInfo BasicInfo;
-        public IDictionary UserVariables;
-        public IDictionary SystemVariables;
-        public List<OutputProcess> RunningProcesses;
-        public List<Dictionary<string, object>> Services;
+        public MonolithSystem System;
         public MonolithHardware Hardware;
         public MonolithSecurity Security;
+
+        public Monolith()
+        {
+            Meta = new MonolithMeta
+            {
+                ElapsedTime = Program.time.ElapsedMilliseconds
+            };
+            BasicInfo = new MonolithBasicInfo();
+            System = new MonolithSystem();
+            Hardware = new MonolithHardware();
+            Security = new MonolithSecurity();
+        }
 
         /**
          * Debating making this static, because I don't like OOP
@@ -57,8 +64,6 @@ namespace specify_client
     {
         public long ElapsedTime;
     }
-
-
 
     public class MonolithBasicInfo
     {
@@ -106,40 +111,43 @@ namespace specify_client
         }
     }
 
-    public struct MonolithHardware
+    public class MonolithHardware
     {
-        public List<Dictionary<String, Object>> Ram;
-        public Dictionary<String, Object> Cpu;
-        public List<Dictionary<String, Object>> Gpu;
+        public List<Dictionary<string, object>> Ram;
+        public Dictionary<string, object> Cpu;
+        public List<Dictionary<string, object>> Gpu;
+
+        public MonolithHardware()
+        {
+            Ram = DataCache.Ram;
+            Cpu = DataCache.Cpu;
+            Gpu = DataCache.Gpu;
+        }
     }
 
+    public class MonolithSystem
+    {
+        public IDictionary UserVariables;
+        public IDictionary SystemVariables;
+        public List<OutputProcess> RunningProcesses;
+        public List<Dictionary<string, object>> Services;
 
+        public MonolithSystem()
+        {
+            UserVariables = DataCache.UserVariables;
+            SystemVariables = DataCache.SystemVariables;
+            RunningProcesses = DataCache.RunningProcesses;
+            Services = DataCache.Services;
+        }
+    }
 
     public static class MonolithCache
     {
-        public static Monolith Monolith { get; private set; }
+        public static Monolith Monolith { get; set; }
 
         public static void AssembleCache()
         {
-            Monolith = new Monolith
-            {
-                Meta = new MonolithMeta
-                {
-                    ElapsedTime = Program.time.ElapsedMilliseconds
-                },
-                BasicInfo = new MonolithBasicInfo(),
-                UserVariables = DataCache.UserVariables,
-                SystemVariables = DataCache.SystemVariables,
-                RunningProcesses = DataCache.RunningProcesses,
-                Services = DataCache.Services,
-                Hardware = new MonolithHardware
-                {
-                    Ram = DataCache.Ram,
-                    Cpu = DataCache.Cpu,
-                    Gpu = DataCache.Gpu,
-                },
-                Security = new MonolithSecurity()
-            };
+            Monolith = new Monolith();
         }
     }
 }
