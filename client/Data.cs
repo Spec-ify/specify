@@ -111,8 +111,10 @@ namespace specify_client
         public static IDictionary UserVariables { get; private set; }
         public static List<OutputProcess> RunningProcesses { get; private set; }
         public static List<Dictionary<string, object>> Services { get; private set; }
+        public static List<Dictionary<string, object>> InstalledApps { get; private set; }
         public static List<string> AvList { get; private set; }
         public static List<string> FwList { get; private set; }
+        public static string HostsFile { get; private set;  }
         public static bool UacEnabled { get; private set; }
 
         public static string Username => Environment.UserName;
@@ -141,6 +143,8 @@ namespace specify_client
             SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
             UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
             Services = Data.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
+            InstalledApps = Data.GetWmi("Win32_Product", "Name, Version");
+            HostsFile = System.IO.File.ReadAllText(@"C:\Windows\system32\drivers\etc\hosts");
 
             RunningProcesses = new List<OutputProcess>();
             var rawProcesses = Process.GetProcesses();
