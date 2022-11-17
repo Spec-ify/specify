@@ -32,9 +32,6 @@ namespace specify_client
             Security = new MonolithSecurity();
         }
 
-        /**
-         * Debating making this static, because I don't like OOP
-         */
         public string Serialize()
         {
             return JsonConvert.SerializeObject(this, Formatting.Indented) + Environment.NewLine;
@@ -131,6 +128,8 @@ namespace specify_client
         public IDictionary SystemVariables;
         public List<OutputProcess> RunningProcesses;
         public List<Dictionary<string, object>> Services;
+        public List<Dictionary<string, object>> InstalledApps;
+        public string HostsFile;
 
         public MonolithSystem()
         {
@@ -138,6 +137,8 @@ namespace specify_client
             SystemVariables = DataCache.SystemVariables;
             RunningProcesses = DataCache.RunningProcesses;
             Services = DataCache.Services;
+            InstalledApps = DataCache.InstalledApps;
+            HostsFile = DataCache.HostsFile;
         }
     }
 
