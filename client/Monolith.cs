@@ -14,6 +14,7 @@ namespace specify_client
     public class Monolith
     {
         // it will say these are never used, but they are serialized
+        public string Version;
         public MonolithMeta Meta;
         public MonolithBasicInfo BasicInfo;
         public MonolithSystem System;
@@ -22,6 +23,7 @@ namespace specify_client
 
         public Monolith()
         {
+            Version = Program.SpecifyVersion;
             Meta = new MonolithMeta
             {
                 ElapsedTime = Program.time.ElapsedMilliseconds
