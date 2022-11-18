@@ -117,12 +117,13 @@ namespace specify_client
         public List<Dictionary<string, object>> Ram;
         public Dictionary<string, object> Cpu;
         public List<Dictionary<string, object>> Gpu;
-
+        public Dictionary<string, object> Motherboard;
         public MonolithHardware()
         {
             Ram = DataCache.Ram;
             Cpu = DataCache.Cpu;
             Gpu = DataCache.Gpu;
+            Motherboard = DataCache.Motherboard;
         }
     }
 

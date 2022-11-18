@@ -124,6 +124,8 @@ namespace specify_client
         public static List<Dictionary<String, Object>> Ram {get; private set;}
         public static Dictionary<String, Object> Cpu {get; private set;}
         public static List<Dictionary<String, Object>> Gpu {get; private set;}
+        public static Dictionary<String, Object> Motherboard {get; private set;}
+
         public static void MakeMainData()
         {
             Os = Data.GetWmi("Win32_OperatingSystem").First();
@@ -132,6 +134,7 @@ namespace specify_client
             Ram = Data.GetWmi("Win32_PhysicalMemory", "DeviceLocator, Capacity, ConfiguredClockSpeed, Manufacturer, PartNumber, SerialNumber");
             Cpu = Data.GetWmi("Win32_Processor", "CurrentClockSpeed, Manufacturer, Name, SocketDesignation").First();
             Gpu = Data.GetWmi("Win32_VideoController", "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, CurrentRefreshRate, CurrentBitsPerPixel");
+            Motherboard = Data.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").First();
         }
 
         public static void DummyTimer()
