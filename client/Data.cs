@@ -116,6 +116,7 @@ namespace specify_client
         public static List<string> FwList { get; private set; }
         public static string HostsFile { get; private set;  }
         public static bool UacEnabled { get; private set; }
+        public static List<Dictionary<string, object>> NetAdapters { get; private set; }
 
         public static string Username => Environment.UserName;
         // all the hardware stuff
@@ -200,7 +201,14 @@ namespace specify_client
                 var enableLua = key.GetValue("EnableLUA");
                 UacEnabled = (int)enableLua == 1;
             }
+        }
 
+        public static void MakeNetworkData()
+        {
+            NetAdapters = Data.GetWmi("Win32_NetworkAdapterConfiguration", 
+                "Description, DHCPEnabled, DHCPServer, DNSDomain, DNSDomainSuffixSearchOrder, DNSHostName, "
+                    + "DNSServerSearchOrder, IPEnabled, IPAddress, IPSubnet, DHCPLeaseObtained, DHCPLeaseExpires, "
+                    + "DefaultIPGateway");
         }
     }
 
