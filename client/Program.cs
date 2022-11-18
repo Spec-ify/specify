@@ -6,15 +6,17 @@ using Newtonsoft.Json;
 
 namespace specify_client
 {
+
     public class Program
     {
+        public const string SpecifyVersion = "v0.1";
         public static Stopwatch time;
         
         static void Main()
         {
             var initialConsoleFg = Console.ForegroundColor;
             var initialConsoleBg = Console.BackgroundColor;
-            Console.WriteLine("Specify");
+            Console.WriteLine($"Specify {SpecifyVersion}");
             Console.WriteLine("This tool gathers information about your computer.  It does not collect any sensitive information.");
             
             while (true)
