@@ -55,6 +55,7 @@ namespace specify_client
             pList.RunItem("DummyTimer");
             pList.RunItem("SystemData");
             pList.RunItem("Security");
+            pList.RunItem("Network");
             pList.RunItem("Assemble");
             // pList.RunItem("MainData");
 

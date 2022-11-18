@@ -20,6 +20,7 @@ namespace specify_client
         public MonolithSystem System;
         public MonolithHardware Hardware;
         public MonolithSecurity Security;
+        public MonolithNetwork Network;
 
         public Monolith()
         {
@@ -32,6 +33,7 @@ namespace specify_client
             System = new MonolithSystem();
             Hardware = new MonolithHardware();
             Security = new MonolithSecurity();
+            Network = new MonolithNetwork();
         }
 
         public string Serialize()
@@ -141,6 +143,16 @@ namespace specify_client
             Services = DataCache.Services;
             InstalledApps = DataCache.InstalledApps;
             HostsFile = DataCache.HostsFile;
+        }
+    }
+
+    public class MonolithNetwork
+    {
+        public List<Dictionary<string, object>> Adapters;
+
+        public MonolithNetwork()
+        {
+            Adapters = DataCache.NetAdapters;
         }
     }
 
