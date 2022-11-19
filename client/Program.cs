@@ -56,6 +56,7 @@ namespace specify_client
             pList.RunItem("SystemData");
             pList.RunItem("Security");
             pList.RunItem("Network");
+            pList.RunItem("Hardware");
             pList.RunItem("Assemble");
             // pList.RunItem("MainData");
 
