@@ -9,7 +9,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Microsoft.Win32;
-using Action = System.Action;
 
 namespace specify_client
 {
@@ -48,15 +47,15 @@ namespace specify_client
          *  - State is Ready or Running
          *  - Triggered at boot or login
          */
-        public static List<Microsoft.Win32.TaskScheduler.Task> GetTsStartupTasks()
+        public static List<Task> GetTsStartupTasks()
         {
             var ts = new TaskService();
             return EnumTsTasks(ts.RootFolder);
         }
 
-        private static List<Microsoft.Win32.TaskScheduler.Task> EnumTsTasks(TaskFolder fld)
+        private static List<Task> EnumTsTasks(TaskFolder fld)
         {
-            var res = new List<Microsoft.Win32.TaskScheduler.Task>();
+            var res = new List<Task>();
             foreach (var task in fld.Tasks)
             {
                 if (

@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Specify Client (Debug)",
+            "type": "dotnet",
+            "projectPath": "./specify_client.csproj",
+            "exePath": "./bin/Debug/",
+            "workingDir": ".",
+            "args": []
+        },
+        {
+            "name": "Specify Client (Release)",
+            "type": "dotnet",
+            "projectPath": "./specify_client.csproj",
+            "exePath": "./bin/Release/",
+            "workingDir": ".",
+            "args": []
+        }
+    ]
+}
