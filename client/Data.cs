@@ -130,11 +130,6 @@ namespace specify_client
         {
             Os = Data.GetWmi("Win32_OperatingSystem").First();
             Cs = Data.GetWmi("Win32_ComputerSystem").First();
-
-            Ram = Data.GetWmi("Win32_PhysicalMemory", "DeviceLocator, Capacity, ConfiguredClockSpeed, Manufacturer, PartNumber, SerialNumber");
-            Cpu = Data.GetWmi("Win32_Processor", "CurrentClockSpeed, Manufacturer, Name, SocketDesignation").First();
-            Gpu = Data.GetWmi("Win32_VideoController", "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, CurrentRefreshRate, CurrentBitsPerPixel");
-            Motherboard = Data.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").First();
         }
 
         public static void DummyTimer()
@@ -186,6 +181,18 @@ namespace specify_client
                     CpuPercent = cpuPercent
                 });
             }
+        }
+
+        public static void MakeHardwareData()
+        {
+            Ram = Data.GetWmi("Win32_PhysicalMemory", 
+                "DeviceLocator, Capacity, ConfiguredClockSpeed, Manufacturer, PartNumber, SerialNumber");
+            Cpu = Data.GetWmi("Win32_Processor", 
+                "CurrentClockSpeed, Manufacturer, Name, SocketDesignation").First();
+            Gpu = Data.GetWmi("Win32_VideoController", 
+                "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
+                + "CurrentRefreshRate, CurrentBitsPerPixel");
+            Motherboard = Data.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").First();
         }
 
         public static void MakeSecurityData()
