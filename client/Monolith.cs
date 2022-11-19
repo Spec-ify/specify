@@ -150,10 +150,12 @@ namespace specify_client
     public class MonolithNetwork
     {
         public List<Dictionary<string, object>> Adapters;
+        public List<Dictionary<string, object>> Routes;
 
         public MonolithNetwork()
         {
             Adapters = DataCache.NetAdapters;
+            Routes = DataCache.IPRoutes;
         }
     }
 

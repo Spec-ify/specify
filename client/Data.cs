@@ -116,6 +116,7 @@ namespace specify_client
         public static string HostsFile { get; private set;  }
         public static bool UacEnabled { get; private set; }
         public static List<Dictionary<string, object>> NetAdapters { get; private set; }
+        public static List<Dictionary<string, object>> IPRoutes { get; private set; }
 
         public static string Username => Environment.UserName;
         // all the hardware stuff
@@ -217,7 +218,9 @@ namespace specify_client
             NetAdapters = Data.GetWmi("Win32_NetworkAdapterConfiguration", 
                 "Description, DHCPEnabled, DHCPServer, DNSDomain, DNSDomainSuffixSearchOrder, DNSHostName, "
                     + "DNSServerSearchOrder, IPEnabled, IPAddress, IPSubnet, DHCPLeaseObtained, DHCPLeaseExpires, "
-                    + "DefaultIPGateway");
+                    + "DefaultIPGateway, MACAddress, InterfaceIndex");
+            IPRoutes = Data.GetWmi("Win32_IP4RouteTable", 
+                "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
         }
     }
 
