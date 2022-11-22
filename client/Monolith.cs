@@ -21,6 +21,8 @@ namespace specify_client
         public MonolithHardware Hardware;
         public MonolithSecurity Security;
         public MonolithNetwork Network;
+        // for issues with gathering the data itself. No diagnoses based on the info will be made in this program.
+        public List<string> Issues;
 
         public Monolith()
         {
@@ -34,6 +36,7 @@ namespace specify_client
             Hardware = new MonolithHardware();
             Security = new MonolithSecurity();
             Network = new MonolithNetwork();
+            Issues = DataCache.Issues;
         }
 
         public string Serialize()

@@ -14,6 +14,7 @@ namespace specify_client
         
         static void Main()
         {
+            DataCache.Issues = new List<string>();
             var initialConsoleFg = Console.ForegroundColor;
             var initialConsoleBg = Console.BackgroundColor;
             Console.WriteLine($"Specify {SpecifyVersion}");

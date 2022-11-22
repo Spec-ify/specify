@@ -104,6 +104,7 @@ namespace specify_client
      */
     public static class DataCache
     {
+        public static List<string> Issues { get; set; }
         public static Dictionary<string, object> Os { get; private set; }
         public static Dictionary<string, object> Cs { get; private set; }
         public static IDictionary SystemVariables { get; private set; }
@@ -170,6 +171,7 @@ namespace specify_client
                 catch (Win32Exception e)
                 {
                     exePath = "<unknown>";
+                    Issues.Add($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})");
                 }
 
                 RunningProcesses.Add(new OutputProcess
@@ -210,6 +212,10 @@ namespace specify_client
             {
                 var enableLua = key.GetValue("EnableLUA");
                 UacEnabled = (int)enableLua == 1;
+            }
+            else
+            {
+                Issues.Add($"Security data: could not get EnableLUA value");
             }
         }
 
