@@ -122,10 +122,10 @@ namespace specify_client
         public static string Username => Environment.UserName;
         // all the hardware stuff
         //each item in the list is a stick of ram
-        public static List<Dictionary<String, Object>> Ram {get; private set;}
-        public static Dictionary<String, Object> Cpu {get; private set;}
-        public static List<Dictionary<String, Object>> Gpu {get; private set;}
-        public static Dictionary<String, Object> Motherboard {get; private set;}
+        public static List<Dictionary<string, object>> Ram {get; private set;}
+        public static Dictionary<string, object> Cpu {get; private set;}
+        public static List<Dictionary<string, object>> Gpu {get; private set;}
+        public static Dictionary<string, object> Motherboard {get; private set;}
         public static Dictionary<string, object> Tpm { get; private set; }
 
         public static void MakeMainData()
@@ -199,14 +199,17 @@ namespace specify_client
             try 
             { 
                 Tpm = Data.GetWmi("Win32_Tpm","*", @"Root\CIMV2\Security\MicrosoftTpm").First();
+                Tpm["IsPresent"] = true;
             }
             catch (InvalidOperationException)
             {
-                Tpm = new Dictionary<String, Object>() { { "No TPM", new Object() } };
+                // No TPM
+                Tpm = new Dictionary<string, object>(){{ "IsPresent", false }};
             }
             catch (ManagementException)
             {
-                Tpm = new Dictionary<String, Object>() { { "Access is denied. Please run Specify as administrator.", new Object() } };
+                Tpm = null;
+                Issues.Add("Hardware Data: could not get TPM. This is probably because specify was not run as administrator.");
             }
         }
 
