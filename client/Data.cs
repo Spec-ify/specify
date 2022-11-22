@@ -196,6 +196,18 @@ namespace specify_client
                 "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
                 + "CurrentRefreshRate, CurrentBitsPerPixel");
             Motherboard = Data.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").First();
+            try 
+            { 
+                Tpm = Data.GetWmi("Win32_Tpm","*", @"Root\CIMV2\Security\MicrosoftTpm").First();
+            }
+            catch (InvalidOperationException)
+            {
+                Tpm = new Dictionary<String, Object>() { { "No TPM", new Object() } };
+            }
+            catch (ManagementException)
+            {
+                Tpm = new Dictionary<String, Object>() { { "Access is denied. Please run Specify as administrator.", new Object() } };
+            }
         }
 
         public static void MakeSecurityData()
