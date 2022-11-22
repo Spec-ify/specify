@@ -43,7 +43,7 @@ namespace specify_client
             Items = new Dictionary<string, ProgressStatus>(){
                 { "MainData", new ProgressStatus("Main Data", DataCache.MakeMainData) },
                 { "SystemData", new ProgressStatus("System Data", DataCache.MakeSystemData) },
-                { "DummyTimer", new ProgressStatus("Dummy 5 second timer", DataCache.DummyTimer) },
+                // { "DummyTimer", new ProgressStatus("Dummy 5 second timer", DataCache.DummyTimer) },
                 { "Security", new ProgressStatus("Security Info", DataCache.MakeSecurityData) },
                 { "Network", new ProgressStatus("Network Info", DataCache.MakeNetworkData) },
                 { "Hardware", new ProgressStatus("Hardware Info", DataCache.MakeHardwareData) },
@@ -61,13 +61,13 @@ namespace specify_client
 
         public void RunItem(string key)
         {
-            var item = Items.ContainsKey(key) ? Items[key] : throw new ArgumentNullException(nameof(key));
+            var item = Items.ContainsKey(key) ? Items[key] : throw new Exception($"Progress item {key} doesn't exist!");
             
             new Thread(() =>
             {
                 foreach (var k in item.Dependencies)
                 {
-                    var dep = Items.ContainsKey(k) ? Items[k] : throw new Exception("Dependency " + k + " of " + key + " does not exist!");
+                    var dep = Items.ContainsKey(k) ? Items[k] : throw new Exception($"Dependency {k} of {key} does not exist!");
                     while (dep.Status != ProgressType.Complete)
                     {
                         Thread.Sleep(0);

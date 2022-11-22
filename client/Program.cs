@@ -53,7 +53,7 @@ namespace specify_client
             pList.PrintStatuses();
             pList.RunItem("WriteFile");
             pList.RunItem("MainData");
-            pList.RunItem("DummyTimer");
+            //pList.RunItem("DummyTimer");
             pList.RunItem("SystemData");
             pList.RunItem("Security");
             pList.RunItem("Network");
