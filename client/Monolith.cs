@@ -121,12 +121,14 @@ namespace specify_client
         public Dictionary<string, object> Cpu;
         public List<Dictionary<string, object>> Gpu;
         public Dictionary<string, object> Motherboard;
+        public Dictionary<string, object> Tpm;
         public MonolithHardware()
         {
             Ram = DataCache.Ram;
             Cpu = DataCache.Cpu;
             Gpu = DataCache.Gpu;
             Motherboard = DataCache.Motherboard;
+            Tpm = DataCache.Tpm;
         }
     }
 

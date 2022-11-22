@@ -126,6 +126,7 @@ namespace specify_client
         public static Dictionary<String, Object> Cpu {get; private set;}
         public static List<Dictionary<String, Object>> Gpu {get; private set;}
         public static Dictionary<String, Object> Motherboard {get; private set;}
+        public static Dictionary<string, object> Tpm { get; private set; }
 
         public static void MakeMainData()
         {
