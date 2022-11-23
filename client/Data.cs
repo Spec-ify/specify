@@ -127,6 +127,7 @@ namespace specify_client
         public static List<Dictionary<string, object>> Gpu {get; private set;}
         public static Dictionary<string, object> Motherboard {get; private set;}
         public static Dictionary<string, object> Tpm { get; private set; }
+        public static bool SecureBootEnabled { get; private set; }
 
         public static void MakeMainData()
         {
@@ -221,17 +222,30 @@ namespace specify_client
                 .Select(x => (string)x["displayName"]).ToList();
 
 
-            var key = Registry.LocalMachine
+            var luaKey = Registry.LocalMachine
                 .OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System");
 
-            if (key != null)
+            if (luaKey != null)
             {
-                var enableLua = key.GetValue("EnableLUA");
+                var enableLua = luaKey.GetValue("EnableLUA");
                 UacEnabled = (int)enableLua == 1;
             }
             else
             {
                 Issues.Add($"Security data: could not get EnableLUA value");
+            }
+            
+            if (Environment.GetEnvironmentVariable("firmware_type").Equals("UEFI"))
+            {
+                var secBootKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\SecureBoot\State");
+                if (secBootKey != null)
+                {
+                    SecureBootEnabled = (int)secBootKey.GetValue("UEFISecureBootEnabled") == 1;
+                }
+                else
+                {
+                    Issues.Add($"Security data: could not get UEFISecureBootEnabled value");
+                }
             }
         }
 
