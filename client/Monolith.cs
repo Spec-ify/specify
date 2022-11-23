@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Management;
 using System.Net;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 
 namespace specify_client
@@ -73,6 +74,7 @@ namespace specify_client
     {
         public string Edition;
         public string Version;
+        public string FriendlyVersion;
         public string InstallDate;
         public string Uptime;
         public string Hostname;
@@ -90,6 +92,9 @@ namespace specify_client
 
             Edition = (string)os["Caption"];
             Version = (string)os["Version"];
+            FriendlyVersion = Data.GetRegistryValue<string>(Registry.LocalMachine, 
+                @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
+                "DisplayVersion");
             InstallDate = Data.CimToIsoDate((string)os["InstallDate"]);
             Uptime = (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"]))
                 .ToString("g");
@@ -105,8 +110,8 @@ namespace specify_client
     {
         public List<string> AvList;
         public List<string> FwList;
-        public bool UacEnabled;
-        public bool SecureBootEnabled;
+        public bool? UacEnabled;
+        public bool? SecureBootEnabled;
         public Dictionary<string, object> Tpm;
 
         public MonolithSecurity()

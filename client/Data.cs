@@ -97,6 +97,14 @@ namespace specify_client
         {
             return d.ToString("yyyy-MM-ddTHH:mm:sszzz");
         }
+        
+        public static T GetRegistryValue<T>(RegistryKey regKey, string path, string name, T def = default)
+        {
+            var key = regKey.OpenSubKey(path);
+            if (key == null) return def;
+            var value = key.GetValue(name);
+            return (T)value;
+        }
     }
 
     /**
@@ -116,7 +124,7 @@ namespace specify_client
         public static List<string> AvList { get; private set; }
         public static List<string> FwList { get; private set; }
         public static string HostsFile { get; private set;  }
-        public static bool UacEnabled { get; private set; }
+        public static bool? UacEnabled { get; private set; }
         public static List<Dictionary<string, object>> NetAdapters { get; private set; }
         public static List<Dictionary<string, object>> IPRoutes { get; private set; }
 
@@ -128,7 +136,7 @@ namespace specify_client
         public static List<Dictionary<string, object>> Gpu {get; private set;}
         public static Dictionary<string, object> Motherboard {get; private set;}
         public static Dictionary<string, object> Tpm { get; private set; }
-        public static bool SecureBootEnabled { get; private set; }
+        public static bool? SecureBootEnabled { get; private set; }
 
         public static void MakeMainData()
         {
@@ -206,32 +214,20 @@ namespace specify_client
                 .Select(x => (string)x["displayName"]).ToList();
             FwList = Data.GetWmi("FirewallProduct", "displayName", @"root\SecurityCenter2")
                 .Select(x => (string)x["displayName"]).ToList();
-
-
-            var luaKey = Registry.LocalMachine
-                .OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System");
-
-            if (luaKey != null)
-            {
-                var enableLua = luaKey.GetValue("EnableLUA");
-                UacEnabled = (int)enableLua == 1;
-            }
-            else
-            {
-                Issues.Add($"Security data: could not get EnableLUA value");
-            }
             
+            var enableLua = Data.GetRegistryValue<int?>(Registry.LocalMachine,
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "EnableLUA");
+            if (enableLua == null) Issues.Add($"Security data: could not get EnableLUA value");
+            else UacEnabled = enableLua == 1;
+
             if (Environment.GetEnvironmentVariable("firmware_type").Equals("UEFI"))
             {
-                var secBootKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\SecureBoot\State");
-                if (secBootKey != null)
-                {
-                    SecureBootEnabled = (int)secBootKey.GetValue("UEFISecureBootEnabled") == 1;
-                }
-                else
-                {
-                    Issues.Add($"Security data: could not get UEFISecureBootEnabled value");
-                }
+                var secBootEnabled = Data.GetRegistryValue<int?>(
+                    Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\SecureBoot\State",
+                    "UEFISecureBootEnabled");
+
+                if (secBootEnabled == null) Issues.Add($"Security data: could not get UEFISecureBootEnabled value");
+                else SecureBootEnabled = secBootEnabled == 1;
             }
             
             try 
