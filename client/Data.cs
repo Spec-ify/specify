@@ -112,6 +112,7 @@ namespace specify_client
         public static List<OutputProcess> RunningProcesses { get; private set; }
         public static List<Dictionary<string, object>> Services { get; private set; }
         public static List<Dictionary<string, object>> InstalledApps { get; private set; }
+        public static List<Dictionary<string, object>> InstalledHotfixes { get; private set; }
         public static List<string> AvList { get; private set; }
         public static List<string> FwList { get; private set; }
         public static string HostsFile { get; private set;  }
@@ -146,6 +147,7 @@ namespace specify_client
             UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
             Services = Data.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
             InstalledApps = Data.GetWmi("Win32_Product", "Name, Version");
+            InstalledHotfixes = Data.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
 
             RunningProcesses = new List<OutputProcess>();
             var rawProcesses = Process.GetProcesses();
