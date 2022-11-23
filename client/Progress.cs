@@ -50,7 +50,7 @@ namespace specify_client
                 {
                     "Assemble",
                     new ProgressStatus("Monolith ... Assemble", MonolithCache.AssembleCache,
-                        new List<string>(){"MainData", "SystemData", "Security", "Network", "Hardware"})
+                        new List<string>{"MainData", "SystemData", "Security", "Network", "Hardware"})
                 },
                 {
                     "WriteFile",
