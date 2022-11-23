@@ -146,7 +146,6 @@ namespace specify_client
             UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
             Services = Data.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
             InstalledApps = Data.GetWmi("Win32_Product", "Name, Version");
-            HostsFile = System.IO.File.ReadAllText(@"C:\Windows\system32\drivers\etc\hosts");
 
             RunningProcesses = new List<OutputProcess>();
             var rawProcesses = Process.GetProcesses();
@@ -197,21 +196,6 @@ namespace specify_client
                 "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
                 + "CurrentRefreshRate, CurrentBitsPerPixel");
             Motherboard = Data.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").First();
-            try 
-            { 
-                Tpm = Data.GetWmi("Win32_Tpm","*", @"Root\CIMV2\Security\MicrosoftTpm").First();
-                Tpm["IsPresent"] = true;
-            }
-            catch (InvalidOperationException)
-            {
-                // No TPM
-                Tpm = new Dictionary<string, object>(){{ "IsPresent", false }};
-            }
-            catch (ManagementException)
-            {
-                Tpm = null;
-                Issues.Add("Hardware Data: could not get TPM. This is probably because specify was not run as administrator.");
-            }
         }
 
         public static void MakeSecurityData()
@@ -247,6 +231,22 @@ namespace specify_client
                     Issues.Add($"Security data: could not get UEFISecureBootEnabled value");
                 }
             }
+            
+            try 
+            { 
+                Tpm = Data.GetWmi("Win32_Tpm","*", @"Root\CIMV2\Security\MicrosoftTpm").First();
+                Tpm["IsPresent"] = true;
+            }
+            catch (InvalidOperationException)
+            {
+                // No TPM
+                Tpm = new Dictionary<string, object>(){{ "IsPresent", false }};
+            }
+            catch (ManagementException)
+            {
+                Tpm = null;
+                Issues.Add("Security Data: could not get TPM. This is probably because specify was not run as administrator.");
+            }
         }
 
         public static void MakeNetworkData()
@@ -257,6 +257,7 @@ namespace specify_client
                     + "DefaultIPGateway, MACAddress, InterfaceIndex");
             IPRoutes = Data.GetWmi("Win32_IP4RouteTable", 
                 "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
+            HostsFile = System.IO.File.ReadAllText(@"C:\Windows\system32\drivers\etc\hosts");
         }
     }
 

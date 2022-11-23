@@ -107,6 +107,7 @@ namespace specify_client
         public List<string> FwList;
         public bool UacEnabled;
         public bool SecureBootEnabled;
+        public Dictionary<string, object> Tpm;
 
         public MonolithSecurity()
         {
@@ -114,6 +115,7 @@ namespace specify_client
             FwList = DataCache.FwList;
             UacEnabled = DataCache.UacEnabled;
             SecureBootEnabled = DataCache.SecureBootEnabled;
+            Tpm = DataCache.Tpm;
         }
     }
 
@@ -123,14 +125,12 @@ namespace specify_client
         public Dictionary<string, object> Cpu;
         public List<Dictionary<string, object>> Gpu;
         public Dictionary<string, object> Motherboard;
-        public Dictionary<string, object> Tpm;
         public MonolithHardware()
         {
             Ram = DataCache.Ram;
             Cpu = DataCache.Cpu;
             Gpu = DataCache.Gpu;
             Motherboard = DataCache.Motherboard;
-            Tpm = DataCache.Tpm;
         }
     }
 
@@ -141,7 +141,6 @@ namespace specify_client
         public List<OutputProcess> RunningProcesses;
         public List<Dictionary<string, object>> Services;
         public List<Dictionary<string, object>> InstalledApps;
-        public string HostsFile;
 
         public MonolithSystem()
         {
@@ -150,7 +149,6 @@ namespace specify_client
             RunningProcesses = DataCache.RunningProcesses;
             Services = DataCache.Services;
             InstalledApps = DataCache.InstalledApps;
-            HostsFile = DataCache.HostsFile;
         }
     }
 
@@ -158,11 +156,13 @@ namespace specify_client
     {
         public List<Dictionary<string, object>> Adapters;
         public List<Dictionary<string, object>> Routes;
+        public string HostsFile;
 
         public MonolithNetwork()
         {
             Adapters = DataCache.NetAdapters;
             Routes = DataCache.IPRoutes;
+            HostsFile = DataCache.HostsFile;
         }
     }
 
