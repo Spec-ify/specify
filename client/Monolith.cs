@@ -112,6 +112,7 @@ namespace specify_client
         public List<string> FwList;
         public bool? UacEnabled;
         public bool? SecureBootEnabled;
+        public int? UacLevel;
         public Dictionary<string, object> Tpm;
 
         public MonolithSecurity()
@@ -121,6 +122,7 @@ namespace specify_client
             UacEnabled = DataCache.UacEnabled;
             SecureBootEnabled = DataCache.SecureBootEnabled;
             Tpm = DataCache.Tpm;
+            UacLevel = DataCache.UacLevel;
         }
     }
 

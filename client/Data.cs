@@ -125,6 +125,7 @@ namespace specify_client
         public static List<string> FwList { get; private set; }
         public static string HostsFile { get; private set;  }
         public static bool? UacEnabled { get; private set; }
+        public static int? UacLevel { get; private set; }
         public static List<Dictionary<string, object>> NetAdapters { get; private set; }
         public static List<Dictionary<string, object>> IPRoutes { get; private set; }
 
@@ -245,6 +246,10 @@ namespace specify_client
                 Tpm = null;
                 Issues.Add("Security Data: could not get TPM. This is probably because specify was not run as administrator.");
             }
+
+            UacLevel = Data.GetRegistryValue<int?>(
+                Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
+                "ConsentPromptBehaviorAdmin");
         }
 
         public static void MakeNetworkData()
