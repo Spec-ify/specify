@@ -141,6 +141,7 @@ namespace specify_client
         public List<OutputProcess> RunningProcesses;
         public List<Dictionary<string, object>> Services;
         public List<Dictionary<string, object>> InstalledApps;
+        public List<Dictionary<string, object>> InstalledHotfixes;
 
         public MonolithSystem()
         {
@@ -149,6 +150,7 @@ namespace specify_client
             RunningProcesses = DataCache.RunningProcesses;
             Services = DataCache.Services;
             InstalledApps = DataCache.InstalledApps;
+            InstalledHotfixes = DataCache.InstalledHotfixes;
         }
     }
 
