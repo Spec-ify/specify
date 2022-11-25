@@ -132,12 +132,17 @@ namespace specify_client
         public Dictionary<string, object> Cpu;
         public List<Dictionary<string, object>> Gpu;
         public Dictionary<string, object> Motherboard;
+        public List<Dictionary<string, object>> Drivers;
+        public List<Dictionary<string, object>> Devices;
+        
         public MonolithHardware()
         {
             Ram = DataCache.Ram;
             Cpu = DataCache.Cpu;
             Gpu = DataCache.Gpu;
             Motherboard = DataCache.Motherboard;
+            Drivers = DataCache.Drivers;
+            Devices = DataCache.Devices;
         }
     }
 

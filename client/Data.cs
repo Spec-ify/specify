@@ -137,6 +137,8 @@ namespace specify_client
         public static List<Dictionary<string, object>> Gpu {get; private set;}
         public static Dictionary<string, object> Motherboard {get; private set;}
         public static Dictionary<string, object> Tpm { get; private set; }
+        public static List<Dictionary<string, object>> Drivers { get; private set; }
+        public static List<Dictionary<string, object>> Devices { get; private set; }
         public static bool? SecureBootEnabled { get; private set; }
 
         public static void MakeMainData()
@@ -207,6 +209,8 @@ namespace specify_client
                 "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
                 + "CurrentRefreshRate, CurrentBitsPerPixel");
             Motherboard = Data.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").First();
+            Drivers = Data.GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
+            Devices = Data.GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
         }
 
         public static void MakeSecurityData()
@@ -271,14 +275,5 @@ namespace specify_client
         public int Id;
         public long WorkingSet;
         public double CpuPercent;
-    }
-
-    public class WMIService
-    {
-        public string Name;
-        public string Caption;
-        public string PathName;
-        public string State;
-        public string StartMode;
     }
 }
