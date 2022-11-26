@@ -60,10 +60,14 @@ namespace specify_client
         }
 
         /**
+         * <summary>
          * Gets tasks from Task Scheduler that satisfy all of the following conditions:
-         *  - Author isn't Microsoft
-         *  - State is Ready or Running
-         *  - Triggered at boot or login
+         * <list type="bullet">
+         *  <item>Author isn't Microsoft</item>
+         *  <item>State is Ready or Running</item>
+         *  <item>Triggered at boot or login</item>
+         * </list>
+         * </summary>
          */
         public static List<Task> GetTsStartupTasks()
         {

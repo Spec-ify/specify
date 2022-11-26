@@ -22,7 +22,7 @@ namespace specify_client
         public MonolithHardware Hardware;
         public MonolithSecurity Security;
         public MonolithNetwork Network;
-        // for issues with gathering the data itself. No diagnoses based on the info will be made in this program.
+        /** For issues with gathering the data itself. No diagnoses based on the info will be made in this program. */
         public List<string> Issues;
 
         public Monolith()
@@ -87,7 +87,7 @@ namespace specify_client
         {
             //win32 operating system class
             var os = DataCache.Os;
-            //win32 computersystem wim class
+            //win32 computersystem wmi class
             var cs = DataCache.Cs;
 
             Edition = (string)os["Caption"];
