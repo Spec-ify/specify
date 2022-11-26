@@ -11,6 +11,9 @@ using System.Threading;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Net.NetworkInformation;
+using System.Net;
+//using System.Threading.Tasks;
 
 namespace specify_client
 {
@@ -40,15 +43,6 @@ namespace specify_client
 
             return res;
         }
-        public static ManagementObjectCollection GetWmiObj(string cls, string selected = "*", string ns = @"root\cimv2")
-        {
-            var scope = new ManagementScope(ns);
-            scope.Connect();
-
-            var query = new ObjectQuery($"SELECT {selected} FROM {cls}");
-            var collection = new ManagementObjectSearcher(scope, query).Get();
-            return collection;
-        }
 
         /**
          * <summary>
@@ -60,7 +54,7 @@ namespace specify_client
          * </remarks>
          * <seealso cref="GetWmi"/>
          */
-        public static ManagementObjectCollection GetWmiObj(string cls, string selected, string ns)
+        public static ManagementObjectCollection GetWmiObj(string cls, string selected = "*", string ns = @"root\cimv2")
         {
             var scope = new ManagementScope(ns);
             scope.Connect();
@@ -209,7 +203,7 @@ namespace specify_client
 
         public static void DummyTimer()
         {
-            Thread.Sleep(5000);
+            Thread.Sleep(500000);
         }
 
         public static void MakeSystemData()
@@ -339,7 +333,6 @@ namespace specify_client
                 Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
                 "ConsentPromptBehaviorAdmin");
         }
-
         public static void MakeNetworkData()
         {
             NetAdapters = Data.GetWmi("Win32_NetworkAdapterConfiguration", 
@@ -349,6 +342,128 @@ namespace specify_client
             IPRoutes = Data.GetWmi("Win32_IP4RouteTable", 
                 "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
             HostsFile = System.IO.File.ReadAllText(@"C:\Windows\system32\drivers\etc\hosts");
+
+            // Uncomment the block below to run a traceroute to Google's DNS
+            /*var NetStats = await GetNetworkRoutes("8.8.8.8", 1000);
+            for (int i = 0; i < NetStats.Address.Count; i++)
+            {
+                Console.WriteLine($"{i}: {NetStats.Address[i]} --- Lat: {NetStats.AverageLatency[i]} --- PL: {NetStats.PacketLoss[i]}");
+            }*/
+        }
+        private static async System.Threading.Tasks.Task<NetworkRoute> GetNetworkRoutes(string ipAddress, int pingCount = 100, int timeout = 10000,  int bufferSize = 100)
+        {
+            var AddressList = GetTraceroute(ipAddress, timeout, 30, bufferSize);
+            var networkRoute = new NetworkRoute();
+
+            foreach(var address in AddressList)
+            {
+                networkRoute.Address.Add(address.ToString());
+                var hostStats = await GetHostStats(ipAddress, timeout, pingCount);
+                networkRoute.AverageLatency.Add(hostStats.Key);
+                networkRoute.PacketLoss.Add(hostStats.Value);
+            }
+
+            return networkRoute;
+        }
+        // I don't like this returning a KeyValuePair, but .NET 4.6 does not innately support tuples.
+        private static async System.Threading.Tasks.Task<KeyValuePair<int,double>> GetHostStats(string ipAddress, int timeout = 10000, int pingCount = 100)
+        {
+            Ping pinger = new Ping();
+            PingOptions pingOptions = new PingOptions();
+
+            string data = "meaninglessdatawithalotofletters"; // 32 letters in total.
+            byte[] buffer = Encoding.ASCII.GetBytes(data);
+
+            int failedPings = 0;
+            int errors = 0;
+            int latencySum = 0;
+            List<System.Threading.Tasks.Task<int>> statTasks = new List<System.Threading.Tasks.Task<int>>();
+
+            for(int i = 0; i < pingCount; i++)
+            {
+                System.Threading.Tasks.Task<int> task = System.Threading.Tasks.Task.Run(() => GetLatency(ipAddress, timeout, buffer, pingOptions));
+                statTasks.Add(task);
+            }
+            await System.Threading.Tasks.Task.WhenAll(statTasks);
+            foreach(var task in statTasks)
+            {
+                if(task.Result == -1)
+                {
+                    failedPings++;
+                }
+                else if(task.Result == -2)
+                {
+                    errors++;
+                }
+                else
+                {
+                    latencySum += task.Result;
+                }
+            }
+            int averageLatency = latencySum / pingCount;
+            double packetLoss = (double)failedPings / (double)pingCount;
+            if (errors > 0)
+            {
+                Console.WriteLine($"{ipAddress} - ERRORS: {errors}");
+            }
+            return new KeyValuePair<int, double>(averageLatency, packetLoss);
+        }
+        private static async System.Threading.Tasks.Task<int> GetLatency(string ipAddress, int timeout, byte[] buffer,PingOptions pingOptions)
+        {
+            try
+            {
+                var pingReply = await new Ping().SendPingAsync(ipAddress, timeout, buffer, pingOptions);
+
+                if (pingReply != null)
+                {
+                    if (pingReply.Status != IPStatus.Success)
+                    {
+                        return -1;
+                    }
+                    else
+                    {
+                        return (int)pingReply.RoundtripTime;
+                    }
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return -2;
+            }
+        }
+        private static IEnumerable<IPAddress> GetTraceroute(string ipAddress, int timeout = 10000, int maxTTL = 30, int bufferSize = 100)
+        {
+            // Cap off the TTL to not overdo the basal traceroute.
+            if(maxTTL > 30)
+            {
+                maxTTL = 30;
+            }
+
+            byte[] buffer = new byte[bufferSize];
+            new Random().NextBytes(buffer);
+
+            using (Ping pingTool = new Ping())
+            {
+                foreach(int i in Enumerable.Range(1, maxTTL))
+                {
+                    PingOptions pingOptions = new PingOptions(i, true);
+                    PingReply reply = pingTool.Send(ipAddress, timeout, buffer, pingOptions);
+
+                    if (reply.Status == IPStatus.Success || reply.Status == IPStatus.TtlExpired)
+                    {
+                        yield return reply.Address;
+                    }
+                    if (reply.Status != IPStatus.TtlExpired && reply.Status != IPStatus.TimedOut)
+                    {
+                        break;
+                    }
+                }
+            }
         }
         
         private static List<RamStick> GetSMBiosMemoryInfo()
@@ -455,7 +570,12 @@ namespace specify_client
             return SMBiosMemoryInfo;
         }
     }
-
+    public class NetworkRoute
+    {
+        public List<string> Address = new List<string>();
+        public List<int> AverageLatency = new List<int>();
+        public List<double> PacketLoss = new List<double>();
+    }
     public class OutputProcess
     {
         public string ProcessName;
