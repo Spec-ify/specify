@@ -206,7 +206,7 @@ namespace specify_client
                 }
                 catch (Win32Exception e)
                 {
-                    exePath = "<unknown>";
+                    exePath = null;
                     Issues.Add($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})");
                 }
 
