@@ -20,11 +20,7 @@ namespace specify_client
          */
         public static List<Dictionary<string, object>> GetWmi(string cls, string selected = "*", string ns = @"root\cimv2")
         {
-            var scope = new ManagementScope(ns);
-            scope.Connect();
-            
-            var query = new ObjectQuery($"SELECT {selected} FROM {cls}");
-            var collection = new ManagementObjectSearcher(scope, query).Get();
+            var collection = GetWmiObj(cls, selected, ns);
             var res = new List<Dictionary<string, object>>();
 
             foreach (var i in collection)
@@ -40,7 +36,16 @@ namespace specify_client
 
             return res;
         }
-        
+        public static ManagementObjectCollection GetWmiObj(string cls, string selected = "*", string ns = @"root\cimv2")
+        {
+            var scope = new ManagementScope(ns);
+            scope.Connect();
+
+            var query = new ObjectQuery($"SELECT {selected} FROM {cls}");
+            var collection = new ManagementObjectSearcher(scope, query).Get();
+            return collection;
+        }
+
         /**
          * Gets tasks from Task Scheduler that satisfy all of the following conditions:
          *  - Author isn't Microsoft
@@ -132,7 +137,7 @@ namespace specify_client
         public static string Username => Environment.UserName;
         // all the hardware stuff
         //each item in the list is a stick of ram
-        public static List<Dictionary<string, object>> Ram {get; private set;}
+        public static List<Dictionary<string, string>> Ram {get; private set;}
         public static Dictionary<string, object> Cpu {get; private set;}
         public static List<Dictionary<string, object>> Gpu {get; private set;}
         public static Dictionary<string, object> Motherboard {get; private set;}
@@ -201,16 +206,17 @@ namespace specify_client
 
         public static void MakeHardwareData()
         {
-            Ram = Data.GetWmi("Win32_PhysicalMemory", 
-                "DeviceLocator, Capacity, ConfiguredClockSpeed, Manufacturer, PartNumber, SerialNumber");
-            Cpu = Data.GetWmi("Win32_Processor", 
+            //Ram = Data.GetWmi("Win32_PhysicalMemory",
+                //"DeviceLocator, Capacity, ConfiguredClockSpeed, Manufacturer, PartNumber, SerialNumber");
+            Cpu = Data.GetWmi("Win32_Processor",
                 "CurrentClockSpeed, Manufacturer, Name, SocketDesignation").First();
-            Gpu = Data.GetWmi("Win32_VideoController", 
+            Gpu = Data.GetWmi("Win32_VideoController",
                 "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
                 + "CurrentRefreshRate, CurrentBitsPerPixel");
             Motherboard = Data.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").First();
             Drivers = Data.GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
             Devices = Data.GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
+            Ram = GetSMBiosMemoryInfo();
         }
 
         public static void MakeSecurityData()
@@ -265,6 +271,142 @@ namespace specify_client
             IPRoutes = Data.GetWmi("Win32_IP4RouteTable", 
                 "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
             HostsFile = System.IO.File.ReadAllText(@"C:\Windows\system32\drivers\etc\hosts");
+        }
+        private static List<Dictionary<string, string>> GetSMBiosMemoryInfo()
+        {
+            // Made a new GetWmi function because I'm not knowledgeable enough in how this works to translate the Dictionary object into what I need for this.
+            var SMBiosObj = Data.GetWmiObj("MSSMBios_RawSMBiosTables", "*", "root\\WMI");
+
+            // If no data is received, stop before it excepts. Add error message?
+            if (SMBiosObj == null)
+            {
+                return new List<Dictionary<string, string>>() { new Dictionary<string, string> { { "Error", "SMBios info not found" } } };
+            }
+
+            // Store raw SMBios Data
+            byte[] SMBios = null;
+            foreach (ManagementObject obj in SMBiosObj)
+            {
+                SMBios = (byte[])obj["SMBiosData"];
+            }
+
+            int offset = 0;
+            byte type = SMBios[offset];
+
+            List<Dictionary<string, string>> SMBiosMemoryInfo = new List<Dictionary<string, string>>();
+
+            while (offset + 4 < SMBios.Length && type != 127)
+            {
+                type = SMBios[offset];
+                int DataLength = SMBios[offset + 1];
+
+                // If the data extends the bounds of the SMBios Data array, stop.
+                if (offset + DataLength > SMBios.Length)
+                {
+                    break;
+                }
+
+                byte[] data = new byte[DataLength];
+                Array.Copy(SMBios, offset, data, 0, DataLength);
+                offset += DataLength;
+
+                List<string> smbStringsList = new List<string>();
+
+                if (offset < SMBios.Length && SMBios[offset] == 0)
+                    offset++;
+
+                // Iterate the byte array to build a list of SMBios structures.
+                while (offset < SMBios.Length && SMBios[offset] != 0)
+                {
+                    System.Text.StringBuilder smbDataString = new System.Text.StringBuilder();
+                    while (offset < SMBios.Length && SMBios[offset] != 0)
+                    {
+                        smbDataString.Append((char)SMBios[offset]);
+                        offset++;
+                    }
+                    offset++;
+                    smbStringsList.Add(smbDataString.ToString());
+                    // Console.WriteLine(smbDataString);
+                }
+                offset++;
+
+                // This is the only type we care about; Type 17. If the type is anything else, it simply loops again.
+                if (type == 0x11)
+                {
+                    Dictionary<string, string> MemoryModule = new Dictionary<string, string>();
+                    // These if statements confirm the data received is valid data.
+                    if (0x10 < data.Length && data[0x10] > 0 && data[0x10] <= smbStringsList.Count)
+                    {
+                        MemoryModule.Add("DeviceLocation", smbStringsList[data[0x10] - 1].Trim());
+                    }
+                    else
+                    {
+                        MemoryModule.Add("DeviceLocation", "NOT FOUND");
+                    }
+
+                    if (0x11 < data.Length && data[0x11] > 0 && data[0x11] <= smbStringsList.Count)
+                    {
+                        MemoryModule.Add("BankLocator", smbStringsList[data[0x11] - 1].Trim());
+                    }
+                    else
+                    {
+                        MemoryModule.Add("BankLocator", "NOT FOUND");
+                    }
+
+                    if (0x17 < data.Length && data[0x17] > 0 && data[0x17] <= smbStringsList.Count)
+                    {
+                        MemoryModule.Add("Manufacturer", smbStringsList[data[0x17] - 1].Trim());
+                    }
+                    else
+                    {
+                        MemoryModule.Add("Manufacturer", "NOT FOUND");
+                    }
+
+
+                    if (0x18 < data.Length && data[0x18] > 0 && data[0x18] <= smbStringsList.Count)
+                    {
+                        MemoryModule.Add("SerialNumber", smbStringsList[data[0x18] - 1].Trim());
+                    }
+                    else
+                    {
+                        MemoryModule.Add("SerialNumber", "NOT FOUND");
+                    }
+
+                    if (0x1A < data.Length && data[0x1A] > 0 && data[0x1A] <= smbStringsList.Count)
+                    {
+                        MemoryModule.Add("PartNumber", smbStringsList[data[0x1A] - 1].Trim());
+                    }
+                    else
+                    {
+                        MemoryModule.Add("PartNumber", "NOT FOUND");
+                    }
+
+
+                    if (0x15 + 1 < data.Length)
+                    {
+                        int speed = (data[0x15 + 1] << 8) | data[0x15];
+                        MemoryModule.Add("ConfiguredSpeed", $"{speed} MHz");
+                    }
+                    else
+                    {
+                        MemoryModule.Add("ConfiguredSpeed", "NOT FOUND");
+                    }
+
+
+                    if (0xC + 1 < data.Length)
+                    {
+                        int capacity = (data[0xC + 1] << 8) | data[0xC];
+                        MemoryModule.Add("Capacity", $"{capacity} MB");
+                    }
+                    else
+                    {
+                        MemoryModule.Add("Capacity", "NOT FOUND");
+                    }
+                    SMBiosMemoryInfo.Add(MemoryModule);
+                }
+                else continue;
+            }
+            return SMBiosMemoryInfo;
         }
     }
 

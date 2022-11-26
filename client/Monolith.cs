@@ -128,7 +128,7 @@ namespace specify_client
 
     public class MonolithHardware
     {
-        public List<Dictionary<string, object>> Ram;
+        public List<Dictionary<string, string>> Ram;
         public Dictionary<string, object> Cpu;
         public List<Dictionary<string, object>> Gpu;
         public Dictionary<string, object> Motherboard;

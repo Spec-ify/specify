@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using Newtonsoft.Json;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.IO;
+using System.Management;
 
 namespace specify_client
 {
@@ -11,7 +15,7 @@ namespace specify_client
     {
         public const string SpecifyVersion = "v0.2";
         public static Stopwatch time;
-        
+
         static void Main()
         {
             DataCache.Issues = new List<string>();
@@ -19,7 +23,7 @@ namespace specify_client
             var initialConsoleBg = Console.BackgroundColor;
             Console.WriteLine($"Specify {SpecifyVersion}");
             Console.WriteLine("This tool gathers information about your computer.  It does not collect any sensitive information.");
-            
+
             while (true)
             {
                 Console.Write("[Enter] - continue, [q] - quit, ");
