@@ -15,8 +15,10 @@ namespace specify_client
     public class Data
     {
         /**
-         * Microsoft recommends using the CIM libraries (Microsoft.Management.Infrastructure)
-         * However, some classes can't be called in CIM and only in WMI (e.g. Win32_PhysicalMemory)
+         * <summary>
+         * Gets the WMI object (with GetWmiObj), and converts it to a dictionary.
+         * </summary>
+         * <seealso cref="GetWmiObj"/>
          */
         public static List<Dictionary<string, object>> GetWmi(string cls, string selected = "*", string ns = @"root\cimv2")
         {
@@ -36,7 +38,18 @@ namespace specify_client
 
             return res;
         }
-        public static ManagementObjectCollection GetWmiObj(string cls, string selected = "*", string ns = @"root\cimv2")
+        
+        /**
+         * <summary>
+         * Gets the WMI Object for the specified query. Try to use GetWmi when possible.
+         * </summary>
+         * <remarks>
+         * Microsoft recommends using the CIM libraries (Microsoft.Management.Infrastructure).
+         * However, some classes can't be called in CIM and only in WMI (e.g. Win32_PhysicalMemory).
+         * </remarks>
+         * <seealso cref="GetWmi"/>
+         */
+        public static ManagementObjectCollection GetWmiObj(string cls, string selected, string ns)
         {
             var scope = new ManagementScope(ns);
             scope.Connect();
@@ -137,7 +150,7 @@ namespace specify_client
         public static string Username => Environment.UserName;
         // all the hardware stuff
         //each item in the list is a stick of ram
-        public static List<Dictionary<string, string>> Ram {get; private set;}
+        public static List<RamStick> Ram {get; private set;}
         public static Dictionary<string, object> Cpu {get; private set;}
         public static List<Dictionary<string, object>> Gpu {get; private set;}
         public static Dictionary<string, object> Motherboard {get; private set;}
@@ -272,7 +285,8 @@ namespace specify_client
                 "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
             HostsFile = System.IO.File.ReadAllText(@"C:\Windows\system32\drivers\etc\hosts");
         }
-        private static List<Dictionary<string, string>> GetSMBiosMemoryInfo()
+        
+        private static List<RamStick> GetSMBiosMemoryInfo()
         {
             // Made a new GetWmi function because I'm not knowledgeable enough in how this works to translate the Dictionary object into what I need for this.
             var SMBiosObj = Data.GetWmiObj("MSSMBios_RawSMBiosTables", "*", "root\\WMI");
@@ -280,7 +294,8 @@ namespace specify_client
             // If no data is received, stop before it excepts. Add error message?
             if (SMBiosObj == null)
             {
-                return new List<Dictionary<string, string>>() { new Dictionary<string, string> { { "Error", "SMBios info not found" } } };
+                Issues.Add("Hardware Data: Could not get SMBios info for RAM.");
+                return null;
             }
 
             // Store raw SMBios Data
@@ -290,25 +305,25 @@ namespace specify_client
                 SMBios = (byte[])obj["SMBiosData"];
             }
 
-            int offset = 0;
-            byte type = SMBios[offset];
+            var offset = 0;
+            var type = SMBios[offset];
 
-            List<Dictionary<string, string>> SMBiosMemoryInfo = new List<Dictionary<string, string>>();
+            var SMBiosMemoryInfo = new List<RamStick>();
 
             while (offset + 4 < SMBios.Length && type != 127)
             {
                 type = SMBios[offset];
-                int DataLength = SMBios[offset + 1];
+                var dataLength = SMBios[offset + 1];
 
                 // If the data extends the bounds of the SMBios Data array, stop.
-                if (offset + DataLength > SMBios.Length)
+                if (offset + dataLength > SMBios.Length)
                 {
                     break;
                 }
 
-                byte[] data = new byte[DataLength];
-                Array.Copy(SMBios, offset, data, 0, DataLength);
-                offset += DataLength;
+                var data = new byte[dataLength];
+                Array.Copy(SMBios, offset, data, 0, dataLength);
+                offset += dataLength;
 
                 List<string> smbStringsList = new List<string>();
 
@@ -331,80 +346,46 @@ namespace specify_client
                 offset++;
 
                 // This is the only type we care about; Type 17. If the type is anything else, it simply loops again.
-                if (type == 0x11)
+                if (type != 0x11) continue;
+                
+                var stick = new RamStick();
+                // These if statements confirm the data received is valid data.
+                // We don't need else statements here because the default is null
+                if (0x10 < data.Length && data[0x10] > 0 && data[0x10] <= smbStringsList.Count)
                 {
-                    Dictionary<string, string> MemoryModule = new Dictionary<string, string>();
-                    // These if statements confirm the data received is valid data.
-                    if (0x10 < data.Length && data[0x10] > 0 && data[0x10] <= smbStringsList.Count)
-                    {
-                        MemoryModule.Add("DeviceLocation", smbStringsList[data[0x10] - 1].Trim());
-                    }
-                    else
-                    {
-                        MemoryModule.Add("DeviceLocation", "NOT FOUND");
-                    }
-
-                    if (0x11 < data.Length && data[0x11] > 0 && data[0x11] <= smbStringsList.Count)
-                    {
-                        MemoryModule.Add("BankLocator", smbStringsList[data[0x11] - 1].Trim());
-                    }
-                    else
-                    {
-                        MemoryModule.Add("BankLocator", "NOT FOUND");
-                    }
-
-                    if (0x17 < data.Length && data[0x17] > 0 && data[0x17] <= smbStringsList.Count)
-                    {
-                        MemoryModule.Add("Manufacturer", smbStringsList[data[0x17] - 1].Trim());
-                    }
-                    else
-                    {
-                        MemoryModule.Add("Manufacturer", "NOT FOUND");
-                    }
-
-
-                    if (0x18 < data.Length && data[0x18] > 0 && data[0x18] <= smbStringsList.Count)
-                    {
-                        MemoryModule.Add("SerialNumber", smbStringsList[data[0x18] - 1].Trim());
-                    }
-                    else
-                    {
-                        MemoryModule.Add("SerialNumber", "NOT FOUND");
-                    }
-
-                    if (0x1A < data.Length && data[0x1A] > 0 && data[0x1A] <= smbStringsList.Count)
-                    {
-                        MemoryModule.Add("PartNumber", smbStringsList[data[0x1A] - 1].Trim());
-                    }
-                    else
-                    {
-                        MemoryModule.Add("PartNumber", "NOT FOUND");
-                    }
-
-
-                    if (0x15 + 1 < data.Length)
-                    {
-                        int speed = (data[0x15 + 1] << 8) | data[0x15];
-                        MemoryModule.Add("ConfiguredSpeed", $"{speed} MHz");
-                    }
-                    else
-                    {
-                        MemoryModule.Add("ConfiguredSpeed", "NOT FOUND");
-                    }
-
-
-                    if (0xC + 1 < data.Length)
-                    {
-                        int capacity = (data[0xC + 1] << 8) | data[0xC];
-                        MemoryModule.Add("Capacity", $"{capacity} MB");
-                    }
-                    else
-                    {
-                        MemoryModule.Add("Capacity", "NOT FOUND");
-                    }
-                    SMBiosMemoryInfo.Add(MemoryModule);
+                    stick.DeviceLocation = smbStringsList[data[0x10] - 1].Trim();
                 }
-                else continue;
+
+                if (0x11 < data.Length && data[0x11] > 0 && data[0x11] <= smbStringsList.Count)
+                {
+                    stick.BankLocator = smbStringsList[data[0x11] - 1].Trim();
+                }
+
+                if (0x17 < data.Length && data[0x17] > 0 && data[0x17] <= smbStringsList.Count)
+                {
+                    stick.Manufacturer = smbStringsList[data[0x17] - 1].Trim();
+                }
+
+                if (0x18 < data.Length && data[0x18] > 0 && data[0x18] <= smbStringsList.Count)
+                {
+                    stick.SerialNumber = smbStringsList[data[0x18] - 1].Trim();
+                }
+
+                if (0x1A < data.Length && data[0x1A] > 0 && data[0x1A] <= smbStringsList.Count)
+                {
+                    stick.PartNumber = smbStringsList[data[0x1A] - 1].Trim();
+                }
+
+                if (0x15 + 1 < data.Length)
+                {
+                    stick.ConfiguredSpeed = (data[0x15 + 1] << 8) | data[0x15];
+                }
+
+                if (0xC + 1 < data.Length)
+                {
+                    stick.Capacity = (data[0xC + 1] << 8) | data[0xC];
+                }
+                SMBiosMemoryInfo.Add(stick);
             }
             return SMBiosMemoryInfo;
         }
@@ -417,5 +398,19 @@ namespace specify_client
         public int Id;
         public long WorkingSet;
         public double CpuPercent;
+    }
+
+    public class RamStick
+    {
+        public string DeviceLocation;
+        public string BankLocator;
+        public string Manufacturer;
+        public string SerialNumber;
+        public string PartNumber;
+        /** MHz */
+        public int? ConfiguredSpeed;
+
+        /** MiB */
+        public int? Capacity;
     }
 }
