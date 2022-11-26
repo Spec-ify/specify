@@ -40,7 +40,16 @@ namespace specify_client
 
             return res;
         }
-        
+        public static ManagementObjectCollection GetWmiObj(string cls, string selected = "*", string ns = @"root\cimv2")
+        {
+            var scope = new ManagementScope(ns);
+            scope.Connect();
+
+            var query = new ObjectQuery($"SELECT {selected} FROM {cls}");
+            var collection = new ManagementObjectSearcher(scope, query).Get();
+            return collection;
+        }
+
         /**
          * <summary>
          * Gets the WMI Object for the specified query. Try to use GetWmi when possible.
