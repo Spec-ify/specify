@@ -9,6 +9,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Microsoft.Win32;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace specify_client
 {
@@ -162,6 +164,33 @@ namespace specify_client
         public static List<Dictionary<string, object>> Drivers { get; private set; }
         public static List<Dictionary<string, object>> Devices { get; private set; }
         public static bool? SecureBootEnabled { get; private set; }
+        private static readonly List<string> SystemProcesses = new List<string>()
+        {
+            "Memory Compression",
+            "Registry",
+            "System",
+            "Idle"
+        };
+
+        // DllImports to P/Invoke process information queries. The typical C# process call fails on certain system processes.
+        [Flags]
+        private enum ProcessAccessFlags : uint
+        {
+            QueryLimitedInformation = 0x00001000
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool QueryFullProcessImageName(
+              [In] IntPtr hProcess,
+              [In] int dwFlags,
+              [Out] StringBuilder lpExeName,
+              ref int lpdwSize);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr OpenProcess(
+         ProcessAccessFlags processAccess,
+         bool bInheritHandle,
+         int processId);
 
         public static void MakeMainData()
         {
@@ -184,6 +213,7 @@ namespace specify_client
 
             RunningProcesses = new List<OutputProcess>();
             var rawProcesses = Process.GetProcesses();
+
             foreach (var rawProcess in rawProcesses)
             {
                 double cpuPercent = -1.0; // TODO: make this actually work properly
@@ -202,12 +232,34 @@ namespace specify_client
 
                 try
                 {
-                    exePath = rawProcess.MainModule?.FileName;
+                    // capacity must be declared so it can be referenced.
+                    int capacity = 2000;
+
+                    StringBuilder sb = new StringBuilder(capacity);
+                    IntPtr ptr = OpenProcess(ProcessAccessFlags.QueryLimitedInformation, false, rawProcess.Id);
+
+                    if (!QueryFullProcessImageName(ptr, 0, sb, ref capacity))
+                    {
+                        if (!SystemProcesses.Contains(rawProcess.ProcessName))
+                        {
+                            exePath = "null - Not found";
+                            Issues.Add($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})");
+                        }
+                        else
+                        {
+                            exePath = "SYSTEM";
+                        }
+                    }
+                    else
+                    {
+                        exePath = sb.ToString();
+                    }
                 }
                 catch (Win32Exception e)
                 {
-                    exePath = "<unknown>";
+                    exePath = "null - Win32Exception";
                     Issues.Add($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})");
+                    Console.WriteLine(e.GetBaseException());
                 }
 
                 RunningProcesses.Add(new OutputProcess
