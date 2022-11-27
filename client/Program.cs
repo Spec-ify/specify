@@ -6,7 +6,8 @@ using Newtonsoft.Json;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.IO;
-using System.Management;
+using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 
 namespace specify_client
 {
@@ -14,7 +15,6 @@ namespace specify_client
     {
         public const string SpecifyVersion = "v0.2";
         public static Stopwatch time;
-
         static void Main()
         {
             DataCache.Issues = new List<string>();
@@ -67,7 +67,6 @@ namespace specify_client
             //Console.WriteLine("Time now: " + Data.DateTimeToIsoDate(DateTime.Now));
             //PrettyPrintObject(MonolithBasicInfo.Create());
         }
-        
         public static void PrettyPrintObject(object o)
         {
             var jsonString = JsonConvert.SerializeObject(o, Formatting.Indented);

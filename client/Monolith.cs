@@ -154,6 +154,7 @@ namespace specify_client
         public List<Dictionary<string, object>> Services;
         public List<Dictionary<string, object>> InstalledApps;
         public List<Dictionary<string, object>> InstalledHotfixes;
+        public Dictionary<string, DateTime?> ScheduledTasks;
 
         public MonolithSystem()
         {
@@ -163,6 +164,7 @@ namespace specify_client
             Services = DataCache.Services;
             InstalledApps = DataCache.InstalledApps;
             InstalledHotfixes = DataCache.InstalledHotfixes;
+            ScheduledTasks = DataCache.ScheduledTasks;
         }
     }
 

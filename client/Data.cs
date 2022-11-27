@@ -148,6 +148,7 @@ namespace specify_client
         public static List<Dictionary<string, object>> Services { get; private set; }
         public static List<Dictionary<string, object>> InstalledApps { get; private set; }
         public static List<Dictionary<string, object>> InstalledHotfixes { get; private set; }
+        public static Dictionary<string, DateTime?> ScheduledTasks { get; private set; }
         public static List<string> AvList { get; private set; }
         public static List<string> FwList { get; private set; }
         public static string HostsFile { get; private set;  }
@@ -203,7 +204,7 @@ namespace specify_client
 
         public static void DummyTimer()
         {
-            Thread.Sleep(500000);
+            Thread.Sleep(5000);
         }
 
         public static void MakeSystemData()
@@ -213,7 +214,7 @@ namespace specify_client
             Services = Data.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
             InstalledApps = Data.GetWmi("Win32_Product", "Name, Version");
             InstalledHotfixes = Data.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
-
+            ScheduledTasks = GetScheduledTasks();
             RunningProcesses = new List<OutputProcess>();
             var rawProcesses = Process.GetProcesses();
 
@@ -275,11 +276,148 @@ namespace specify_client
                 });
             }
         }
+        private static Dictionary<string, DateTime?> GetScheduledTasks()
+        {
+            // This starts a cmd process and pipes the output of schtasks /query back to Specified.
+            // I would like a way to do this that doesn't ask to start another process. Defender won't appreciate this.
+            string command = "schtasks /query";
+            ProcessStartInfo procStartInfo = new ProcessStartInfo("cmd", "/c " + command);
+            procStartInfo.RedirectStandardOutput = true;
+            procStartInfo.UseShellExecute = false;
+            procStartInfo.CreateNoWindow = true;
+            Process proc = new Process();
+            proc.StartInfo = procStartInfo;
+            proc.Start();
 
+            string tasklist = proc.StandardOutput.ReadToEnd();
+
+            // Trim the output of the previous command into something more workable.
+            var splitTaskList = tasklist.Split('\n');
+            var trimmedTaskList = TrimTaskList(splitTaskList);
+
+            Dictionary<string, DateTime?> returnList = new Dictionary<string, DateTime?>();
+
+            // Iterate the trimmed task list and convert each task into serializable data.
+            foreach(var task in trimmedTaskList)
+            {
+                // There is a method to ignore empty strings, however .NET 4.6 has an overload selection bug that will not allow the app to compile when using that method.
+                var splitTask = task.Split(' ');
+
+                // Inefficient method to remove empty strings. The resulting list is:
+                // [0]: Task name
+                // [1]: Scheduled DateTime
+                // [2]: Status (Ready/Disabled)
+                // [3]: '\r'
+                List<string> SplitTaskAsList = new List<string>();
+                for(int i = 0; i < splitTask.Length; i++)
+                {
+                    var segment = splitTask[i];
+                    if (segment.Count() == 0)
+                    {
+                        continue;
+                    }
+                    // If the list is empty, you're working on the task name. Combine strings to get the full task name.
+                    if (SplitTaskAsList.Count == 0)
+                    {
+                        for(int j = i+1; j < splitTask.Length; j++)
+                        {
+                            // An empty string marks the end of a name.
+                            if (splitTask[j].Count() == 0)
+                            {
+                                break;
+                            }
+
+                            // A string labeled "N/A" is an empty datetime field.
+                            if (splitTask[j].StartsWith(@"N/A"))
+                            {
+                                break;
+                            }
+
+                            // If the string is a valid date, it is no longer part of the task name.
+                            if (DateTime.TryParse(splitTask[j], out DateTime discard))
+                            {
+                                break;
+                            }
+                            
+                            segment += $" {splitTask[j]}";
+                            i++;
+                        }
+                    }
+                    // If the list contains one element, you're working on the scheduled datetime. segment (splitTask[i]) is the date, splitTask[i+1] is the time.
+                    if(SplitTaskAsList.Count == 1)
+                    {
+                        segment += $" {splitTask[i+1]}";
+                        i++;
+                    }
+                    SplitTaskAsList.Add(segment);
+                }
+
+                DateTime? ScheduledTime;
+                // I can't do TryParse(string, out Datetime?) ?! That seems absurd.
+                DateTime RidiculousVariable;
+
+                if(!DateTime.TryParse(SplitTaskAsList[1], out RidiculousVariable))
+                {
+                    // The task is not scheduled.
+                    ScheduledTime = null;
+                }
+                else
+                {
+                    ScheduledTime = RidiculousVariable;
+                }
+
+
+                try
+                {
+                    returnList.Add(SplitTaskAsList[0], ScheduledTime);
+                }
+                catch (ArgumentException)
+                {
+                    // If there is already a task of the same name in the dictionary, ignore the new task. This is probably unwise.
+                    continue;
+                }
+            }
+            return returnList;
+        }
+        private static List<string> TrimTaskList(string[] taskList)
+        {
+            List<string> TrimList = new List<string>();
+
+            foreach (string line in taskList)
+            {
+                // Ignore empty and formatting strings.
+                if (line.Count() == 0)
+                {
+                    continue;
+                }
+                if (!char.IsLetterOrDigit(line[0]))
+                {
+                    continue;
+                }
+                if (line.StartsWith("Folder:"))
+                {
+                    continue;
+                }
+                if (line.StartsWith("==="))
+                {
+                    continue;
+                }
+                if (line.StartsWith("TaskName"))
+                {
+                    continue;
+                }
+                // Remove errored task strings.
+                if (line.StartsWith("INFO:"))
+                {
+                    // TODO: This needs some sort of error message, maybe an issue.
+                    continue;
+                }
+                TrimList.Add(line);
+            }
+            return TrimList;
+        }
         public static void MakeHardwareData()
         {
-            //Ram = Data.GetWmi("Win32_PhysicalMemory",
-                //"DeviceLocator, Capacity, ConfiguredClockSpeed, Manufacturer, PartNumber, SerialNumber");
             Cpu = Data.GetWmi("Win32_Processor",
                 "CurrentClockSpeed, Manufacturer, Name, SocketDesignation").First();
             Gpu = Data.GetWmi("Win32_VideoController",
