@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using Newtonsoft.Json;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.IO;
-using System.Diagnostics;
-using System.Diagnostics.Eventing.Reader;
+using System.Management;
 
 namespace specify_client
 {
@@ -22,7 +20,7 @@ namespace specify_client
             var initialConsoleBg = Console.BackgroundColor;
             Console.WriteLine($"Specify {SpecifyVersion}");
             Console.WriteLine("This tool gathers information about your computer.  It does not collect any sensitive information.");
-
+            
             while (true)
             {
                 Console.Write("[Enter] - continue, [q] - quit, ");
@@ -67,6 +65,7 @@ namespace specify_client
             //Console.WriteLine("Time now: " + Data.DateTimeToIsoDate(DateTime.Now));
             //PrettyPrintObject(MonolithBasicInfo.Create());
         }
+        
         public static void PrettyPrintObject(object o)
         {
             var jsonString = JsonConvert.SerializeObject(o, Formatting.Indented);
