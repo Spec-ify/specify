@@ -1,7 +1,6 @@
-﻿namespace specify_client
+﻿namespace specify_client;
+
+public static class Settings
 {
-    public static class Settings
-    {
-        public static bool RedactUsername = false;
-    }
+    public static bool RedactUsername = false;
 }
