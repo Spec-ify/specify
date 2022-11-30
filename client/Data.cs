@@ -13,6 +13,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Net.NetworkInformation;
 using System.Net;
+using System.IO;
 //using System.Threading.Tasks;
 
 namespace specify_client
@@ -697,6 +698,125 @@ namespace specify_client
             {
                 Issues.Add("Error retrieving SMART Data." + e.Message);
             }
+            var partitionInfo = Data.GetWmiObj("Win32_Volume");
+            foreach (var partition in partitionInfo)
+            {
+                // Check if partition drive size is identical to exactly one partition drive size in the list of disks. If it is, add win32_volume data to it.
+                // If it is not, create an issue for the failed link.
+                UInt64 partitionSize = 0;
+                UInt64 blockSize = 0;
+                try
+                {
+                    partitionSize = (UInt64)partition["Capacity"];
+                    blockSize = (UInt64)partition["BlockSize"];
+                }
+                catch (NullReferenceException)
+                {
+                    Issues.Add("Failure to parse partition information - No capacity found. This is likely a virtual or unallocated drive.");
+                    continue;
+                }
+
+                // Drive and Partition indices.
+                int dIndex = -1;
+                int pIndex = -1;
+
+                // Indicators; If found and unique, store partition information with the drive under dIndex/pIndex.
+                // Otherwise, store into non-specific partition list.
+                bool found = false;
+                bool unique = true;
+                for (int di = 0; di < drives.Count(); di++)
+                {
+                    for (int pi = 0; pi < drives[di].Partitions.Count(); pi++)
+                    {
+                        var fileSystem = (string)partition["FileSystem"];
+                        if (fileSystem.ToLower().Equals("ntfs"))
+                        {
+                            if (partitionSize == drives[di].Partitions[pi].PartitionCapacity ||
+                                partitionSize + blockSize == drives[di].Partitions[pi].PartitionCapacity ||
+                                partitionSize - blockSize == drives[di].Partitions[pi].PartitionCapacity ||
+                                partitionSize + 2048 == drives[di].Partitions[pi].PartitionCapacity ||
+                                partitionSize - 2048 == drives[di].Partitions[pi].PartitionCapacity ||
+                                partitionSize + 1024 == drives[di].Partitions[pi].PartitionCapacity ||
+                                partitionSize - 1024 == drives[di].Partitions[pi].PartitionCapacity ||
+                                partitionSize + 4096 == drives[di].Partitions[pi].PartitionCapacity ||
+                                partitionSize - 4096 == drives[di].Partitions[pi].PartitionCapacity)
+                            {
+                                // If it hasn't been found yet, this is a potential match.
+                                if (!found)
+                                {
+                                    pIndex = pi;
+                                    dIndex = di;
+                                    found = true;
+                                }
+                                // If it has been found, there are two matches, it is not unique, stop the check.
+                                else
+                                {
+                                    unique = false;
+                                    break;
+                                }
+                            }
+                        }
+                        else if (fileSystem.ToLower().Equals("fat32") || fileSystem.ToLower().Equals("exfat32"))
+                        {
+                            if (partitionSize == drives[di].Partitions[pi].PartitionCapacity ||
+                                partitionSize + (2048 * 2048) == drives[di].Partitions[pi].PartitionCapacity ||
+                                partitionSize - (2048 * 2048) == drives[di].Partitions[pi].PartitionCapacity)
+                            {
+                                // If it hasn't been found yet, this is a potential match.
+                                if (!found)
+                                {
+                                    pIndex = pi;
+                                    dIndex = di;
+                                    found = true;
+                                }
+                                // If it has been found, there are two matches, it is not unique, stop the check.
+                                else
+                                {
+                                    unique = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    // If it is not unique, no drive or partition index is valid. Stop checking.
+                    if (!unique)
+                    {
+                        dIndex = -1;
+                        pIndex = -1;
+                        break;
+                    }
+                }
+                if (found && unique)
+                {
+                    // These should never be -1, however they seem to happen occasionally.
+                    // Prevent the exception by continuing the loop.
+                    if (dIndex == -1 || pIndex == -1)
+                    {
+                        continue;
+                    }
+                    var matchingPartition = drives[dIndex].Partitions[pIndex];
+                    var DriveLetter = partition["DriveLetter"];
+                    if (DriveLetter != null)
+                    {
+                        matchingPartition.PartitionLabel = (string)DriveLetter;
+                    }
+                    matchingPartition.PartitionFree = (UInt64)partition["FreeSpace"];
+                    var FileSystem = partition["FileSystem"];
+                    if (FileSystem != null)
+                    {
+                        matchingPartition.Filesystem = (string)FileSystem;
+                    }
+                }
+                else
+                {
+                    var DriveLetter = partition["DriveLetter"];
+                    string letter = "";
+                    if (DriveLetter != null)
+                    {
+                    }
+                    Issues.Add($"Partition link could not be established for {partitionSize} B partition - Drive Label: {letter}");
+                }
+            }
             return drives;
         }
         private static SmartAttribute GetAttribute(byte[] data)
@@ -1041,7 +1161,7 @@ namespace specify_client
     public class Partition
     {
         public UInt64 PartitionCapacity;
-        public long PartitionFree;
+        public UInt64 PartitionFree;
         public string PartitionLabel;
         public string Filesystem;
     }
