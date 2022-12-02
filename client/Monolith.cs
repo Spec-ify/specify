@@ -134,7 +134,7 @@ public class MonolithHardware
     public Dictionary<string, object> Motherboard;
     public List<Dictionary<string, object>> Drivers;
     public List<Dictionary<string, object>> Devices;
-    public List<DiskDrive> DiskDrives;
+    public List<DiskDrive> Disks;
     public List<TempMeasurement> Temperatures;
         
     public MonolithHardware()
@@ -145,7 +145,7 @@ public class MonolithHardware
         Motherboard = DataCache.Motherboard;
         Drivers = DataCache.Drivers;
         Devices = DataCache.Devices;
-        DiskDrives = DataCache.Disks;
+        Disks = DataCache.Disks;
         Temperatures = DataCache.Temperatures;
     }
 }
