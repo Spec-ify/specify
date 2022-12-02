@@ -597,7 +597,7 @@ public static class DataCache
             }
             catch (NullReferenceException)
             {
-                drive.DeviceName = "Unknown";
+                drive.DeviceName = null;
                 Issues.Add($"Could not retrieve device name of drive @ index {diskNumber}");
             }
             try
@@ -606,7 +606,7 @@ public static class DataCache
             }
             catch (NullReferenceException)
             {
-                drive.SerialNumber = "Unknown";
+                drive.SerialNumber = null;
                 Issues.Add($"Could not retrieve serial number of drive @ index {diskNumber}");
             }
 
@@ -618,7 +618,7 @@ public static class DataCache
             }
             catch (NullReferenceException)
             {
-                drive.DiskCapacity = 0;
+                drive.DiskCapacity = null;
                 Issues.Add($"Could not retrieve capacity of drive @ index {diskNumber}");
             }
             try
@@ -627,7 +627,7 @@ public static class DataCache
             }
             catch (NullReferenceException)
             {
-                drive.InstanceId = "Unknown";
+                drive.InstanceId = null;
                 Issues.Add($"Could not retrieve Instance ID of drive @ index {diskNumber}");
             }
 
@@ -799,7 +799,7 @@ public static class DataCache
                 {
                     matchingPartition.PartitionLabel = (string)driveLetter;
                 }
-                matchingPartition.PartitionFree = (UInt64)partition["FreeSpace"];
+                matchingPartition.PartitionFree = (ulong)partition["FreeSpace"];
                 var fileSystem = partition["FileSystem"];
                 if (fileSystem != null)
                 {
@@ -1128,10 +1128,10 @@ public class DiskDrive
 {
     public string DeviceName;
     public string SerialNumber;
-    public int DiskNumber;
-    public ulong DiskCapacity;
-    public ulong DiskFree;
-    public uint BlockSize;
+    public int? DiskNumber;
+    public ulong? DiskCapacity;
+    public ulong? DiskFree;
+    public uint? BlockSize;
     public List<Partition> Partitions;
     public List<SmartAttribute> SmartData;
     [NonSerialized()] public string InstanceId; // Only used to link SmartData, do not serialize. Unless you really want to.

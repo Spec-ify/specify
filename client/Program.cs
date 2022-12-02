@@ -36,7 +36,7 @@ public class Program
                 return;
             }
             if (key.Key == ConsoleKey.Enter) break;
-            if (key.Key == ConsoleKey.D1 || key.Key == ConsoleKey.NumPad1)
+            if (key.Key is ConsoleKey.D1 or ConsoleKey.NumPad1)
                 Settings.RedactUsername = !Settings.RedactUsername;
                 
             Console.Write("\r");

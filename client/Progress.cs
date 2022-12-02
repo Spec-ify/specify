@@ -125,8 +125,8 @@ public class ProgressList
     }
         
     /**
-         * From https://stackoverflow.com/a/8946847 and a comment
-         */
+     * From https://stackoverflow.com/a/8946847 and a comment
+     */
     public static void ClearCurrentConsoleLine()
     {
         var currentLineCursor = Console.CursorTop;

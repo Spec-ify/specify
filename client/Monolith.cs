@@ -12,6 +12,7 @@ namespace specify_client;
 /**
  * The big structure of all the things
  */
+[Serializable]
 public class Monolith
 {
     // it will say these are never used, but they are serialized
