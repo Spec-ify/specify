@@ -32,8 +32,8 @@ public class ProgressStatus
 }
 
 /**
-     * Things for progress, will be called by the GUI
-     */
+ * Things for progress, will be called by the GUI
+ */
 public class ProgressList
 {
     public Dictionary<string, ProgressStatus> Items { get; set; }
