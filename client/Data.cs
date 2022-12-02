@@ -710,7 +710,9 @@ public static class DataCache
                             partitionSize + 1024 != drives[di].Partitions[pi].PartitionCapacity &&
                             partitionSize - 1024 != drives[di].Partitions[pi].PartitionCapacity &&
                             partitionSize + 4096 != drives[di].Partitions[pi].PartitionCapacity &&
-                            partitionSize - 4096 != drives[di].Partitions[pi].PartitionCapacity) continue;
+                            partitionSize - 4096 != drives[di].Partitions[pi].PartitionCapacity &&
+                            partitionSize + 512 != drives[di].Partitions[pi].PartitionCapacity &&
+                            partitionSize - 512 != drives[di].Partitions[pi].PartitionCapacity) continue;
                         // If it hasn't been found yet, this is a potential match.
                         if (!found)
                         {
@@ -780,6 +782,30 @@ public static class DataCache
                 {
                 }
                 Issues.Add($"Partition link could not be established for {partitionSize} B partition - Drive Label: {letter}");
+            }
+        }
+        foreach (var d in drives)
+        {
+            bool complete = true;
+            UInt64 free = 0;
+            foreach (var partition in d.Partitions)
+            {
+                if(partition.PartitionFree == null || partition.PartitionFree == 0)
+                {
+                    complete = false;
+                }
+                else
+                {
+                    free += partition.PartitionFree;
+                }
+            }
+            if(!complete)
+            {
+                // Use Libre here.
+            }
+            else
+            {
+                d.DiskFree = free;
             }
         }
         return drives;
@@ -1072,8 +1098,8 @@ public class DiskDrive
     public string SerialNumber;
     public int DiskNumber;
     public ulong DiskCapacity;
-    public string DiskFree;
-    public ulong BlockSize;
+    public ulong DiskFree;
+    public uint BlockSize;
     public List<Partition> Partitions;
     public List<SmartAttribute> SmartData;
     [NonSerialized()] public string InstanceId; // Only used to link SmartData, do not serialize. Unless you really want to.
