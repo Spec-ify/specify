@@ -384,43 +384,14 @@ public static class DataCache
         }
         return returnList;
     }
-    private static List<string> TrimTaskList(string[] taskList)
+    private static List<string> TrimTaskList(IEnumerable<string> taskList)
     {
-        List<string> TrimList = new List<string>();
-
-        foreach (string line in taskList)
-        {
-            // Ignore empty and formatting strings.
-            if (line.Count() == 0)
-            {
-                continue;
-            }
-            if (!char.IsLetterOrDigit(line[0]))
-            {
-                continue;
-            }
-            if (line.StartsWith("Folder:"))
-            {
-                continue;
-            }
-            if (line.StartsWith("==="))
-            {
-                continue;
-            }
-            if (line.StartsWith("TaskName"))
-            {
-                continue;
-            }
-            // Remove errored task strings.
-            if (line.StartsWith("INFO:"))
-            {
-                // TODO: This needs some sort of error message, maybe an issue.
-                continue;
-            }
-            TrimList.Add(line);
-        }
-        return TrimList;
+        return (from line in taskList
+            where line.Any() where char.IsLetterOrDigit(line[0]) where !line.StartsWith("Folder:") 
+            where !line.StartsWith("===") where !line.StartsWith("TaskName") where !line.StartsWith("INFO:") 
+            select line).ToList();
     }
+    
     public static void MakeHardwareData()
     {
         Cpu = Data.GetWmi("Win32_Processor",
@@ -497,61 +468,61 @@ public static class DataCache
     }
     private static async System.Threading.Tasks.Task<NetworkRoute> GetNetworkRoutes(string ipAddress, int pingCount = 100, int timeout = 10000,  int bufferSize = 100)
     {
-        var AddressList = GetTraceroute(ipAddress, timeout, 30, bufferSize);
+        var addressList = GetTraceroute(ipAddress, timeout, 30, bufferSize);
         var networkRoute = new NetworkRoute();
 
-        foreach(var address in AddressList)
+        foreach(var address in addressList)
         {
             networkRoute.Address.Add(address.ToString());
-            var hostStats = await GetHostStats(ipAddress, timeout, pingCount);
-            networkRoute.AverageLatency.Add(hostStats.Key);
-            networkRoute.PacketLoss.Add(hostStats.Value);
+            (int Latency, double Loss) hostStats = await GetHostStats(ipAddress, timeout, pingCount);
+            networkRoute.AverageLatency.Add(hostStats.Latency);
+            networkRoute.PacketLoss.Add(hostStats.Loss);
         }
 
         return networkRoute;
     }
-    // I don't like this returning a KeyValuePair, but .NET 4.6 does not innately support tuples.
-    private static async System.Threading.Tasks.Task<KeyValuePair<int,double>> GetHostStats(string ipAddress, int timeout = 10000, int pingCount = 100)
+
+    private static async System.Threading.Tasks.Task<(int, double)> GetHostStats(string ipAddress, int timeout = 10000, int pingCount = 100)
     {
-        Ping pinger = new Ping();
-        PingOptions pingOptions = new PingOptions();
+        var pinger = new Ping();
+        var pingOptions = new PingOptions();
 
-        string data = "meaninglessdatawithalotofletters"; // 32 letters in total.
-        byte[] buffer = Encoding.ASCII.GetBytes(data);
+        var data = "meaninglessdatawithalotofletters"; // 32 letters in total.
+        var buffer = Encoding.ASCII.GetBytes(data);
 
-        int failedPings = 0;
-        int errors = 0;
-        int latencySum = 0;
-        List<System.Threading.Tasks.Task<int>> statTasks = new List<System.Threading.Tasks.Task<int>>();
+        var failedPings = 0;
+        var errors = 0;
+        var latencySum = 0;
+        var statTasks = new List<System.Threading.Tasks.Task<int>>();
 
         for(int i = 0; i < pingCount; i++)
         {
-            System.Threading.Tasks.Task<int> task = System.Threading.Tasks.Task.Run(() => GetLatency(ipAddress, timeout, buffer, pingOptions));
+            var task = System.Threading.Tasks.Task.Run(() => GetLatency(ipAddress, timeout, buffer, pingOptions));
             statTasks.Add(task);
         }
         await System.Threading.Tasks.Task.WhenAll(statTasks);
         foreach(var task in statTasks)
         {
-            if(task.Result == -1)
+            switch (task.Result)
             {
-                failedPings++;
-            }
-            else if(task.Result == -2)
-            {
-                errors++;
-            }
-            else
-            {
-                latencySum += task.Result;
+                case -1:
+                    failedPings++;
+                    break;
+                case -2:
+                    errors++;
+                    break;
+                default:
+                    latencySum += task.Result;
+                    break;
             }
         }
-        int averageLatency = latencySum / pingCount;
-        double packetLoss = (double)failedPings / (double)pingCount;
+        var averageLatency = latencySum / pingCount;
+        var packetLoss = failedPings / (double)pingCount;
         if (errors > 0)
         {
             Console.WriteLine($"{ipAddress} - ERRORS: {errors}");
         }
-        return new KeyValuePair<int, double>(averageLatency, packetLoss);
+        return (averageLatency, packetLoss);
     }
     private static async System.Threading.Tasks.Task<int> GetLatency(string ipAddress, int timeout, byte[] buffer,PingOptions pingOptions)
     {
@@ -589,24 +560,23 @@ public static class DataCache
             maxTTL = 30;
         }
 
-        byte[] buffer = new byte[bufferSize];
+        var buffer = new byte[bufferSize];
         new Random().NextBytes(buffer);
 
-        using (Ping pingTool = new Ping())
+        using var pingTool = new Ping();
+        
+        foreach(var i in Enumerable.Range(1, maxTTL))
         {
-            foreach(int i in Enumerable.Range(1, maxTTL))
-            {
-                PingOptions pingOptions = new PingOptions(i, true);
-                PingReply reply = pingTool.Send(ipAddress, timeout, buffer, pingOptions);
+            var pingOptions = new PingOptions(i, true);
+            var reply = pingTool.Send(ipAddress, timeout, buffer, pingOptions);
 
-                if (reply.Status == IPStatus.Success || reply.Status == IPStatus.TtlExpired)
-                {
-                    yield return reply.Address;
-                }
-                if (reply.Status != IPStatus.TtlExpired && reply.Status != IPStatus.TimedOut)
-                {
-                    break;
-                }
+            if (reply.Status is IPStatus.Success or IPStatus.TtlExpired)
+            {
+                yield return reply.Address;
+            }
+            if (reply.Status != IPStatus.TtlExpired && reply.Status != IPStatus.TimedOut)
+            {
+                break;
             }
         }
     }
@@ -614,76 +584,74 @@ public static class DataCache
     {
         List<DiskDrive> drives = new List<DiskDrive>();
 
-        var DriveWmiInfo = Data.GetWmiObj("Win32_DiskDrive");
+        var driveWmiInfo = Data.GetWmiObj("Win32_DiskDrive");
 
         // This assumes the WMI info reports disks in order by drive number. I'm not certain this is a safe assumption.
-        int diskNumber = 0;
-        foreach (ManagementObject driveWmi in DriveWmiInfo)
+        var diskNumber = 0;
+        foreach (var driveWmi in driveWmiInfo)
         {
-            DiskDrive drive = new DiskDrive();
+            var drive = new DiskDrive
+            {
+                DeviceName = ((string)driveWmi["Model"]).Trim(),
+                SerialNumber = ((string)driveWmi["SerialNumber"]).Trim(),
+                DiskNumber = diskNumber,
+                DiskCapacity = (ulong)driveWmi["Size"],
+                BlockSize = (uint)driveWmi["BytesPerSector"],
+                InstanceId = (string)driveWmi["PNPDeviceID"],
+                Partitions = new List<Partition>()
+            };
 
-            drive.DeviceName = ((string)driveWmi["Model"]).Trim();
-            drive.SerialNumber = ((string)driveWmi["SerialNumber"]).Trim();
-            drive.DiskNumber = diskNumber;
-            drive.DiskCapacity = (UInt64)driveWmi["Size"];
-            drive.BlockSize = (UInt32)driveWmi["BytesPerSector"];
-            drive.InstanceId = (string)driveWmi["PNPDeviceID"];
-
-            drive.Partitions = new List<Partition>();
-                
             diskNumber++;
             drives.Add(drive);
         }
 
-        var PartitionWmiInfo = Data.GetWmiObj("Win32_DiskPartition");
-        foreach (ManagementObject partitionWmi in PartitionWmiInfo)
+        var partitionWmiInfo = Data.GetWmiObj("Win32_DiskPartition");
+        foreach (var partitionWmi in partitionWmiInfo)
         {
-            Partition partition = new Partition()
+            var partition = new Partition()
             {
                 PartitionCapacity = (UInt64)partitionWmi["Size"],
             };
-            UInt32 diskIndex = (UInt32)partitionWmi["DiskIndex"];
+            var diskIndex = (UInt32)partitionWmi["DiskIndex"];
                 
             drives[(int)diskIndex].Partitions.Add(partition);
         }
         try
         {
             var queryCollection = Data.GetWmiObj("MSStorageDriver_FailurePredictData", "*", "\\\\.\\root\\wmi");
-            foreach (ManagementObject m in queryCollection)
+            foreach (var m in queryCollection)
             {
 
                 // The following lines up to the attribute list creationlink smart data to its corresponding drive.
                 // It makes the assumption that the PNPDeviceID in Wmi32_DiskDrive has a matching identification code to MSStorageDriver_FailurePredictData's InstanceID, and that these identification codes are unique.
                 // This is not a safe assumption, testing will be required.
-                string InstanceId = (string)m["InstanceName"];
-                InstanceId = InstanceId.Substring(0, InstanceId.Length - 2);
-                var splitID = InstanceId.Split('\\');
-                InstanceId = splitID[splitID.Count() - 1];
+                var instanceId = (string)m["InstanceName"];
+                instanceId = instanceId.Substring(0, instanceId.Length - 2);
+                var splitID = instanceId.Split('\\');
+                instanceId = splitID[splitID.Count() - 1];
 
-                int driveIndex = -1;
-                for(int i = 0; i < drives.Count; i++)
+                var driveIndex = -1;
+                for(var i = 0; i < drives.Count; i++)
                 {
                     var drive = drives[i];
-                    if(drive.InstanceId.ToLower().Contains(InstanceId.ToLower()))
-                    {
-                        driveIndex = i;
-                        break;
-                    }
+                    if (!drive.InstanceId.ToLower().Contains(instanceId.ToLower())) continue;
+                    driveIndex = i;
+                    break;
                 }
 
                 if(driveIndex == -1)
                 {
-                    Issues.Add($"Smart Data found for {InstanceId} with no matching drive. This is a Specify error");
+                    Issues.Add($"Smart Data found for {instanceId} with no matching drive. This is a Specify error");
                     break;
                 }
 
-                List<SmartAttribute> diskAttributes = new List<SmartAttribute>();
+                var diskAttributes = new List<SmartAttribute>();
 
-                byte[] vs = (byte[])m["VendorSpecific"];
+                var vs = (byte[])m["VendorSpecific"];
                 // Every 12th byte starting at byte index 2 is a smart identifier.
-                for (int i = 2; i < vs.Length; i += 12)
+                for (var i = 2; i < vs.Length; i += 12)
                 {
-                    byte[] c = new byte[12];
+                    var c = new byte[12];
                     // Copy 12 bytes into a new array.
                     Array.Copy(vs, i, c, 0, 12);
 
@@ -706,12 +674,12 @@ public static class DataCache
         {
             // Check if partition drive size is identical to exactly one partition drive size in the list of disks. If it is, add win32_volume data to it.
             // If it is not, create an issue for the failed link.
-            UInt64 partitionSize = 0;
-            UInt64 blockSize = 0;
+            ulong partitionSize = 0;
+            ulong blockSize = 0;
             try
             {
-                partitionSize = (UInt64)partition["Capacity"];
-                blockSize = (UInt64)partition["BlockSize"];
+                partitionSize = (ulong)partition["Capacity"];
+                blockSize = (ulong)partition["BlockSize"];
             }
             catch (NullReferenceException)
             {
@@ -720,74 +688,68 @@ public static class DataCache
             }
 
             // Drive and Partition indices.
-            int dIndex = -1;
-            int pIndex = -1;
+            var dIndex = -1;
+            var pIndex = -1;
 
             // Indicators; If found and unique, store partition information with the drive under dIndex/pIndex.
             // Otherwise, store into non-specific partition list.
-            bool found = false;
-            bool unique = true;
-            for (int di = 0; di < drives.Count(); di++)
+            var found = false;
+            var unique = true;
+            for (var di = 0; di < drives.Count(); di++)
             {
-                for (int pi = 0; pi < drives[di].Partitions.Count(); pi++)
+                for (var pi = 0; pi < drives[di].Partitions.Count(); pi++)
                 {
                     var fileSystem = (string)partition["FileSystem"];
                     if (fileSystem.ToLower().Equals("ntfs"))
                     {
-                        if (partitionSize == drives[di].Partitions[pi].PartitionCapacity ||
-                            partitionSize + blockSize == drives[di].Partitions[pi].PartitionCapacity ||
-                            partitionSize - blockSize == drives[di].Partitions[pi].PartitionCapacity ||
-                            partitionSize + 2048 == drives[di].Partitions[pi].PartitionCapacity ||
-                            partitionSize - 2048 == drives[di].Partitions[pi].PartitionCapacity ||
-                            partitionSize + 1024 == drives[di].Partitions[pi].PartitionCapacity ||
-                            partitionSize - 1024 == drives[di].Partitions[pi].PartitionCapacity ||
-                            partitionSize + 4096 == drives[di].Partitions[pi].PartitionCapacity ||
-                            partitionSize - 4096 == drives[di].Partitions[pi].PartitionCapacity)
+                        if (partitionSize != drives[di].Partitions[pi].PartitionCapacity &&
+                            partitionSize + blockSize != drives[di].Partitions[pi].PartitionCapacity &&
+                            partitionSize - blockSize != drives[di].Partitions[pi].PartitionCapacity &&
+                            partitionSize + 2048 != drives[di].Partitions[pi].PartitionCapacity &&
+                            partitionSize - 2048 != drives[di].Partitions[pi].PartitionCapacity &&
+                            partitionSize + 1024 != drives[di].Partitions[pi].PartitionCapacity &&
+                            partitionSize - 1024 != drives[di].Partitions[pi].PartitionCapacity &&
+                            partitionSize + 4096 != drives[di].Partitions[pi].PartitionCapacity &&
+                            partitionSize - 4096 != drives[di].Partitions[pi].PartitionCapacity) continue;
+                        // If it hasn't been found yet, this is a potential match.
+                        if (!found)
                         {
-                            // If it hasn't been found yet, this is a potential match.
-                            if (!found)
-                            {
-                                pIndex = pi;
-                                dIndex = di;
-                                found = true;
-                            }
-                            // If it has been found, there are two matches, it is not unique, stop the check.
-                            else
-                            {
-                                unique = false;
-                                break;
-                            }
+                            pIndex = pi;
+                            dIndex = di;
+                            found = true;
+                        }
+                        // If it has been found, there are two matches, it is not unique, stop the check.
+                        else
+                        {
+                            unique = false;
+                            break;
                         }
                     }
                     else if (fileSystem.ToLower().Equals("fat32") || fileSystem.ToLower().Equals("exfat32"))
                     {
-                        if (partitionSize == drives[di].Partitions[pi].PartitionCapacity ||
-                            partitionSize + (2048 * 2048) == drives[di].Partitions[pi].PartitionCapacity ||
-                            partitionSize - (2048 * 2048) == drives[di].Partitions[pi].PartitionCapacity)
+                        if (partitionSize != drives[di].Partitions[pi].PartitionCapacity &&
+                            partitionSize + (2048 * 2048) != drives[di].Partitions[pi].PartitionCapacity &&
+                            partitionSize - (2048 * 2048) != drives[di].Partitions[pi].PartitionCapacity) continue;
+                        // If it hasn't been found yet, this is a potential match.
+                        if (!found)
                         {
-                            // If it hasn't been found yet, this is a potential match.
-                            if (!found)
-                            {
-                                pIndex = pi;
-                                dIndex = di;
-                                found = true;
-                            }
-                            // If it has been found, there are two matches, it is not unique, stop the check.
-                            else
-                            {
-                                unique = false;
-                                break;
-                            }
+                            pIndex = pi;
+                            dIndex = di;
+                            found = true;
+                        }
+                        // If it has been found, there are two matches, it is not unique, stop the check.
+                        else
+                        {
+                            unique = false;
+                            break;
                         }
                     }
                 }
                 // If it is not unique, no drive or partition index is valid. Stop checking.
-                if (!unique)
-                {
-                    dIndex = -1;
-                    pIndex = -1;
-                    break;
-                }
+                if (unique) continue;
+                dIndex = -1;
+                pIndex = -1;
+                break;
             }
             if (found && unique)
             {
@@ -798,23 +760,23 @@ public static class DataCache
                     continue;
                 }
                 var matchingPartition = drives[dIndex].Partitions[pIndex];
-                var DriveLetter = partition["DriveLetter"];
-                if (DriveLetter != null)
+                var driveLetter = partition["DriveLetter"];
+                if (driveLetter != null)
                 {
-                    matchingPartition.PartitionLabel = (string)DriveLetter;
+                    matchingPartition.PartitionLabel = (string)driveLetter;
                 }
                 matchingPartition.PartitionFree = (UInt64)partition["FreeSpace"];
-                var FileSystem = partition["FileSystem"];
-                if (FileSystem != null)
+                var fileSystem = partition["FileSystem"];
+                if (fileSystem != null)
                 {
-                    matchingPartition.Filesystem = (string)FileSystem;
+                    matchingPartition.Filesystem = (string)fileSystem;
                 }
             }
             else
             {
-                var DriveLetter = partition["DriveLetter"];
-                string letter = "";
-                if (DriveLetter != null)
+                var driveLetter = partition["DriveLetter"];
+                var letter = "";
+                if (driveLetter != null)
                 {
                 }
                 Issues.Add($"Partition link could not be established for {partitionSize} B partition - Drive Label: {letter}");
@@ -825,17 +787,17 @@ public static class DataCache
     private static SmartAttribute GetAttribute(byte[] data)
     {
         // Smart data is fed backwards, with byte 10 being the first byte for the attribute and byte 5 being the last.
-        byte[] values = new byte[6]
+        var values = new byte[6]
         {
             data[10], data[9], data[8], data[7], data[6], data[5]
         };
 
-        SmartAttribute attribute = new SmartAttribute()
+        var attribute = new SmartAttribute()
         {
             Id = data[0],
             Name = GetAttributeName(data[0]),
         };
-        string rawValue = BitConverter.ToString(values);
+        var rawValue = BitConverter.ToString(values);
 
         rawValue = rawValue.Replace("-", string.Empty);
         attribute.RawValue = rawValue;
@@ -843,179 +805,100 @@ public static class DataCache
     }
     private static string GetAttributeName(byte id)
     {
-        switch (id)
+        return id switch
         {
-            case 0x1:
-                return "Read Error Rate";
-            case 0x2:
-                return "Throughput Performance";
-            case 0x3:
-                return "Spin-Up Time";
-            case 0x4:
-                return "Start/Stop Count";
-            case 0x5:
-                return "Reallocated Sectors Count(!)";
-            case 0x6:
-                return "Read Channel Margin";
-            case 0x7:
-                return "Seek Error Rate";
-            case 0x8:
-                return "Seek Time Performance";
-            case 0x9:
-                return "Power-On Hours";
-            case 0xA:
-                return "Spin Retry Count(!)";
-            case 0xB:
-                return "Calibration Retry Count";
-            case 0xC:
-                return "Power Cycle Count";
-            case 0xD:
-                return "Soft Read Error Rate";
-            case 0x16:
-                return "Current Helium Level";
-            case 0x17:
-                return "Helium Condition Lower";
-            case 0x18:
-                return "Helium Condition Upper";
-            case 0xAA:
-                return "Available Reserved Space";
-            case 0xAB:
-                return "SSD Program Fail Count";
-            case 0xAC:
-                return "SSD Erase Fail Count";
-            case 0xAD:
-                return "SSD Wear Leveling Count";
-            case 0xAE:
-                return "Unexpected Power Loss Count";
-            case 0xAF:
-                return "Power Loss Protection Failure";
-            case 0xB0:
-                return "Erase Fail Count";
-            case 0xB1:
-                return "Wear Range Delta";
-            case 0xB2:
-                return "Used Reserved Block Count";
-            case 0xB3:
-                return "Used Reserved Block Count Total";
-            case 0xB4:
-                return "Unused Reserved Block Count Total";
-            case 0xB5:
-                return "Vendor Specific"; // Program Fail Count Total or Non-4K Aligned Access Count
-            case 0xB6:
-                return "Erase Fail Count";
-            case 0xB7:
-                return "Vendor Specific (WD or Seagate)"; //SATA Downshift Error Count or Runtime Bad Block. WD or Seagate respectively.
-            case 0xB8:
-                return "End-to-end Error Count(!)";
-            case 0xB9:
-                return "Head Stability";
-            case 0xBA:
-                return "Induced Op-Vibration Detection";
-            case 0xBB:
-                return "Reported Uncorrectable Errors(!)";
-            case 0xBC:
-                return "Command Timeout(!)";
-            case 0xBD:
-                return "High Fly Writes(!)";
-            case 0xBE:
-                return "Airflow Temperature";
-            case 0xBF:
-                return "G-Sense Error Rate";
-            case 0xC0:
-                return "Unsafe Shutdown Count";
-            case 0xC1:
-                return "Load Cycle Count";
-            case 0xC2:
-                return "Temperature";
-            case 0xC3:
-                return "Hardware ECC Recovered";
-            case 0xC4:
-                return "Reallocation Event Count(!)";
-            case 0xC5:
-                return "Current Pending Sector Count(!)";
-            case 0xC6:
-                return "Uncorrectable Sector Count(!)";
-            case 0xC7:
-                return "UltraDMA CRC Error Count";
-            case 0xC8:
-                return "Multi-Zone Error Rate(!)(Unless Fujitsu)";
-            case 0xC9:
-                return "Soft Read Error Rate(!)";
-            case 0xCA:
-                return "Data Address Mark Errors";
-            case 0xCB:
-                return "Run Out Cancel";
-            case 0xCC:
-                return "Soft ECC Correction";
-            case 0xCD:
-                return "Thermal Asperity Rate";
-            case 0xCE:
-                return "Flying Height";
-            case 0xCF:
-                return "Spin High Current";
-            case 0xD0:
-                return "Spin Buzz";
-            case 0xD1:
-                return "Offline Seek Performance";
-            case 0xD2:
-                return "Vibration During Write";
-            case 0xD3:
-                return "Vibration During Write";
-            case 0xD4:
-                return "Shock During Write";
-            case 0xDC:
-                return "Disk Shift";
-            case 0xDD:
-                return "G-Sense Error Rate";
-            case 0xDE:
-                return "Loaded Hours";
-            case 0xDF:
-                return "Load/Unload Retry Count";
-            case 0xE0:
-                return "Load Friction";
-            case 0xE1:
-                return "Load/Unload Cycle Count";
-            case 0xE2:
-                return "Load 'In'-time";
-            case 0xE3:
-                return "Torque Amplification Count";
-            case 0xE4:
-                return "Power-Off Retract Cycle";
-            case 0xE6:
-                return "GMR Head Amplitude / Drive Life Protection Status"; // HDDs / SSDs respectively.
-            case 0xE7:
-                return "SSD Life Left / HDD Temperature";
-            case 0xE8:
-                return "Vendor Specific"; // Endurance Remaining or Available Reserved Space.
-            case 0xE9:
-                return "Media Wearout Indicator";
-            case 0xEA:
-                return "Average and Maximum Erase Count";
-            case 0xEB:
-                return "Good Block and Free Block Count";
-            case 0xF0:
-                return "Head Flying Hours (Unless Fujitsu)";
-            case 0xF1:
-                return "Total LBAs Written";
-            case 0xF2:
-                return "Total LBAs Read";
-            case 0xF3:
-                return "Total LBAs Written Expanded";
-            case 0xF4:
-                return "Total LBAs Read Expanded";
-            case 0xF9:
-                return "NAND Writes (# of GiB)";
-            case 0xFA:
-                return "Read Error Retry Rate";
-            case 0xFB:
-                return "Minimum Spares Remaining";
-            case 0xFC:
-                return "Newly Added Bad Flash Block";
-            case 0xFE:
-                return "Free Fall Protection";
-            default:
-                return "Vendor Specific";
+            0x1 => "Read Error Rate",
+            0x2 => "Throughput Performance",
+            0x3 => "Spin-Up Time",
+            0x4 => "Start/Stop Count",
+            0x5 => "Reallocated Sectors Count(!)",
+            0x6 => "Read Channel Margin",
+            0x7 => "Seek Error Rate",
+            0x8 => "Seek Time Performance",
+            0x9 => "Power-On Hours",
+            0xA => "Spin Retry Count(!)",
+            0xB => "Calibration Retry Count",
+            0xC => "Power Cycle Count",
+            0xD => "Soft Read Error Rate",
+            0x16 => "Current Helium Level",
+            0x17 => "Helium Condition Lower",
+            0x18 => "Helium Condition Upper",
+            0xAA => "Available Reserved Space",
+            0xAB => "SSD Program Fail Count",
+            0xAC => "SSD Erase Fail Count",
+            0xAD => "SSD Wear Leveling Count",
+            0xAE => "Unexpected Power Loss Count",
+            0xAF => "Power Loss Protection Failure",
+            0xB0 => "Erase Fail Count",
+            0xB1 => "Wear Range Delta",
+            0xB2 => "Used Reserved Block Count",
+            0xB3 => "Used Reserved Block Count Total",
+            0xB4 => "Unused Reserved Block Count Total",
+            0xB5 => "Vendor Specific" // Program Fail Count Total or Non-4K Aligned Access Count
+            ,
+            0xB6 => "Erase Fail Count",
+            0xB7 =>
+                "Vendor Specific (WD or Seagate)" //SATA Downshift Error Count or Runtime Bad Block. WD or Seagate respectively.
+            ,
+            0xB8 => "End-to-end Error Count(!)",
+            0xB9 => "Head Stability",
+            0xBA => "Induced Op-Vibration Detection",
+            0xBB => "Reported Uncorrectable Errors(!)",
+            0xBC => "Command Timeout(!)",
+            0xBD => "High Fly Writes(!)",
+            0xBE => "Airflow Temperature",
+            0xBF => "G-Sense Error Rate",
+            0xC0 => "Unsafe Shutdown Count",
+            0xC1 => "Load Cycle Count",
+            0xC2 => "Temperature",
+            0xC3 => "Hardware ECC Recovered",
+            0xC4 => "Reallocation Event Count(!)",
+            0xC5 => "Current Pending Sector Count(!)",
+            0xC6 => "Uncorrectable Sector Count(!)",
+            0xC7 => "UltraDMA CRC Error Count",
+            0xC8 => "Multi-Zone Error Rate(!)(Unless Fujitsu)",
+            0xC9 => "Soft Read Error Rate(!)",
+            0xCA => "Data Address Mark Errors",
+            0xCB => "Run Out Cancel",
+            0xCC => "Soft ECC Correction",
+            0xCD => "Thermal Asperity Rate",
+            0xCE => "Flying Height",
+            0xCF => "Spin High Current",
+            0xD0 => "Spin Buzz",
+            0xD1 => "Offline Seek Performance",
+            0xD2 => "Vibration During Write",
+            0xD3 => "Vibration During Write",
+            0xD4 => "Shock During Write",
+            0xDC => "Disk Shift",
+            0xDD => "G-Sense Error Rate",
+            0xDE => "Loaded Hours",
+            0xDF => "Load/Unload Retry Count",
+            0xE0 => "Load Friction",
+            0xE1 => "Load/Unload Cycle Count",
+            0xE2 => "Load 'In'-time",
+            0xE3 => "Torque Amplification Count",
+            0xE4 => "Power-Off Retract Cycle",
+            0xE6 => "GMR Head Amplitude / Drive Life Protection Status" // HDDs / SSDs respectively.
+            ,
+            0xE7 => "SSD Life Left / HDD Temperature",
+            0xE8 => "Vendor Specific" // Endurance Remaining or Available Reserved Space.
+            ,
+            0xE9 => "Media Wearout Indicator",
+            0xEA => "Average and Maximum Erase Count",
+            0xEB => "Good Block and Free Block Count",
+            0xF0 => "Head Flying Hours (Unless Fujitsu)",
+            0xF1 => "Total LBAs Written",
+            0xF2 => "Total LBAs Read",
+            0xF3 => "Total LBAs Written Expanded",
+            0xF4 => "Total LBAs Read Expanded",
+            0xF9 => "NAND Writes (# of GiB)",
+            0xFA => "Read Error Retry Rate",
+            0xFB => "Minimum Spares Remaining",
+            0xFC => "Newly Added Bad Flash Block",
+            0xFE => "Free Fall Protection",
+            _ => "Vendor Specific"
         };
+        ;
     }
     private static List<RamStick> GetSMBiosMemoryInfo()
     {
@@ -1056,7 +939,7 @@ public static class DataCache
             Array.Copy(SMBios, offset, data, 0, dataLength);
             offset += dataLength;
 
-            List<string> smbStringsList = new List<string>();
+            var smbStringsList = new List<string>();
 
             if (offset < SMBios.Length && SMBios[offset] == 0)
                 offset++;
@@ -1064,7 +947,7 @@ public static class DataCache
             // Iterate the byte array to build a list of SMBios structures.
             while (offset < SMBios.Length && SMBios[offset] != 0)
             {
-                System.Text.StringBuilder smbDataString = new System.Text.StringBuilder();
+                var smbDataString = new System.Text.StringBuilder();
                 while (offset < SMBios.Length && SMBios[offset] != 0)
                 {
                     smbDataString.Append((char)SMBios[offset]);
@@ -1124,8 +1007,8 @@ public static class DataCache
     {
         //Any temp sensor reading below 24 will be filtered out
         //These sensors are either not reading in celsius, are in error, or we cannot interpret them properly here
-        List<TempMeasurement> Temps = new List<TempMeasurement>();
-        Computer computer = new Computer
+        var Temps = new List<TempMeasurement>();
+        var computer = new Computer
         {
             IsCpuEnabled= true,
             IsGpuEnabled= true,
@@ -1134,26 +1017,21 @@ public static class DataCache
         computer.Open();
         computer.Accept(new SensorUpdateVisitor());
 
-        foreach (IHardware hardware in computer.Hardware)
+        foreach (var hardware in computer.Hardware)
         {
-            foreach (IHardware subhardware in hardware.SubHardware)
-                foreach (ISensor sensor in subhardware.Sensors)
-                    if (sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24)
-                        Temps.Add(new TempMeasurement
-                        {
-                            Hardware = hardware.Name,
-                            SensorName = sensor.Name,
-                            SensorValue = sensor.Value.Value
-                        });
+            Temps.AddRange(
+                from subhardware in hardware.SubHardware from sensor in subhardware.Sensors 
+                where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24 
+                select new TempMeasurement 
+                    { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
+                );
 
-            foreach (ISensor sensor in hardware.Sensors)
-                if (sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24)
-                    Temps.Add(new TempMeasurement
-                    {
-                        Hardware = hardware.Name,
-                        SensorName= sensor.Name,
-                        SensorValue = sensor.Value.Value
-                    });
+            Temps.AddRange(
+                from sensor in hardware.Sensors 
+                where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24 
+                select new TempMeasurement 
+                    { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
+                );
         }
 
         computer.Close();
@@ -1193,17 +1071,17 @@ public class DiskDrive
     public string DeviceName;
     public string SerialNumber;
     public int DiskNumber;
-    public UInt64 DiskCapacity;
+    public ulong DiskCapacity;
     public string DiskFree;
-    public UInt32 BlockSize;
+    public ulong BlockSize;
     public List<Partition> Partitions;
     public List<SmartAttribute> SmartData;
     [NonSerialized()] public string InstanceId; // Only used to link SmartData, do not serialize. Unless you really want to.
 }
 public class Partition
 {
-    public UInt64 PartitionCapacity;
-    public UInt64 PartitionFree;
+    public ulong PartitionCapacity;
+    public ulong PartitionFree;
     public string PartitionLabel;
     public string Filesystem;
 }
@@ -1228,7 +1106,7 @@ public class SensorUpdateVisitor : IVisitor
     public void VisitHardware(IHardware hardware)
     {
         hardware.Update();
-        foreach (IHardware subHardware in hardware.SubHardware) subHardware.Accept(this);
+        foreach (var subHardware in hardware.SubHardware) subHardware.Accept(this);
     }
     public void VisitSensor(ISensor sensor) { }
     public void VisitParameter(IParameter parameter) { }
