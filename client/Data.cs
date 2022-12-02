@@ -590,16 +590,48 @@ public static class DataCache
         var diskNumber = 0;
         foreach (var driveWmi in driveWmiInfo)
         {
-            var drive = new DiskDrive
+            DiskDrive drive = new();
+            try
             {
-                DeviceName = ((string)driveWmi["Model"]).Trim(),
-                SerialNumber = ((string)driveWmi["SerialNumber"]).Trim(),
-                DiskNumber = diskNumber,
-                DiskCapacity = (ulong)driveWmi["Size"],
-                BlockSize = (uint)driveWmi["BytesPerSector"],
-                InstanceId = (string)driveWmi["PNPDeviceID"],
-                Partitions = new List<Partition>()
-            };
+                drive.DeviceName = ((string)driveWmi["Model"]).Trim();
+            }
+            catch (NullReferenceException)
+            {
+                drive.DeviceName = "Unknown";
+                Issues.Add($"Could not retrieve device name of drive @ index {diskNumber}");
+            }
+            try
+            {
+                drive.SerialNumber = ((string)driveWmi["SerialNumber"]).Trim();
+            }
+            catch (NullReferenceException)
+            {
+                drive.SerialNumber = "Unknown";
+                Issues.Add($"Could not retrieve serial number of drive @ index {diskNumber}");
+            }
+
+            drive.DiskNumber = diskNumber;
+
+            try 
+            { 
+                drive.DiskCapacity = (ulong)driveWmi["Size"];
+            }
+            catch (NullReferenceException)
+            {
+                drive.DiskCapacity = 0;
+                Issues.Add($"Could not retrieve capacity of drive @ index {diskNumber}");
+            }
+            try
+            { 
+                drive.InstanceId = (string)driveWmi["PNPDeviceID"];
+            }
+            catch (NullReferenceException)
+            {
+                drive.InstanceId = "Unknown";
+                Issues.Add($"Could not retrieve Instance ID of drive @ index {diskNumber}");
+            }
+
+            drive.Partitions = new List<Partition>();
 
             diskNumber++;
             drives.Add(drive);
