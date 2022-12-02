@@ -14,6 +14,7 @@ using System.Text;
 using System.Net.NetworkInformation;
 using System.Net;
 using System.IO;
+using LibreHardwareMonitor.Hardware;
 //using System.Threading.Tasks;
 
 namespace specify_client;
@@ -169,6 +170,7 @@ public static class DataCache
     public static Dictionary<string, object> Tpm { get; private set; }
     public static List<Dictionary<string, object>> Drivers { get; private set; }
     public static List<Dictionary<string, object>> Devices { get; private set; }
+    public static List<TempMeasurement> Temperatures { get; private set; }
     public static bool? SecureBootEnabled { get; private set; }
     private static readonly List<string> SystemProcesses = new List<string>()
     {
@@ -431,6 +433,7 @@ public static class DataCache
         Devices = Data.GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
         Ram = GetSMBiosMemoryInfo();
         Disks = GetDiskDriveData();
+        Temperatures = GetTemps();
     }
 
     public static void MakeSecurityData()
@@ -1117,6 +1120,45 @@ public static class DataCache
         }
         return SMBiosMemoryInfo;
     }
+    private static List<TempMeasurement> GetTemps()
+    {
+        //Any temp sensor reading below 24 will be filtered out
+        //These sensors are either not reading in celsius, are in error, or we cannot interpret them properly here
+        List<TempMeasurement> Temps = new List<TempMeasurement>();
+        Computer computer = new Computer
+        {
+            IsCpuEnabled= true,
+            IsGpuEnabled= true,
+            IsMotherboardEnabled= true
+        };
+        computer.Open();
+        computer.Accept(new SensorUpdateVisitor());
+
+        foreach (IHardware hardware in computer.Hardware)
+        {
+            foreach (IHardware subhardware in hardware.SubHardware)
+                foreach (ISensor sensor in subhardware.Sensors)
+                    if (sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24)
+                        Temps.Add(new TempMeasurement
+                        {
+                            Hardware = hardware.Name,
+                            SensorName = sensor.Name,
+                            SensorValue = sensor.Value.Value
+                        });
+
+            foreach (ISensor sensor in hardware.Sensors)
+                if (sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24)
+                    Temps.Add(new TempMeasurement
+                    {
+                        Hardware = hardware.Name,
+                        SensorName= sensor.Name,
+                        SensorValue = sensor.Value.Value
+                    });
+        }
+
+        computer.Close();
+        return Temps;
+    }
 }
 public class NetworkRoute
 {
@@ -1170,4 +1212,24 @@ public class SmartAttribute
     public byte Id;
     public string Name;
     public string RawValue;
+}
+public class TempMeasurement
+{
+    public string Hardware;
+    public string SensorName;
+    public float SensorValue;
+}
+public class SensorUpdateVisitor : IVisitor
+{
+    public void VisitComputer(IComputer computer)
+    {
+        computer.Traverse(this);
+    }
+    public void VisitHardware(IHardware hardware)
+    {
+        hardware.Update();
+        foreach (IHardware subHardware in hardware.SubHardware) subHardware.Accept(this);
+    }
+    public void VisitSensor(ISensor sensor) { }
+    public void VisitParameter(IParameter parameter) { }
 }
