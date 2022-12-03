@@ -167,6 +167,7 @@ public static class DataCache
     public static Dictionary<string, object> Cpu {get; private set;}
     public static List<Dictionary<string, object>> Gpu {get; private set;}
     public static Dictionary<string, object> Motherboard {get; private set;}
+    public static List<Dictionary<string, object>> AudioDevices { get; private set; }
     public static Dictionary<string, object> Tpm { get; private set; }
     public static List<Dictionary<string, object>> Drivers { get; private set; }
     public static List<Dictionary<string, object>> Devices { get; private set; }
@@ -380,6 +381,7 @@ public static class DataCache
             "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
             + "CurrentRefreshRate, CurrentBitsPerPixel");
         Motherboard = Data.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").First();
+        AudioDevices = Data.GetWmi("Win32_SoundDevice", "Name, Manufacturer, Status, DeviceID");
         Drivers = Data.GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
         Devices = Data.GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
         Ram = GetSMBiosMemoryInfo();

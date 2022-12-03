@@ -133,6 +133,7 @@ public class MonolithHardware
     public Dictionary<string, object> Cpu;
     public List<Dictionary<string, object>> Gpu;
     public Dictionary<string, object> Motherboard;
+    public List<Dictionary<string, object>> AudioDevices;
     public List<Dictionary<string, object>> Drivers;
     public List<Dictionary<string, object>> Devices;
     public List<DiskDrive> Storage;
@@ -144,6 +145,7 @@ public class MonolithHardware
         Cpu = DataCache.Cpu;
         Gpu = DataCache.Gpu;
         Motherboard = DataCache.Motherboard;
+        AudioDevices = DataCache.AudioDevices;
         Drivers = DataCache.Drivers;
         Devices = DataCache.Devices;
         Storage = DataCache.Disks;
