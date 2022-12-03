@@ -180,26 +180,6 @@ public static class DataCache
         "Idle"
     };
 
-    // DllImports to P/Invoke process information queries. The typical C# process call fails on certain system processes.
-    [Flags]
-    private enum ProcessAccessFlags : uint
-    {
-        QueryLimitedInformation = 0x00001000
-    }
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool QueryFullProcessImageName(
-        [In] IntPtr hProcess,
-        [In] int dwFlags,
-        [Out] StringBuilder lpExeName,
-        ref int lpdwSize);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern IntPtr OpenProcess(
-        ProcessAccessFlags processAccess,
-        bool bInheritHandle,
-        int processId);
-
     public static void MakeMainData()
     {
         Os = Data.GetWmi("Win32_OperatingSystem").First();
@@ -245,9 +225,9 @@ public static class DataCache
                 int capacity = 2000;
 
                 StringBuilder sb = new StringBuilder(capacity);
-                IntPtr ptr = OpenProcess(ProcessAccessFlags.QueryLimitedInformation, false, rawProcess.Id);
+                IntPtr ptr = Interop.OpenProcess(Interop.ProcessAccessFlags.QueryLimitedInformation, false, rawProcess.Id);
 
-                if (!QueryFullProcessImageName(ptr, 0, sb, ref capacity))
+                if (!Interop.QueryFullProcessImageName(ptr, 0, sb, ref capacity))
                 {
                     if (!SystemProcesses.Contains(rawProcess.ProcessName))
                     {

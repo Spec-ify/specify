@@ -62,6 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data.cs" />
+    <Compile Include="Interop.cs" />
     <Compile Include="Monolith.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Progress.cs" />
