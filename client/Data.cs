@@ -14,6 +14,7 @@ using System.Text;
 using System.Net.NetworkInformation;
 using System.Net;
 using System.IO;
+using System.Xml;
 using LibreHardwareMonitor.Hardware;
 //using System.Threading.Tasks;
 
@@ -168,6 +169,7 @@ public static class DataCache
     public static List<Dictionary<string, object>> Gpu {get; private set;}
     public static Dictionary<string, object> Motherboard {get; private set;}
     public static List<Dictionary<string, object>> AudioDevices { get; private set; }
+    public static List<Monitor> MonitorInfo { get; private set; }
     public static Dictionary<string, object> Tpm { get; private set; }
     public static List<Dictionary<string, object>> Drivers { get; private set; }
     public static List<Dictionary<string, object>> Devices { get; private set; }
@@ -382,6 +384,7 @@ public static class DataCache
             + "CurrentRefreshRate, CurrentBitsPerPixel");
         Motherboard = Data.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").First();
         AudioDevices = Data.GetWmi("Win32_SoundDevice", "Name, Manufacturer, Status, DeviceID");
+        MonitorInfo = GetMonitorInfo();
         Drivers = Data.GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
         Devices = Data.GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
         Ram = GetSMBiosMemoryInfo();
@@ -561,6 +564,22 @@ public static class DataCache
                 break;
             }
         }
+    }
+    public static List<Monitor> GetMonitorInfo()
+    {
+        List<Monitor> MonitorInfo = new List<Monitor>();
+
+        System.Diagnostics.Process process = new System.Diagnostics.Process();
+        System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+        startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+
+        startInfo.FileName = "cmd.exe";
+        startInfo.Arguments = "/C dxdiag /x dxoutput.xml";
+        process.StartInfo = startInfo;
+        process.Start();
+
+        // Still need to work on this
+
     }
     private static List<DiskDrive> GetDiskDriveData()
     {
@@ -1105,6 +1124,14 @@ public class RamStick
 
     /** MiB */
     public int? Capacity;
+}
+public class Monitor
+{
+    public string GPU;
+    public string MonitorName;
+    public string MonitorID;
+    public string NativeRes;
+    public string CurrentRes;
 }
 public class DiskDrive
 {
