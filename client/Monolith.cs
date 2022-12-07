@@ -179,12 +179,14 @@ public class MonolithNetwork
 {
     public List<Dictionary<string, object>> Adapters;
     public List<Dictionary<string, object>> Routes;
+    public List<NetworkConnection> NetworkConnections;
     public string HostsFile;
 
     public MonolithNetwork()
     {
         Adapters = DataCache.NetAdapters;
         Routes = DataCache.IPRoutes;
+        NetworkConnections = DataCache.NetworkConnections;
         HostsFile = DataCache.HostsFile;
     }
 }
