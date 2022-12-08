@@ -15,6 +15,9 @@ using System.Net.NetworkInformation;
 using System.Net;
 using System.IO;
 using LibreHardwareMonitor.Hardware;
+using System.Xml;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 using System.Security.Cryptography.X509Certificates;
 //using System.Threading.Tasks;
 
@@ -178,6 +181,7 @@ public static class DataCache
     public static List<Dictionary<string, object>> Drivers { get; private set; }
     public static List<Dictionary<string, object>> Devices { get; private set; }
     public static List<TempMeasurement> Temperatures { get; private set; }
+    public static List<BatteryData> Batteries { get; private set; }
     public static bool? SecureBootEnabled { get; private set; }
 
     /*[StructLayout(LayoutKind.Sequential)]
@@ -517,6 +521,7 @@ public static class DataCache
         Ram = GetSMBiosMemoryInfo();
         Disks = GetDiskDriveData();
         Temperatures = GetTemps();
+        Batteries = GetBatteryData();
     }
 
     public static void MakeSecurityData()
@@ -1184,28 +1189,37 @@ public static class DataCache
             IsGpuEnabled = true,
             IsMotherboardEnabled = true
         };
-        computer.Open();
-        computer.Accept(new SensorUpdateVisitor());
 
-        foreach (var hardware in computer.Hardware)
+        try
         {
-            Temps.AddRange(
-                from subhardware in hardware.SubHardware
-                from sensor in subhardware.Sensors
-                where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24
-                select new TempMeasurement
-                { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
-                );
+            computer.Open();
+            computer.Accept(new SensorUpdateVisitor());
 
-            Temps.AddRange(
-                from sensor in hardware.Sensors
-                where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24
-                select new TempMeasurement
-                { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
-                );
+            foreach (var hardware in computer.Hardware)
+            {
+                Temps.AddRange(
+                    from subhardware in hardware.SubHardware
+                    from sensor in subhardware.Sensors
+                    where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24
+                    select new TempMeasurement
+                    { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
+                    );
+
+                Temps.AddRange(
+                    from sensor in hardware.Sensors
+                    where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24
+                    select new TempMeasurement
+                    { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
+                    );
+            }
+        } catch (OverflowException)
+        {
+            Issues.Add("Absolute value overflow occured when fetching temperature data");
+        } finally
+        {
+            computer.Close();
         }
 
-        computer.Close();
         return Temps;
     }
     public static List<MIB_TCPROW_OWNER_PID> GetAllTCPv4Connections()
@@ -1357,6 +1371,57 @@ public static class DataCache
         }
         return connectionsList;
     }
+    private static List<BatteryData> GetBatteryData()
+    {
+        List<BatteryData> BatteryInfo = new List<BatteryData>();
+        String path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location); //Directory the .exe has been launched from
+
+        Process cmd = new Process //Generate the XML report we'll be grabbing the data from
+        {
+            StartInfo =
+            {
+                FileName = "cmd",
+                WorkingDirectory = path,
+                CreateNoWindow = true,
+                Arguments = "/Q /C powercfg /batteryreport /xml"
+            }
+        };
+        cmd.Start();
+        Stopwatch timer = Stopwatch.StartNew();
+        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(10));
+
+        while (timer.Elapsed < timeout)
+            if (File.Exists(Path.Combine(path, "battery-report.xml")))
+            {
+                XmlDocument doc = new XmlDocument();
+                doc.Load(Path.Combine(path, "battery-report.xml"));
+                List<JToken> BatteryData = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["BatteryReport"]["Batteries"].Children().Children().ToList();
+
+                foreach (JToken battery in BatteryData)
+                    if (battery.HasValues)
+                    {
+                        BatteryInfo.Add(
+                            new BatteryData
+                            {
+                                Name = (string)battery["Id"],
+                                Manufacturer = (string)battery["Manufacturer"],
+                                Chemistry = (string)battery["Chemistry"],
+                                Design_Capacity = (string)battery["DesignCapacity"],
+                                Full_Charge_Capacity = (string)battery["FullChargeCapacity"],
+                                Remaining_Life_Percentage = string.Concat(((float)battery["FullChargeCapacity"] / (float)battery["DesignCapacity"] * 100).ToString("0.00"), "%")
+                            });
+                    }
+                File.Delete(Path.Combine(path, "battery-report.xml"));
+                break;
+            }
+
+        if (timer.Elapsed > timeout)
+            Issues.Add("Battery report was not generated before the timeout!");
+
+        timer.Stop();
+        cmd.Close();
+        return BatteryInfo;
+    }
 }
 
 public class NetworkRoute
@@ -1425,6 +1490,15 @@ public class NetworkConnection
     public string RemoteIPAddress;
     public int RemotePort;
     public uint OwningPID;
+}
+public class BatteryData
+{
+    public string Name;
+    public string Manufacturer;
+    public string Chemistry;
+    public string Design_Capacity;
+    public string Full_Charge_Capacity;
+    public string Remaining_Life_Percentage;
 }
 public class SensorUpdateVisitor : IVisitor
 {

@@ -138,6 +138,7 @@ public class MonolithHardware
     public List<Dictionary<string, object>> Devices;
     public List<DiskDrive> Storage;
     public List<TempMeasurement> Temperatures;
+    public List<BatteryData> Batteries;
         
     public MonolithHardware()
     {
@@ -150,6 +151,7 @@ public class MonolithHardware
         Devices = DataCache.Devices;
         Storage = DataCache.Disks;
         Temperatures = DataCache.Temperatures;
+        Batteries = DataCache.Batteries;
     }
 }
 
