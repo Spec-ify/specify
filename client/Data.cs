@@ -704,18 +704,53 @@ public static class DataCache
     public static List<Monitor> GetMonitorInfo()
     {
         List<Monitor> MonitorInfo = new List<Monitor>();
+        String path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
 
-        System.Diagnostics.Process process = new System.Diagnostics.Process();
-        System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-        startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+        Process cmd = new Process
+        {
+            StartInfo =
+            {
+                FileName = "cmd",
+                WorkingDirectory = path,
+                CreateNoWindow = true,
+                Arguments = "/Q /C dxdiag /x dxinfo.xml"
+            }
+        };
 
-        startInfo.FileName = "cmd.exe";
-        startInfo.Arguments = "/C dxdiag /x dxoutput.xml";
-        process.StartInfo = startInfo;
-        process.Start();
+        cmd.Start();
 
-        // Still need to work on this
+        Stopwatch timer = Stopwatch.StartNew();
+        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(10));
 
+        while (timer.Elapsed < timeout)
+            if (File.Exists(Path.Combine(path, "dxinfo.xml")))
+            {
+                XmlDocument doc = new XmlDocument();
+                doc.Load(Path.Combine(path, "dxinfo.xml"));
+                List<JToken> Monitor = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["DxDiag"]["DisplayDevices"].Children().Children().ToList();
+
+                foreach (JToken DisplayDevice in MonitorInfo)
+                    if (DisplayDevice.HasValues)
+                    {
+                        MonitorInfo.Add(
+                            new Monitor
+                            {
+                                Name = (string)DisplayDevice["CardName"],
+                                ChipType = (string)DisplayDevice["ChipType"],
+                                DedicatedMemory = (string)DisplayDevice["DedicatedMemory"],
+                                MonitorName = (string)DisplayDevice["MonitorName"],
+                                NativeMode = (string)DisplayDevice["NativeMode"]
+                            });
+                    }
+                File.Delete(Path.Combine(path, "dxinfo.xml"));
+                break;
+            }
+        if (timer.Elapsed > timeout)
+            Issues.Add("Monitor report was not generated before the timeout!");
+
+        timer.Stop();
+        cmd.Close();
+        return MonitorInfo;
     }
     private static List<DiskDrive> GetDiskDriveData()
     {
@@ -1473,11 +1508,11 @@ public class RamStick
 }
 public class Monitor
 {
-    public string GPU;
+    public string Name;
+    public string ChipType;
+    public string DedicatedMemory;
     public string MonitorName;
-    public string MonitorID;
-    public string NativeRes;
-    public string CurrentRes;
+    public string NativeMode;
 }
 public class DiskDrive
 {
