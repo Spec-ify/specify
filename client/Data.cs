@@ -16,6 +16,10 @@ using System.Net;
 using System.IO;
 using System.Xml;
 using LibreHardwareMonitor.Hardware;
+using System.Xml;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.Security.Cryptography.X509Certificates;
 //using System.Threading.Tasks;
 
 namespace specify_client;
@@ -40,7 +44,7 @@ public class Data
             {
                 tempD[j.Name] = j.Value;
             }
-                
+
             res.Add(tempD);
         }
 
@@ -94,7 +98,7 @@ public class Data
             ) continue;
 
             if (task.State != TaskState.Ready || task.State != TaskState.Running) continue;
-                
+
             var triggers = task.Definition.Triggers;
             var triggersFlag = true;
             foreach (var trigger in triggers)
@@ -107,7 +111,7 @@ public class Data
 
             res.Add(task);
         }
-            
+
         foreach (var sfld in fld.SubFolders)
             res.AddRange(EnumTsTasks(sfld));
 
@@ -127,7 +131,7 @@ public class Data
     {
         return d.ToString("yyyy-MM-ddTHH:mm:sszzz");
     }
-        
+
     public static T GetRegistryValue<T>(RegistryKey regKey, string path, string name, T def = default)
     {
         var key = regKey.OpenSubKey(path);
@@ -142,6 +146,10 @@ public class Data
  */
 public static class DataCache
 {
+    [NonSerialized]
+    public const int AF_INET = 2;    // IP_v4 = System.Net.Sockets.AddressFamily.InterNetwork
+    [NonSerialized]
+    public const int AF_INET6 = 23;  // IP_v6 = System.Net.Sockets.AddressFamily.InterNetworkV6
     public static List<string> Issues { get; set; }
     public static Dictionary<string, object> Os { get; private set; }
     public static Dictionary<string, object> Cs { get; private set; }
@@ -154,27 +162,149 @@ public static class DataCache
     public static Dictionary<string, DateTime?> ScheduledTasks { get; private set; }
     public static List<string> AvList { get; private set; }
     public static List<string> FwList { get; private set; }
-    public static string HostsFile { get; private set;  }
+    public static string HostsFile { get; private set; }
     public static bool? UacEnabled { get; private set; }
     public static int? UacLevel { get; private set; }
     public static List<Dictionary<string, object>> NetAdapters { get; private set; }
     public static List<Dictionary<string, object>> IPRoutes { get; private set; }
+    public static List<NetworkConnection> NetworkConnections { get; private set; }
 
     public static string Username => Environment.UserName;
     // all the hardware stuff
     //each item in the list is a stick of ram
-    public static List<RamStick> Ram {get; private set;}
+    public static List<RamStick> Ram { get; private set; }
     public static List<DiskDrive> Disks { get; private set; }
-    public static Dictionary<string, object> Cpu {get; private set;}
-    public static List<Dictionary<string, object>> Gpu {get; private set;}
-    public static Dictionary<string, object> Motherboard {get; private set;}
+    public static Dictionary<string, object> Cpu { get; private set; }
+    public static List<Dictionary<string, object>> Gpu { get; private set; }
+    public static Dictionary<string, object> Motherboard { get; private set; }
     public static List<Dictionary<string, object>> AudioDevices { get; private set; }
     public static List<Monitor> MonitorInfo { get; private set; }
     public static Dictionary<string, object> Tpm { get; private set; }
     public static List<Dictionary<string, object>> Drivers { get; private set; }
     public static List<Dictionary<string, object>> Devices { get; private set; }
     public static List<TempMeasurement> Temperatures { get; private set; }
+    public static List<BatteryData> Batteries { get; private set; }
     public static bool? SecureBootEnabled { get; private set; }
+
+    /*[StructLayout(LayoutKind.Sequential)]
+    public struct MIB_TCPSTATS
+    {
+        public int dwRtoAlgorithm;
+        public int dwRtoMin;
+        public int dwRtoMax;
+        public int dwMaxConn;
+        public int dwActiveOpens;
+        public int dwPassiveOpens;
+        public int dwAttemptFails;
+        public int dwEstabResets;
+        public int dwCurrEstab;
+        public int dw64InSegs; // UInt64?
+        public int dw64OutSegs; // UInt64?
+        public int dwRetransSegs;
+        public int dwInErrs;
+        public int dwOutRsts;
+        public int dwNumConns;
+    }*/
+    /*[StructLayout(LayoutKind.Sequential)]
+    public struct MIB_UDPSTATS
+    {
+        public int dwInDatagrams;
+        public int dwNoPorts;
+        public int dwInErrors;
+        public int dwOutDatagrams;
+        public int dwNumAddrs;
+    }*/
+    /*[StructLayout(LayoutKind.Sequential)]
+    public struct MIB_TCPTABLE_EX
+    {
+        public int dwNumEntries;
+        public MIB_TCPROW_EX[] table;
+    }*/
+    /*[StructLayout(LayoutKind.Sequential)]
+    public struct MIB_TCPROW_EX
+    {
+        public int dwState;
+        public int dwLocalAddr;
+        public int dwLocalPort;
+        public int dwRemoteAddr;
+        public int dwRemotePort;
+        public int dwProcessId;
+    }*/
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MIB_TCPROW_OWNER_PID
+    {
+        public uint state;
+        public uint localAddr;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public byte[] localPort;
+        public uint remoteAddr;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public byte[] remotePort;
+        public uint owningPid;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MIB_TCPTABLE_OWNER_PID
+    {
+        public uint dwNumEntries;
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.Struct, SizeConst = 1)]
+        public MIB_TCPROW_OWNER_PID[] table;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MIB_TCP6ROW_OWNER_PID
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public byte[] localAddr;
+        public uint localScopeId;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public byte[] localPort;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public byte[] remoteAddr;
+        public uint remoteScopeId;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public byte[] remotePort;
+        public uint state;
+        public uint owningPid;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MIB_TCP6TABLE_OWNER_PID
+    {
+        public uint dwNumEntries;
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.Struct, SizeConst = 1)]
+        public MIB_TCP6ROW_OWNER_PID[] table;
+    }
+    public enum TCP_TABLE_CLASS
+    {
+        TCP_TABLE_BASIC_LISTENER,
+        TCP_TABLE_BASIC_CONNECTIONS,
+        TCP_TABLE_BASIC_ALL,
+        TCP_TABLE_OWNER_PID_LISTENER,
+        TCP_TABLE_OWNER_PID_CONNECTIONS,
+        TCP_TABLE_OWNER_PID_ALL,
+        TCP_TABLE_OWNER_MODULE_LISTENER,
+        TCP_TABLE_OWNER_MODULE_CONNECTIONS,
+        TCP_TABLE_OWNER_MODULE_ALL
+    }
+    /*public enum MIB_TCP_STATE
+    {
+        MIB_TCP_STATE_CLOSED,
+        MIB_TCP_STATE_LISTEN,
+        MIB_TCP_STATE_SYN_SENT,
+        MIB_TCP_STATE_SYN_RCVD,
+        MIB_TCP_STATE_ESTAB,
+        MIB_TCP_STATE_FIN_WAIT1,
+        MIB_TCP_STATE_FIN_WAIT2,
+        MIB_TCP_STATE_CLOSE_WAIT,
+        MIB_TCP_STATE_CLOSING,
+        MIB_TCP_STATE_LAST_ACK,
+        MIB_TCP_STATE_TIME_WAIT,
+        MIB_TCP_STATE_DELETE_TCB
+    }*/
+    [DllImport("iphlpapi.dll", SetLastError = true)]
+    static extern uint GetExtendedTcpTable(
+        IntPtr pTcpTable, ref int dwOutBufLen, bool sort, int ipVersion, TCP_TABLE_CLASS tblClass, uint reserved = 0);
+
+    [DllImport("kernel32", SetLastError = true)] // this function is used to get the pointer on the process heap required by AllocateAndGetTcpExTableFromStack
+    public static extern IntPtr GetProcessHeap();
     private static readonly List<string> SystemProcesses = new List<string>()
     {
         "Memory Compression",
@@ -196,7 +326,7 @@ public static class DataCache
 
     public static void MakeSystemData()
     {
-            
+
         SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
         UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
         Services = Data.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
@@ -286,7 +416,7 @@ public static class DataCache
         Dictionary<string, DateTime?> returnList = new Dictionary<string, DateTime?>();
 
         // Iterate the trimmed task list and convert each task into serializable data.
-        foreach(var task in trimmedTaskList)
+        foreach (var task in trimmedTaskList)
         {
             // There is a method to ignore empty strings, however .NET 4.6 has an overload selection bug that will not allow the app to compile when using that method.
             var splitTask = task.Split(' ');
@@ -297,7 +427,7 @@ public static class DataCache
             // [2]: Status (Ready/Disabled)
             // [3]: '\r'
             List<string> SplitTaskAsList = new List<string>();
-            for(int i = 0; i < splitTask.Length; i++)
+            for (int i = 0; i < splitTask.Length; i++)
             {
                 var segment = splitTask[i];
                 if (segment.Count() == 0)
@@ -307,7 +437,7 @@ public static class DataCache
                 // If the list is empty, you're working on the task name. Combine strings to get the full task name.
                 if (SplitTaskAsList.Count == 0)
                 {
-                    for(int j = i+1; j < splitTask.Length; j++)
+                    for (int j = i + 1; j < splitTask.Length; j++)
                     {
                         // An empty string marks the end of a name.
                         if (splitTask[j].Count() == 0)
@@ -326,15 +456,15 @@ public static class DataCache
                         {
                             break;
                         }
-                            
+
                         segment += $" {splitTask[j]}";
                         i++;
                     }
                 }
                 // If the list contains one element, you're working on the scheduled datetime. segment (splitTask[i]) is the date, splitTask[i+1] is the time.
-                if(SplitTaskAsList.Count == 1)
+                if (SplitTaskAsList.Count == 1)
                 {
-                    segment += $" {splitTask[i+1]}";
+                    segment += $" {splitTask[i + 1]}";
                     i++;
                 }
                 SplitTaskAsList.Add(segment);
@@ -344,7 +474,7 @@ public static class DataCache
             // I can't do TryParse(string, out Datetime?) ?! That seems absurd.
             DateTime RidiculousVariable;
 
-            if(!DateTime.TryParse(SplitTaskAsList[1], out RidiculousVariable))
+            if (!DateTime.TryParse(SplitTaskAsList[1], out RidiculousVariable))
             {
                 // The task is not scheduled.
                 ScheduledTime = null;
@@ -370,11 +500,15 @@ public static class DataCache
     private static List<string> TrimTaskList(IEnumerable<string> taskList)
     {
         return (from line in taskList
-            where line.Any() where char.IsLetterOrDigit(line[0]) where !line.StartsWith("Folder:") 
-            where !line.StartsWith("===") where !line.StartsWith("TaskName") where !line.StartsWith("INFO:") 
-            select line).ToList();
+                where line.Any()
+                where char.IsLetterOrDigit(line[0])
+                where !line.StartsWith("Folder:")
+                where !line.StartsWith("===")
+                where !line.StartsWith("TaskName")
+                where !line.StartsWith("INFO:")
+                select line).ToList();
     }
-    
+
     public static void MakeHardwareData()
     {
         Cpu = Data.GetWmi("Win32_Processor",
@@ -390,6 +524,7 @@ public static class DataCache
         Ram = GetSMBiosMemoryInfo();
         Disks = GetDiskDriveData();
         Temperatures = GetTemps();
+        Batteries = GetBatteryData();
     }
 
     public static void MakeSecurityData()
@@ -398,7 +533,7 @@ public static class DataCache
             .Select(x => (string)x["displayName"]).ToList();
         FwList = Data.GetWmi("FirewallProduct", "displayName", @"root\SecurityCenter2")
             .Select(x => (string)x["displayName"]).ToList();
-            
+
         var enableLua = Data.GetRegistryValue<int?>(Registry.LocalMachine,
             @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "EnableLUA");
         if (enableLua == null) Issues.Add($"Security data: could not get EnableLUA value");
@@ -413,16 +548,16 @@ public static class DataCache
             if (secBootEnabled == null) Issues.Add($"Security data: could not get UEFISecureBootEnabled value");
             else SecureBootEnabled = secBootEnabled == 1;
         }
-            
-        try 
-        { 
-            Tpm = Data.GetWmi("Win32_Tpm","*", @"Root\CIMV2\Security\MicrosoftTpm").First();
+
+        try
+        {
+            Tpm = Data.GetWmi("Win32_Tpm", "*", @"Root\CIMV2\Security\MicrosoftTpm").First();
             Tpm["IsPresent"] = true;
         }
         catch (InvalidOperationException)
         {
             // No TPM
-            Tpm = new Dictionary<string, object>(){{ "IsPresent", false }};
+            Tpm = new Dictionary<string, object>() { { "IsPresent", false } };
         }
         catch (ManagementException)
         {
@@ -436,13 +571,14 @@ public static class DataCache
     }
     public static void MakeNetworkData()
     {
-        NetAdapters = Data.GetWmi("Win32_NetworkAdapterConfiguration", 
+        NetAdapters = Data.GetWmi("Win32_NetworkAdapterConfiguration",
             "Description, DHCPEnabled, DHCPServer, DNSDomain, DNSDomainSuffixSearchOrder, DNSHostName, "
             + "DNSServerSearchOrder, IPEnabled, IPAddress, IPSubnet, DHCPLeaseObtained, DHCPLeaseExpires, "
             + "DefaultIPGateway, MACAddress, InterfaceIndex");
-        IPRoutes = Data.GetWmi("Win32_IP4RouteTable", 
+        IPRoutes = Data.GetWmi("Win32_IP4RouteTable",
             "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
-        HostsFile = System.IO.File.ReadAllText(@"C:\Windows\system32\drivers\etc\hosts");
+        HostsFile = File.ReadAllText(@"C:\Windows\system32\drivers\etc\hosts");
+        NetworkConnections = GetNetworkConnections();
 
         // Uncomment the block below to run a traceroute to Google's DNS
         /*var NetStats = await GetNetworkRoutes("8.8.8.8", 1000);
@@ -451,12 +587,12 @@ public static class DataCache
             Console.WriteLine($"{i}: {NetStats.Address[i]} --- Lat: {NetStats.AverageLatency[i]} --- PL: {NetStats.PacketLoss[i]}");
         }*/
     }
-    private static async System.Threading.Tasks.Task<NetworkRoute> GetNetworkRoutes(string ipAddress, int pingCount = 100, int timeout = 10000,  int bufferSize = 100)
+    private static async System.Threading.Tasks.Task<NetworkRoute> GetNetworkRoutes(string ipAddress, int pingCount = 100, int timeout = 10000, int bufferSize = 100)
     {
         var addressList = GetTraceroute(ipAddress, timeout, 30, bufferSize);
         var networkRoute = new NetworkRoute();
 
-        foreach(var address in addressList)
+        foreach (var address in addressList)
         {
             networkRoute.Address.Add(address.ToString());
             (int Latency, double Loss) hostStats = await GetHostStats(ipAddress, timeout, pingCount);
@@ -480,13 +616,13 @@ public static class DataCache
         var latencySum = 0;
         var statTasks = new List<System.Threading.Tasks.Task<int>>();
 
-        for(int i = 0; i < pingCount; i++)
+        for (int i = 0; i < pingCount; i++)
         {
             var task = System.Threading.Tasks.Task.Run(() => GetLatency(ipAddress, timeout, buffer, pingOptions));
             statTasks.Add(task);
         }
         await System.Threading.Tasks.Task.WhenAll(statTasks);
-        foreach(var task in statTasks)
+        foreach (var task in statTasks)
         {
             switch (task.Result)
             {
@@ -509,7 +645,7 @@ public static class DataCache
         }
         return (averageLatency, packetLoss);
     }
-    private static async System.Threading.Tasks.Task<int> GetLatency(string ipAddress, int timeout, byte[] buffer,PingOptions pingOptions)
+    private static async System.Threading.Tasks.Task<int> GetLatency(string ipAddress, int timeout, byte[] buffer, PingOptions pingOptions)
     {
         try
         {
@@ -540,7 +676,7 @@ public static class DataCache
     private static IEnumerable<IPAddress> GetTraceroute(string ipAddress, int timeout = 10000, int maxTTL = 30, int bufferSize = 100)
     {
         // Cap off the TTL to not overdo the basal traceroute.
-        if(maxTTL > 30)
+        if (maxTTL > 30)
         {
             maxTTL = 30;
         }
@@ -549,8 +685,8 @@ public static class DataCache
         new Random().NextBytes(buffer);
 
         using var pingTool = new Ping();
-        
-        foreach(var i in Enumerable.Range(1, maxTTL))
+
+        foreach (var i in Enumerable.Range(1, maxTTL))
         {
             var pingOptions = new PingOptions(i, true);
             var reply = pingTool.Send(ipAddress, timeout, buffer, pingOptions);
@@ -613,8 +749,8 @@ public static class DataCache
 
             drive.DiskNumber = diskNumber;
 
-            try 
-            { 
+            try
+            {
                 drive.DiskCapacity = (ulong)driveWmi["Size"];
             }
             catch (NullReferenceException)
@@ -623,7 +759,7 @@ public static class DataCache
                 Issues.Add($"Could not retrieve capacity of drive @ index {diskNumber}");
             }
             try
-            { 
+            {
                 drive.InstanceId = (string)driveWmi["PNPDeviceID"];
             }
             catch (NullReferenceException)
@@ -646,7 +782,7 @@ public static class DataCache
                 PartitionCapacity = (UInt64)partitionWmi["Size"],
             };
             var diskIndex = (UInt32)partitionWmi["DiskIndex"];
-                
+
             drives[(int)diskIndex].Partitions.Add(partition);
         }
         try
@@ -664,7 +800,7 @@ public static class DataCache
                 instanceId = splitID[splitID.Count() - 1];
 
                 var driveIndex = -1;
-                for(var i = 0; i < drives.Count; i++)
+                for (var i = 0; i < drives.Count; i++)
                 {
                     var drive = drives[i];
                     if (!drive.InstanceId.ToLower().Contains(instanceId.ToLower())) continue;
@@ -672,7 +808,7 @@ public static class DataCache
                     break;
                 }
 
-                if(driveIndex == -1)
+                if (driveIndex == -1)
                 {
                     Issues.Add($"Smart Data found for {instanceId} with no matching drive. This is a Specify error");
                     break;
@@ -823,7 +959,7 @@ public static class DataCache
             UInt64 free = 0;
             foreach (var partition in d.Partitions)
             {
-                if(partition.PartitionFree == null || partition.PartitionFree == 0)
+                if (partition.PartitionFree == null || partition.PartitionFree == 0)
                 {
                     complete = false;
                 }
@@ -832,7 +968,7 @@ public static class DataCache
                     free += partition.PartitionFree;
                 }
             }
-            if(!complete)
+            if (!complete)
             {
                 // Use Libre here.
             }
@@ -1014,13 +1150,12 @@ public static class DataCache
                 }
                 offset++;
                 smbStringsList.Add(smbDataString.ToString());
-                // Console.WriteLine(smbDataString);
             }
             offset++;
 
             // This is the only type we care about; Type 17. If the type is anything else, it simply loops again.
             if (type != 0x11) continue;
-                
+
             var stick = new RamStick();
             // These if statements confirm the data received is valid data.
             // We don't need else statements here because the default is null
@@ -1069,34 +1204,245 @@ public static class DataCache
         var Temps = new List<TempMeasurement>();
         var computer = new Computer
         {
-            IsCpuEnabled= true,
-            IsGpuEnabled= true,
-            IsMotherboardEnabled= true
+            IsCpuEnabled = true,
+            IsGpuEnabled = true,
+            IsMotherboardEnabled = true
         };
-        computer.Open();
-        computer.Accept(new SensorUpdateVisitor());
 
-        foreach (var hardware in computer.Hardware)
+        try
         {
-            Temps.AddRange(
-                from subhardware in hardware.SubHardware from sensor in subhardware.Sensors 
-                where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24 
-                select new TempMeasurement 
-                    { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
-                );
+            computer.Open();
+            computer.Accept(new SensorUpdateVisitor());
 
-            Temps.AddRange(
-                from sensor in hardware.Sensors 
-                where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24 
-                select new TempMeasurement 
+            foreach (var hardware in computer.Hardware)
+            {
+                Temps.AddRange(
+                    from subhardware in hardware.SubHardware
+                    from sensor in subhardware.Sensors
+                    where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24
+                    select new TempMeasurement
                     { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
-                );
+                    );
+
+                Temps.AddRange(
+                    from sensor in hardware.Sensors
+                    where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24
+                    select new TempMeasurement
+                    { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
+                    );
+            }
+        } catch (OverflowException)
+        {
+            Issues.Add("Absolute value overflow occured when fetching temperature data");
+        } finally
+        {
+            computer.Close();
         }
 
-        computer.Close();
         return Temps;
     }
+    public static List<MIB_TCPROW_OWNER_PID> GetAllTCPv4Connections()
+    {
+        return GetTCPConnections<MIB_TCPROW_OWNER_PID, MIB_TCPTABLE_OWNER_PID>(AF_INET);
+    }
+
+    public static List<MIB_TCP6ROW_OWNER_PID> GetAllTCPv6Connections()
+    {
+        return GetTCPConnections<MIB_TCP6ROW_OWNER_PID, MIB_TCP6TABLE_OWNER_PID>(AF_INET6);
+    }
+
+    public static List<IPR> GetTCPConnections<IPR, IPT>(int ipVersion)
+    {
+
+        IPR[] tableRows;
+        int buffSize = 0;
+        var dwNumEntriesField = typeof(IPT).GetField("dwNumEntries");
+
+        uint ret = GetExtendedTcpTable(IntPtr.Zero, ref buffSize, true, ipVersion, TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_ALL);
+        IntPtr tcpTablePtr = Marshal.AllocHGlobal(buffSize);
+
+        try
+        {
+            ret = GetExtendedTcpTable(tcpTablePtr, ref buffSize, true, ipVersion, TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_ALL);
+            if (ret != 0) return new List<IPR>();
+
+            IPT table = (IPT)Marshal.PtrToStructure(tcpTablePtr, typeof(IPT));
+            int rowStructSize = Marshal.SizeOf(typeof(IPR));
+            uint numEntries = (uint)dwNumEntriesField.GetValue(table);
+
+            tableRows = new IPR[numEntries];
+
+            IntPtr rowPtr = (IntPtr)((long)tcpTablePtr + 4);
+            for (int i = 0; i < numEntries; i++)
+            {
+                IPR tcpRow = (IPR)Marshal.PtrToStructure(rowPtr, typeof(IPR));
+                tableRows[i] = tcpRow;
+                rowPtr = (IntPtr)((long)rowPtr + rowStructSize);
+            }
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(tcpTablePtr);
+        }
+        return tableRows != null ? tableRows.ToList() : new List<IPR>();
+    }
+    private static List<NetworkConnection> GetNetworkConnections()
+    {
+        List<NetworkConnection> connectionsList = new();
+        var connections = GetAllTCPv4Connections();
+        foreach (var connection in connections)
+        {
+            NetworkConnection conn = new();
+            int port = 0;
+            port += connection.localPort[0] << 8;
+            port += connection.localPort[1];
+
+            int rport = 0;
+            rport += connection.remotePort[0] << 8;
+            rport += connection.remotePort[1];
+
+            var la = connection.localAddr;
+
+            uint localAddr1 = la % 256;
+            la = la / 256;
+            uint localAddr2 = la % 256;
+            la = la / 256;
+            uint localAddr3 = la % 256;
+            uint localAddr4 = la / 256;
+
+            var ra = connection.remoteAddr;
+            uint remoteAddr1 = ra % 256;
+            ra = ra / 256;
+            uint remoteAddr2 = ra % 256;
+            ra = ra / 256;
+            uint remoteAddr3 = ra % 256;
+            uint remoteAddr4 = ra / 256;
+
+            conn.LocalIPAddress = $"{localAddr1}.{localAddr2}.{localAddr3}.{localAddr4}";
+            conn.LocalPort = port;
+            conn.RemoteIPAddress = $"{remoteAddr1}.{remoteAddr2}.{remoteAddr3}.{remoteAddr4}";
+            conn.RemotePort = rport;
+            conn.OwningPID = connection.owningPid;
+
+            connectionsList.Add(conn);
+        }
+        var v6connections = GetAllTCPv6Connections();
+        foreach (var connection in v6connections)
+        {
+            NetworkConnection conn = new();
+            int port = 0;
+            port += connection.localPort[0] << 8;
+            port += connection.localPort[1];
+
+            int rport = 0;
+            rport += connection.remotePort[0] << 8;
+            rport += connection.remotePort[1];
+
+            var la = connection.localAddr;
+            var ra = connection.remoteAddr;
+
+            var localAddr = "";
+            var remoteAddr = "";
+            for (int i = 0; i < la.Length; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    if (i != 0)
+                    {
+                        localAddr += ":";
+                    }
+                    if (la[i] == 0x00 && la[i + 1] == 0x00)
+                    {
+                        i++;
+                        continue;
+                    }
+                }
+                byte[] annoyingArrayAssignment = new byte[1] { la[i] };
+                localAddr += BitConverter.ToString(annoyingArrayAssignment);
+
+            }
+            for (int i = 0; i < ra.Length; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    if (i != 0)
+                    {
+                        remoteAddr += ":";
+                    }
+                    if (ra[i] == 0x00 && ra[i + 1] == 0x00)
+                    {
+                        i++;
+                        continue;
+                    }
+                }
+                byte[] annoyingArrayAssignment = new byte[1] { ra[i] };
+                remoteAddr += BitConverter.ToString(annoyingArrayAssignment);
+
+            }
+
+            conn.LocalIPAddress = localAddr;
+            conn.LocalPort = port;
+            conn.RemoteIPAddress = remoteAddr;
+            conn.RemotePort = rport;
+            conn.OwningPID = connection.owningPid;
+
+            connectionsList.Add(conn);
+        }
+        return connectionsList;
+    }
+    private static List<BatteryData> GetBatteryData()
+    {
+        List<BatteryData> BatteryInfo = new List<BatteryData>();
+        String path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location); //Directory the .exe has been launched from
+
+        Process cmd = new Process //Generate the XML report we'll be grabbing the data from
+        {
+            StartInfo =
+            {
+                FileName = "cmd",
+                WorkingDirectory = path,
+                CreateNoWindow = true,
+                Arguments = "/Q /C powercfg /batteryreport /xml"
+            }
+        };
+        cmd.Start();
+        Stopwatch timer = Stopwatch.StartNew();
+        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(10));
+
+        while (timer.Elapsed < timeout)
+            if (File.Exists(Path.Combine(path, "battery-report.xml")))
+            {
+                XmlDocument doc = new XmlDocument();
+                doc.Load(Path.Combine(path, "battery-report.xml"));
+                List<JToken> BatteryData = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["BatteryReport"]["Batteries"].Children().Children().ToList();
+
+                foreach (JToken battery in BatteryData)
+                    if (battery.HasValues)
+                    {
+                        BatteryInfo.Add(
+                            new BatteryData
+                            {
+                                Name = (string)battery["Id"],
+                                Manufacturer = (string)battery["Manufacturer"],
+                                Chemistry = (string)battery["Chemistry"],
+                                Design_Capacity = (string)battery["DesignCapacity"],
+                                Full_Charge_Capacity = (string)battery["FullChargeCapacity"],
+                                Remaining_Life_Percentage = string.Concat(((float)battery["FullChargeCapacity"] / (float)battery["DesignCapacity"] * 100).ToString("0.00"), "%")
+                            });
+                    }
+                File.Delete(Path.Combine(path, "battery-report.xml"));
+                break;
+            }
+
+        if (timer.Elapsed > timeout)
+            Issues.Add("Battery report was not generated before the timeout!");
+
+        timer.Stop();
+        cmd.Close();
+        return BatteryInfo;
+    }
 }
+
 public class NetworkRoute
 {
     public List<string> Address = new List<string>();
@@ -1163,6 +1509,23 @@ public class TempMeasurement
     public string Hardware;
     public string SensorName;
     public float SensorValue;
+}
+public class NetworkConnection
+{
+    public string LocalIPAddress;
+    public int LocalPort;
+    public string RemoteIPAddress;
+    public int RemotePort;
+    public uint OwningPID;
+}
+public class BatteryData
+{
+    public string Name;
+    public string Manufacturer;
+    public string Chemistry;
+    public string Design_Capacity;
+    public string Full_Charge_Capacity;
+    public string Remaining_Life_Percentage;
 }
 public class SensorUpdateVisitor : IVisitor
 {
