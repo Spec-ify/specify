@@ -714,9 +714,16 @@ public static class DataCache
                 FileName = "cmd",
                 WorkingDirectory = path,
                 CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
                 Arguments = "/Q /C dxdiag /x dxinfo.xml"
             }
         };
+
+        if (File.Exists(Path.Combine(path, "dxinfo.xml")))
+        {
+            File.Delete(Path.Combine(path, "dxinfo.xml"));
+        }
 
         cmd.Start();
 
