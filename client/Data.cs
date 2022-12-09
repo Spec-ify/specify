@@ -739,6 +739,7 @@ public static class DataCache
 
                 var videoid = 0;
 
+                // very inefficient while loop right here, but as long as it works, thats what matters -K97i
                 while (true)
                 {
 
@@ -748,8 +749,6 @@ public static class DataCache
 
                             if (DisplayDevice.HasValues)
                             {
-                                Console.WriteLine((string)DisplayDevice[videoid]["CardName"]);
-
                                 MonitorInfo.Add(
                                     new Monitor
                                     {
@@ -757,7 +756,7 @@ public static class DataCache
                                         ChipType = (string)DisplayDevice[videoid]["ChipType"],
                                         DedicatedMemory = (string)DisplayDevice[videoid]["DedicatedMemory"],
                                         MonitorModel = (string)DisplayDevice[videoid]["MonitorModel"],
-                                        NativeMode = (string)DisplayDevice[videoid]["NativeMode"]
+                                        CurrentMode = (string)DisplayDevice[videoid]["CurrentMode"]
                                     });
 
                                 videoid = videoid + 1;
@@ -1547,7 +1546,7 @@ public class Monitor
     public string ChipType;
     public string DedicatedMemory;
     public string MonitorModel;
-    public string NativeMode;
+    public string CurrentMode;
 }
 public class DiskDrive
 {
