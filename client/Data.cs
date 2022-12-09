@@ -728,7 +728,7 @@ public static class DataCache
         cmd.Start();
 
         Stopwatch timer = Stopwatch.StartNew();
-        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(120));
+        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(60));
             
         while (timer.Elapsed < timeout)
 
@@ -744,15 +744,15 @@ public static class DataCache
                         MonitorInfo.Add(
                             new Monitor
                             {
-                                Name = (string)DisplayDevice["CardName"],
-                                ChipType = (string)DisplayDevice["ChipType"],
-                                DedicatedMemory = (string)DisplayDevice["DedicatedMemory"],
-                                MonitorName = (string)DisplayDevice["MonitorName"],
-                                NativeMode = (string)DisplayDevice["NativeMode"]
+                                Name = (string)DisplayDevice[0]["CardName"],
+                                ChipType = (string)DisplayDevice[0]["ChipType"],
+                                DedicatedMemory = (string)DisplayDevice[0]["DedicatedMemory"],
+                                MonitorName = (string)DisplayDevice[0]["MonitorName"],
+                                NativeMode = (string)DisplayDevice[0]["NativeMode"]
                             });
-                        break;
                     }
-                
+
+                break;
             }
         if (timer.Elapsed > timeout)
             Issues.Add("Monitor report was not generated before the timeout!");
