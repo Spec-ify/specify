@@ -1380,10 +1380,12 @@ public static class DataCache
         {
             StartInfo =
             {
-                FileName = "cmd",
+                FileName = "powercfg",
                 WorkingDirectory = path,
                 CreateNoWindow = true,
-                Arguments = "/Q /C powercfg /batteryreport /xml"
+                Arguments = "/batteryreport /xml",
+                RedirectStandardOutput = true,
+                UseShellExecute = false
             }
         };
         cmd.Start();
@@ -1391,7 +1393,7 @@ public static class DataCache
         TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(10));
 
         while (timer.Elapsed < timeout)
-            if (File.Exists(Path.Combine(path, "battery-report.xml")))
+            if (File.Exists(Path.Combine(path, "battery-report.xml")) && Process.GetProcessesByName("powercfg").Length == 0)
             {
                 XmlDocument doc = new XmlDocument();
                 doc.Load(Path.Combine(path, "battery-report.xml"));
