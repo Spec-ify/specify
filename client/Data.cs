@@ -721,11 +721,12 @@ public static class DataCache
         cmd.Start();
 
         Stopwatch timer = Stopwatch.StartNew();
-        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(10));
-
+        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(120));
+            
         while (timer.Elapsed < timeout)
-            if (File.Exists(Path.Combine(path, "dxinfo.xml")))
-            {
+
+            if (File.Exists(Path.Combine(path, "dxinfo.xml")) && Process.GetProcessesByName("dxdiag").Length == 0)
+                {
                 XmlDocument doc = new XmlDocument();
                 doc.Load(Path.Combine(path, "dxinfo.xml"));
                 List<JToken> Monitor = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["DxDiag"]["DisplayDevices"].Children().Children().ToList();
@@ -742,15 +743,18 @@ public static class DataCache
                                 MonitorName = (string)DisplayDevice["MonitorName"],
                                 NativeMode = (string)DisplayDevice["NativeMode"]
                             });
+                        break;
                     }
-                File.Delete(Path.Combine(path, "dxinfo.xml"));
-                break;
+                
             }
         if (timer.Elapsed > timeout)
             Issues.Add("Monitor report was not generated before the timeout!");
 
         timer.Stop();
         cmd.Close();
+
+        File.Delete(Path.Combine(path, "dxinfo.xml"));
+
         return MonitorInfo;
     }
     private static List<DiskDrive> GetDiskDriveData()
@@ -1446,7 +1450,7 @@ public static class DataCache
         cmd.Start();
 
         Stopwatch timer = Stopwatch.StartNew();
-        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(30));
+        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(60));
 
         while (timer.Elapsed < timeout)
             if (File.Exists(Path.Combine(path, "battery-report.xml")))
