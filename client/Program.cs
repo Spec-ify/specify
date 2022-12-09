@@ -61,8 +61,6 @@ public class Program
         //Console.WriteLine("Last boot up time: " + Data.CimToIsoDate((string) DataCache.Os["LastBootUpTime"]));
         //Console.WriteLine("Time now: " + Data.DateTimeToIsoDate(DateTime.Now));
         //PrettyPrintObject(MonolithBasicInfo.Create());
-
-        Console.ReadLine();
     }
     
         
