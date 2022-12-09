@@ -524,8 +524,7 @@ public static class DataCache
         Ram = GetSMBiosMemoryInfo();
         Disks = GetDiskDriveData();
         Temperatures = GetTemps();
-        // 1457 (doc.load) is borky
-        // Batteries = GetBatteryData();
+        Batteries = GetBatteryData();
     }
 
     public static void MakeSecurityData()
@@ -738,19 +737,38 @@ public static class DataCache
                 doc.Load(Path.Combine(path, "dxinfo.xml"));
                 List<JToken> Monitor = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["DxDiag"]["DisplayDevices"].Children().Children().ToList();
 
-                foreach (JToken DisplayDevice in Monitor)
-                    if (DisplayDevice.HasValues)
+                var videoid = 0;
+
+                while (true)
+                {
+
+                    try
                     {
-                        MonitorInfo.Add(
-                            new Monitor
+                        foreach (JToken DisplayDevice in Monitor)
+
+                            if (DisplayDevice.HasValues)
                             {
-                                Name = (string)DisplayDevice[0]["CardName"],
-                                ChipType = (string)DisplayDevice[0]["ChipType"],
-                                DedicatedMemory = (string)DisplayDevice[0]["DedicatedMemory"],
-                                MonitorName = (string)DisplayDevice[0]["MonitorName"],
-                                NativeMode = (string)DisplayDevice[0]["NativeMode"]
-                            });
+                                Console.WriteLine((string)DisplayDevice[videoid]["CardName"]);
+
+                                MonitorInfo.Add(
+                                    new Monitor
+                                    {
+                                        Name = (string)DisplayDevice[videoid]["CardName"],
+                                        ChipType = (string)DisplayDevice[videoid]["ChipType"],
+                                        DedicatedMemory = (string)DisplayDevice[videoid]["DedicatedMemory"],
+                                        MonitorModel = (string)DisplayDevice[videoid]["MonitorModel"],
+                                        NativeMode = (string)DisplayDevice[videoid]["NativeMode"]
+                                    });
+
+                                videoid = videoid + 1;
+
+                            }
                     }
+                    catch(ArgumentOutOfRangeException)
+                    {
+                        break;
+                    }
+                }
 
                 break;
             }
@@ -1465,10 +1483,7 @@ public static class DataCache
             if (File.Exists(Path.Combine(path, "battery-report.xml")) && Process.GetProcessesByName("powercfg").Length == 0)
             {
                 XmlDocument doc = new XmlDocument();
-
-                // 1457 (doc.load) is borky
-                // doc.Load(Path.Combine(path, "battery-report.xml"));
-
+                doc.Load(Path.Combine(path, "battery-report.xml"));
                 List<JToken> BatteryData = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["BatteryReport"]["Batteries"].Children().Children().ToList();
 
                 foreach (JToken battery in BatteryData)
@@ -1531,7 +1546,7 @@ public class Monitor
     public string Name;
     public string ChipType;
     public string DedicatedMemory;
-    public string MonitorName;
+    public string MonitorModel;
     public string NativeMode;
 }
 public class DiskDrive
