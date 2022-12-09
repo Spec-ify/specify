@@ -524,7 +524,8 @@ public static class DataCache
         Ram = GetSMBiosMemoryInfo();
         Disks = GetDiskDriveData();
         Temperatures = GetTemps();
-        Batteries = GetBatteryData();
+        // 1457 (doc.load) is borky
+        // Batteries = GetBatteryData();
     }
 
     public static void MakeSecurityData()
@@ -729,7 +730,7 @@ public static class DataCache
                 doc.Load(Path.Combine(path, "dxinfo.xml"));
                 List<JToken> Monitor = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["DxDiag"]["DisplayDevices"].Children().Children().ToList();
 
-                foreach (JToken DisplayDevice in MonitorInfo)
+                foreach (JToken DisplayDevice in Monitor)
                     if (DisplayDevice.HasValues)
                     {
                         MonitorInfo.Add(
@@ -1266,10 +1267,12 @@ public static class DataCache
                     { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
                     );
             }
-        } catch (OverflowException)
+        }
+        catch (OverflowException)
         {
             Issues.Add("Absolute value overflow occured when fetching temperature data");
-        } finally
+        }
+        finally
         {
             computer.Close();
         }
@@ -1441,14 +1444,18 @@ public static class DataCache
             }
         };
         cmd.Start();
+
         Stopwatch timer = Stopwatch.StartNew();
-        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(10));
+        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(30));
 
         while (timer.Elapsed < timeout)
             if (File.Exists(Path.Combine(path, "battery-report.xml")))
             {
                 XmlDocument doc = new XmlDocument();
-                doc.Load(Path.Combine(path, "battery-report.xml"));
+
+                // 1457 (doc.load) is borky
+                // doc.Load(Path.Combine(path, "battery-report.xml"));
+
                 List<JToken> BatteryData = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["BatteryReport"]["Batteries"].Children().Children().ToList();
 
                 foreach (JToken battery in BatteryData)
