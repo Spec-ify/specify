@@ -16,7 +16,6 @@ using System.Net;
 using System.IO;
 using System.Xml;
 using LibreHardwareMonitor.Hardware;
-using System.Xml;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using System.Security.Cryptography.X509Certificates;
