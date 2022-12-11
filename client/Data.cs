@@ -361,7 +361,7 @@ public static class DataCache
 
         var DisableAV = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiVirus");
         var DisableAS = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiSpyware");
-        var PUAProtection = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender", "PUAProtection");
+        var PUAProtection = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"\SOFTWARE\Policies\Microsoft\Windows Defender", "PUAProtection");
         var DRII = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"\Software\Policies\Microsoft\MRT", "DontReportInfectionInformation");
         if (DisableAV == 1 ||
             DisableAS == 1 ||
@@ -383,7 +383,7 @@ public static class DataCache
         var BypassTPMCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassTPMCheck");
         var BypassRAMCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassRAMCheck");
         var BypassSecureBootCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassSecureBootCheck");
-        var HWNotificationCache = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"Control Panel\UnsupportedHardwareNotificationCache", "SV2");
+        var HWNotificationCache = Data.GetRegistryValue<int?>(Registry.CurrentUser, @"Control Panel\UnsupportedHardwareNotificationCache", "SV2");
 
         if(
             UnsupportedTPMOrCPU == 1 ||
