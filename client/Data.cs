@@ -1010,12 +1010,9 @@ public static class DataCache
             0xB2 => "Used Reserved Block Count",
             0xB3 => "Used Reserved Block Count Total",
             0xB4 => "Unused Reserved Block Count Total",
-            0xB5 => "Vendor Specific" // Program Fail Count Total or Non-4K Aligned Access Count
-            ,
+            0xB5 => "Vendor Specific", // Program Fail Count Total or Non-4K Aligned Access Count
             0xB6 => "Erase Fail Count",
-            0xB7 =>
-                "Vendor Specific (WD or Seagate)" //SATA Downshift Error Count or Runtime Bad Block. WD or Seagate respectively.
-            ,
+            0xB7 => "Vendor Specific (WD or Seagate)", //SATA Downshift Error Count or Runtime Bad Block. WD or Seagate respectively.
             0xB8 => "End-to-end Error Count(!)",
             0xB9 => "Head Stability",
             0xBA => "Induced Op-Vibration Detection",
@@ -1054,11 +1051,9 @@ public static class DataCache
             0xE2 => "Load 'In'-time",
             0xE3 => "Torque Amplification Count",
             0xE4 => "Power-Off Retract Cycle",
-            0xE6 => "GMR Head Amplitude / Drive Life Protection Status" // HDDs / SSDs respectively.
-            ,
+            0xE6 => "GMR Head Amplitude / Drive Life Protection Status", // HDDs / SSDs respectively.
             0xE7 => "SSD Life Left / HDD Temperature",
-            0xE8 => "Vendor Specific" // Endurance Remaining or Available Reserved Space.
-            ,
+            0xE8 => "Vendor Specific", // Endurance Remaining or Available Reserved Space.
             0xE9 => "Media Wearout Indicator",
             0xEA => "Average and Maximum Erase Count",
             0xEB => "Good Block and Free Block Count",
