@@ -340,51 +340,43 @@ public static class DataCache
         {
             Issues.Add($"TdrLevel set to {TdrLevel}");
         }
+
         var NBFLimit = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit");
         if (NBFLimit != null && NBFLimit != 80)
         {
             Issues.Add($"NonBestEffortLimit set to {NBFLimit}");
         }
+
         var ThrottlingIndex = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "NetworkThrottlingIndex");
-        if(ThrottlingIndex == 0xFFFFFFFF)
+        if (ThrottlingIndex == 0xFFFFFFFF)
         {
             Issues.Add("Network Throttling Disabled");
         }
+
         var Superfetch = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters", "EnableSuperfetch");
-        if(Superfetch == 0)
+        if (Superfetch == 0)
         {
             Issues.Add("Superfetch Disabled");
         }
-        // DefenderDisabled exists to avoid Issues spam. If one service is disabled, the OS is compromised, it is not necessary to report all service statuses.
-        bool DefenderDisabled = false;
+
         var DisableAV = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiVirus");
-        if(DisableAV == 1)
+        var DisableAS = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiSpyware");
+        var PUAProtection = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender", "PUAProtection");
+        var DRII = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"\Software\Policies\Microsoft\MRT", "DontReportInfectionInformation");
+        if (DisableAV == 1 ||
+            DisableAS == 1 ||
+            PUAProtection == 0 ||
+            DRII == 1)
         {
             Issues.Add("Windows Defender Disabled");
-            DefenderDisabled = true;
         }
-        var DisableAS = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiSpyware");
-        if(DisableAS == 1 && !DefenderDisabled)
-        {
-            Issues.Add("Windows AntiSpyware Disabled");
-            DefenderDisabled = true;
-        }
-        var PUAProtection = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender", "PUAProtection");
-        if(PUAProtection == 0 && !DefenderDisabled)
-        {
-            Issues.Add("PUA Protection Disabled");
-            DefenderDisabled = true;
-        }
-        var DRII = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"\Software\Policies\Microsoft\MRT", "DontReportInfectionInformation");
-        if(DRII == 1 && !DefenderDisabled)
-        {
-            Issues.Add("DontReportInfectionInformation set to 1");
-        }
+
         var DisableWER = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting", "Disabled");
         if(DisableWER == 1)
         {
             Issues.Add("Windows Error Reporting Disabled");
         }
+
         var UnsupportedTPMOrCPU = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\MoSetup", "AllowUpgradesWithUnsupportedTPMOrCPU");
         var BypassCPUCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassCPUCheck");
         var BypassStorageCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassStorageCheck");
