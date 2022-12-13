@@ -47,6 +47,7 @@ public class ProgressList
             { "Security", new ProgressStatus("Security Info", DataCache.MakeSecurityData) },
             { "Network", new ProgressStatus("Network Info", DataCache.MakeNetworkData) },
             { "Hardware", new ProgressStatus("Hardware Info", DataCache.MakeHardwareData) },
+            { "RegistryCheck", new ProgressStatus("Registry Check", DataCache.RegistryCheck) },
             {
                 "Assemble",
                 new ProgressStatus("Monolith ... Assemble", MonolithCache.AssembleCache,
