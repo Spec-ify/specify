@@ -353,10 +353,10 @@ public static class DataCache
             try
             {
                 // capacity must be declared so it can be referenced.
-                int capacity = 2000;
+                var capacity = 2000;
 
-                StringBuilder sb = new StringBuilder(capacity);
-                IntPtr ptr = Interop.OpenProcess(Interop.ProcessAccessFlags.QueryLimitedInformation, false, rawProcess.Id);
+                var sb = new StringBuilder(capacity);
+                var ptr = Interop.OpenProcess(Interop.ProcessAccessFlags.QueryLimitedInformation, false, rawProcess.Id);
 
                 if (!Interop.QueryFullProcessImageName(ptr, 0, sb, ref capacity))
                 {
