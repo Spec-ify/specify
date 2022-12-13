@@ -185,50 +185,6 @@ public static class DataCache
     public static List<BatteryData> Batteries { get; private set; }
     public static bool? SecureBootEnabled { get; private set; }
 
-    /*[StructLayout(LayoutKind.Sequential)]
-    public struct MIB_TCPSTATS
-    {
-        public int dwRtoAlgorithm;
-        public int dwRtoMin;
-        public int dwRtoMax;
-        public int dwMaxConn;
-        public int dwActiveOpens;
-        public int dwPassiveOpens;
-        public int dwAttemptFails;
-        public int dwEstabResets;
-        public int dwCurrEstab;
-        public int dw64InSegs; // UInt64?
-        public int dw64OutSegs; // UInt64?
-        public int dwRetransSegs;
-        public int dwInErrs;
-        public int dwOutRsts;
-        public int dwNumConns;
-    }*/
-    /*[StructLayout(LayoutKind.Sequential)]
-    public struct MIB_UDPSTATS
-    {
-        public int dwInDatagrams;
-        public int dwNoPorts;
-        public int dwInErrors;
-        public int dwOutDatagrams;
-        public int dwNumAddrs;
-    }*/
-    /*[StructLayout(LayoutKind.Sequential)]
-    public struct MIB_TCPTABLE_EX
-    {
-        public int dwNumEntries;
-        public MIB_TCPROW_EX[] table;
-    }*/
-    /*[StructLayout(LayoutKind.Sequential)]
-    public struct MIB_TCPROW_EX
-    {
-        public int dwState;
-        public int dwLocalAddr;
-        public int dwLocalPort;
-        public int dwRemoteAddr;
-        public int dwRemotePort;
-        public int dwProcessId;
-    }*/
     [StructLayout(LayoutKind.Sequential)]
     public struct MIB_TCPROW_OWNER_PID
     {
@@ -283,21 +239,6 @@ public static class DataCache
         TCP_TABLE_OWNER_MODULE_CONNECTIONS,
         TCP_TABLE_OWNER_MODULE_ALL
     }
-    /*public enum MIB_TCP_STATE
-    {
-        MIB_TCP_STATE_CLOSED,
-        MIB_TCP_STATE_LISTEN,
-        MIB_TCP_STATE_SYN_SENT,
-        MIB_TCP_STATE_SYN_RCVD,
-        MIB_TCP_STATE_ESTAB,
-        MIB_TCP_STATE_FIN_WAIT1,
-        MIB_TCP_STATE_FIN_WAIT2,
-        MIB_TCP_STATE_CLOSE_WAIT,
-        MIB_TCP_STATE_CLOSING,
-        MIB_TCP_STATE_LAST_ACK,
-        MIB_TCP_STATE_TIME_WAIT,
-        MIB_TCP_STATE_DELETE_TCB
-    }*/
     [DllImport("iphlpapi.dll", SetLastError = true)]
     static extern uint GetExtendedTcpTable(
         IntPtr pTcpTable, ref int dwOutBufLen, bool sort, int ipVersion, TCP_TABLE_CLASS tblClass, uint reserved = 0);
@@ -391,6 +332,70 @@ public static class DataCache
                 WorkingSet = rawProcess.WorkingSet64,
                 CpuPercent = cpuPercent
             });
+        }
+    }
+    public static void RegistryCheck()
+    {
+        var TdrLevel = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"System\CurrentControlSet\Control\GraphicsDrivers", "TdrLevel");
+        if (TdrLevel != null)
+        {
+            Issues.Add($"TdrLevel set to {TdrLevel}");
+        }
+
+        var NBFLimit = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit");
+        if (NBFLimit != null && NBFLimit != 80)
+        {
+            Issues.Add($"NonBestEffortLimit set to {NBFLimit}");
+        }
+
+        var ThrottlingIndex = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "NetworkThrottlingIndex");
+        if (ThrottlingIndex == 0xFFFFFFFF)
+        {
+            Issues.Add("Network Throttling Disabled");
+        }
+
+        var Superfetch = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters", "EnableSuperfetch");
+        if (Superfetch == 0)
+        {
+            Issues.Add("Superfetch Disabled");
+        }
+
+        var DisableAV = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiVirus");
+        var DisableAS = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiSpyware");
+        var PUAProtection = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"\SOFTWARE\Policies\Microsoft\Windows Defender", "PUAProtection");
+        var DRII = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"\Software\Policies\Microsoft\MRT", "DontReportInfectionInformation");
+        if (DisableAV == 1 ||
+            DisableAS == 1 ||
+            PUAProtection == 0 ||
+            DRII == 1)
+        {
+            Issues.Add("Windows Defender Disabled");
+        }
+
+        var DisableWER = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting", "Disabled");
+        if(DisableWER == 1)
+        {
+            Issues.Add("Windows Error Reporting Disabled");
+        }
+
+        var UnsupportedTPMOrCPU = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\MoSetup", "AllowUpgradesWithUnsupportedTPMOrCPU");
+        var BypassCPUCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassCPUCheck");
+        var BypassStorageCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassStorageCheck");
+        var BypassTPMCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassTPMCheck");
+        var BypassRAMCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassRAMCheck");
+        var BypassSecureBootCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassSecureBootCheck");
+        var HWNotificationCache = Data.GetRegistryValue<int?>(Registry.CurrentUser, @"Control Panel\UnsupportedHardwareNotificationCache", "SV2");
+
+        if(
+            UnsupportedTPMOrCPU == 1 ||
+            BypassCPUCheck == 1 ||
+            BypassStorageCheck == 1 ||
+            BypassTPMCheck == 1 ||
+            BypassRAMCheck == 1 ||
+            BypassSecureBootCheck == 1 ||
+            HWNotificationCache == 0)
+        {
+            Issues.Add("Windows hardware checks bypassed");
         }
     }
     private static Dictionary<string, DateTime?> GetScheduledTasks()
@@ -1092,12 +1097,9 @@ public static class DataCache
             0xB2 => "Used Reserved Block Count",
             0xB3 => "Used Reserved Block Count Total",
             0xB4 => "Unused Reserved Block Count Total",
-            0xB5 => "Vendor Specific" // Program Fail Count Total or Non-4K Aligned Access Count
-            ,
+            0xB5 => "Vendor Specific", // Program Fail Count Total or Non-4K Aligned Access Count
             0xB6 => "Erase Fail Count",
-            0xB7 =>
-                "Vendor Specific (WD or Seagate)" //SATA Downshift Error Count or Runtime Bad Block. WD or Seagate respectively.
-            ,
+            0xB7 => "Vendor Specific (WD or Seagate)", //SATA Downshift Error Count or Runtime Bad Block. WD or Seagate respectively.
             0xB8 => "End-to-end Error Count(!)",
             0xB9 => "Head Stability",
             0xBA => "Induced Op-Vibration Detection",
@@ -1136,11 +1138,9 @@ public static class DataCache
             0xE2 => "Load 'In'-time",
             0xE3 => "Torque Amplification Count",
             0xE4 => "Power-Off Retract Cycle",
-            0xE6 => "GMR Head Amplitude / Drive Life Protection Status" // HDDs / SSDs respectively.
-            ,
+            0xE6 => "GMR Head Amplitude / Drive Life Protection Status", // HDDs / SSDs respectively.
             0xE7 => "SSD Life Left / HDD Temperature",
-            0xE8 => "Vendor Specific" // Endurance Remaining or Available Reserved Space.
-            ,
+            0xE8 => "Vendor Specific", // Endurance Remaining or Available Reserved Space.
             0xE9 => "Media Wearout Indicator",
             0xEA => "Average and Maximum Erase Count",
             0xEB => "Good Block and Free Block Count",
