@@ -12,7 +12,7 @@ public class Program
     public static Stopwatch Time;
     static void Main()
     {
-        DataCache.Issues = new List<string>();
+        data.Cache.Issues = new List<string>();
         var initialConsoleFg = Console.ForegroundColor;
         var initialConsoleBg = Console.BackgroundColor;
         Console.WriteLine($"Specify {SpecifyVersion}");
@@ -70,7 +70,7 @@ public class Program
         pList.RunItem("Hardware");
         pList.RunItem("Assemble");
         // pList.RunItem("MainData");
-        //Console.WriteLine("Last boot up time: " + Data.CimToIsoDate((string) DataCache.Os["LastBootUpTime"]));
+        //Console.WriteLine("Last boot up time: " + Data.CimToIsoDate((string) data.Cache.Os["LastBootUpTime"]));
         //Console.WriteLine("Time now: " + Data.DateTimeToIsoDate(DateTime.Now));
         //PrettyPrintObject(MonolithBasicInfo.Create());
     }

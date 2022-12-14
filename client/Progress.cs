@@ -41,12 +41,12 @@ public class ProgressList
     public ProgressList()
     {
         Items = new Dictionary<string, ProgressStatus>(){
-            { "MainData", new ProgressStatus("Main Data", DataCache.MakeMainData) },
-            { "SystemData", new ProgressStatus("System Data", DataCache.MakeSystemData) },
-            // { "DummyTimer", new ProgressStatus("Dummy 5 second timer", DataCache.DummyTimer) },
-            { "Security", new ProgressStatus("Security Info", DataCache.MakeSecurityData) },
-            { "Network", new ProgressStatus("Network Info", DataCache.MakeNetworkData) },
-            { "Hardware", new ProgressStatus("Hardware Info", DataCache.MakeHardwareData) },
+            { "MainData", new ProgressStatus("Main Data", data.Cache.MakeMainData) },
+            { "SystemData", new ProgressStatus("System Data", data.Cache.MakeSystemData) },
+            // { "DummyTimer", new ProgressStatus("Dummy 5 second timer", data.Cache.DummyTimer) },
+            { "Security", new ProgressStatus("Security Info", data.Cache.MakeSecurityData) },
+            { "Network", new ProgressStatus("Network Info", data.Cache.MakeNetworkData) },
+            { "Hardware", new ProgressStatus("Hardware Info", data.Cache.MakeHardwareData) },
             {
                 "Assemble",
                 new ProgressStatus("Monolith ... Assemble", MonolithCache.AssembleCache,

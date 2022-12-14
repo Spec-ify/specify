@@ -61,7 +61,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Data.cs" />
+    <Compile Include="data\Cache.cs" />
+    <Compile Include="data\Methods.cs" />
+    <Compile Include="data\Utils.cs" />
+    <Compile Include="data\Structs.cs" />
     <Compile Include="Interop.cs" />
     <Compile Include="Monolith.cs" />
     <Compile Include="Program.cs" />
