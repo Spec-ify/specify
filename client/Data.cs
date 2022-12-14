@@ -525,6 +525,7 @@ public static class DataCache
 
                             if (DisplayDevice.HasValues)
                             {
+
                                 MonitorInfo.Add(
                                     new Monitor
                                     {
@@ -535,12 +536,34 @@ public static class DataCache
                                         CurrentMode = (string)DisplayDevice[videoid]["CurrentMode"]
                                     });
 
-                                videoid = videoid + 1;
+                                videoid++;
 
                             }
                     }
-                    catch(ArgumentOutOfRangeException)
+                    catch (ArgumentOutOfRangeException)
                     {
+                        break;
+                    }
+
+                    catch (ArgumentException)
+                    {
+                        foreach (JToken DisplayDevice in Monitor)
+
+                            if (DisplayDevice.HasValues)
+                            {
+
+                                MonitorInfo.Add(
+                                    new Monitor
+                                    {
+                                        Name = (string)DisplayDevice["CardName"],
+                                        ChipType = (string)DisplayDevice["ChipType"],
+                                        DedicatedMemory = (string)DisplayDevice["DedicatedMemory"],
+                                        MonitorModel = (string)DisplayDevice["MonitorModel"],
+                                        CurrentMode = (string)DisplayDevice["CurrentMode"]
+                                    });
+
+                                break;
+                            }
                         break;
                     }
                 }
