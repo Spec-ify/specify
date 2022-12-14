@@ -31,7 +31,7 @@ public class Monolith
         Version = Program.SpecifyVersion;
         Meta = new MonolithMeta
         {
-            ElapsedTime = Program.time.ElapsedMilliseconds
+            ElapsedTime = Program.Time.ElapsedMilliseconds
         };
         BasicInfo = new MonolithBasicInfo();
         System = new MonolithSystem();
@@ -48,7 +48,7 @@ public class Monolith
 
     public static void WriteFile()
     {
-        Program.time.Stop();
+        Program.Time.Stop();
 
         var serialized = MonolithCache.Monolith.Serialize();
 
@@ -57,7 +57,10 @@ public class Monolith
             serialized = serialized.Replace(DataCache.Username, "[REDACTED]");
         }
 
-        File.WriteAllText("specify_specs.json", serialized);
+        if (!Settings.DontUpload)
+        {
+            File.WriteAllText("specify_specs.json", serialized);
+        }
     }
 
     private static void CacheError(object thing)
@@ -71,6 +74,7 @@ public struct MonolithMeta
     public long ElapsedTime;
 }
 
+[Serializable]
 public class MonolithBasicInfo
 {
     public string Edition;
@@ -107,6 +111,7 @@ public class MonolithBasicInfo
     }
 }
 
+[Serializable]
 public class MonolithSecurity
 {
     public List<string> AvList;
@@ -127,6 +132,7 @@ public class MonolithSecurity
     }
 }
 
+[Serializable]
 public class MonolithHardware
 {
     public List<RamStick> Ram;
@@ -155,6 +161,7 @@ public class MonolithHardware
     }
 }
 
+[Serializable]
 public class MonolithSystem
 {
     public IDictionary UserVariables;
@@ -164,6 +171,7 @@ public class MonolithSystem
     public List<Dictionary<string, object>> InstalledApps;
     public List<Dictionary<string, object>> InstalledHotfixes;
     public Dictionary<string, DateTime?> ScheduledTasks;
+    public List<IRegistryValue> ChoiceRegistryValues;
 
     public MonolithSystem()
     {
@@ -174,9 +182,11 @@ public class MonolithSystem
         InstalledApps = DataCache.InstalledApps;
         InstalledHotfixes = DataCache.InstalledHotfixes;
         ScheduledTasks = DataCache.ScheduledTasks;
+        ChoiceRegistryValues = DataCache.ChoiceRegistryValues;
     }
 }
 
+[Serializable]
 public class MonolithNetwork
 {
     public List<Dictionary<string, object>> Adapters;
