@@ -14,8 +14,8 @@ using System.Text;
 using System.Net.NetworkInformation;
 using System.Net;
 using System.IO;
-using LibreHardwareMonitor.Hardware;
 using System.Xml;
+using LibreHardwareMonitor.Hardware;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -138,6 +138,7 @@ public static class DataCache
     public static List<Dictionary<string, object>> Gpu { get; private set; }
     public static Dictionary<string, object> Motherboard { get; private set; }
     public static List<Dictionary<string, object>> AudioDevices { get; private set; }
+    public static List<Monitor> MonitorInfo { get; private set; }
     public static Dictionary<string, object> Tpm { get; private set; }
     public static List<Dictionary<string, object>> Drivers { get; private set; }
     public static List<Dictionary<string, object>> Devices { get; private set; }
@@ -293,6 +294,7 @@ public static class DataCache
             + "CurrentRefreshRate, CurrentBitsPerPixel");
         Motherboard = Data.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").First();
         AudioDevices = Data.GetWmi("Win32_SoundDevice", "Name, Manufacturer, Status, DeviceID");
+        MonitorInfo = GetMonitorInfo();
         Drivers = Data.GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
         Devices = Data.GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
         Ram = GetSMBiosMemoryInfo();
@@ -474,6 +476,86 @@ public static class DataCache
                 break;
             }
         }
+    }
+    public static List<Monitor> GetMonitorInfo()
+    {
+        List<Monitor> MonitorInfo = new List<Monitor>();
+        String path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+
+        Process cmd = new Process
+        {
+            StartInfo =
+            {
+                FileName = "cmd",
+                WorkingDirectory = path,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                Arguments = "/Q /C dxdiag /x dxinfo.xml"
+            }
+        };
+
+        if (File.Exists(Path.Combine(path, "dxinfo.xml")))
+        {
+            File.Delete(Path.Combine(path, "dxinfo.xml"));
+        }
+
+        cmd.Start();
+
+        Stopwatch timer = Stopwatch.StartNew();
+        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(60));
+            
+        while (timer.Elapsed < timeout)
+
+            if (File.Exists(Path.Combine(path, "dxinfo.xml")) && Process.GetProcessesByName("dxdiag").Length == 0)
+                {
+                XmlDocument doc = new XmlDocument();
+                doc.Load(Path.Combine(path, "dxinfo.xml"));
+                List<JToken> Monitor = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["DxDiag"]["DisplayDevices"].Children().Children().ToList();
+
+                var videoid = 0;
+
+                // very inefficient while loop right here, but as long as it works, thats what matters -K97i
+                while (true)
+                {
+
+                    try
+                    {
+                        foreach (JToken DisplayDevice in Monitor)
+
+                            if (DisplayDevice.HasValues)
+                            {
+                                MonitorInfo.Add(
+                                    new Monitor
+                                    {
+                                        Name = (string)DisplayDevice[videoid]["CardName"],
+                                        ChipType = (string)DisplayDevice[videoid]["ChipType"],
+                                        DedicatedMemory = (string)DisplayDevice[videoid]["DedicatedMemory"],
+                                        MonitorModel = (string)DisplayDevice[videoid]["MonitorModel"],
+                                        CurrentMode = (string)DisplayDevice[videoid]["CurrentMode"]
+                                    });
+
+                                videoid = videoid + 1;
+
+                            }
+                    }
+                    catch(ArgumentOutOfRangeException)
+                    {
+                        break;
+                    }
+                }
+
+                break;
+            }
+        if (timer.Elapsed > timeout)
+            Issues.Add("Monitor report was not generated before the timeout!");
+
+        timer.Stop();
+        cmd.Close();
+
+        File.Delete(Path.Combine(path, "dxinfo.xml"));
+
+        return MonitorInfo;
     }
     private static List<DiskDrive> GetDiskDriveData()
     {
@@ -1045,10 +1127,12 @@ public static class DataCache
                     { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
                     );
             }
-        } catch (OverflowException)
+        }
+        catch (OverflowException)
         {
             Issues.Add("Absolute value overflow occured when fetching temperature data");
-        } finally
+        }
+        finally
         {
             computer.Close();
         }
@@ -1222,8 +1306,9 @@ public static class DataCache
             }
         };
         cmd.Start();
+
         Stopwatch timer = Stopwatch.StartNew();
-        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(10));
+        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(60));
 
         while (timer.Elapsed < timeout)
             if (File.Exists(Path.Combine(path, "battery-report.xml")) && Process.GetProcessesByName("powercfg").Length == 0)
@@ -1286,6 +1371,14 @@ public class RamStick
 
     /** MiB */
     public int? Capacity;
+}
+public class Monitor
+{
+    public string Name;
+    public string ChipType;
+    public string DedicatedMemory;
+    public string MonitorModel;
+    public string CurrentMode;
 }
 public class DiskDrive
 {
