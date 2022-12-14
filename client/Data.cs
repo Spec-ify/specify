@@ -1,9 +1,9 @@
-﻿// everything that handles actual data collection to be passed over to the monolith
-using System;
+﻿using System;
 using System.Collections;
 using System.Management;
 using Microsoft.Win32.TaskScheduler;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -18,10 +18,18 @@ using LibreHardwareMonitor.Hardware;
 using System.Xml;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Task = Microsoft.Win32.TaskScheduler.Task;
+
 //using System.Threading.Tasks;
 
 namespace specify_client;
 
+/**
+ * <summary>
+ * Collection of utility functions for data gathering
+ * </summary>
+ */
 public class Data
 {
     /**
@@ -69,52 +77,6 @@ public class Data
         return collection;
     }
 
-    /**
-     * <summary>
-     * Gets tasks from Task Scheduler that satisfy all of the following conditions:
-     * <list type="bullet">
-     *  <item>Author isn't Microsoft</item>
-     *  <item>State is Ready or Running</item>
-     *  <item>Triggered at boot or login</item>
-     * </list>
-     * </summary>
-     */
-    public static List<Task> GetTsStartupTasks()
-    {
-        var ts = new TaskService();
-        return EnumTsTasks(ts.RootFolder);
-    }
-
-    private static List<Task> EnumTsTasks(TaskFolder fld)
-    {
-        var res = new List<Task>();
-        foreach (var task in fld.Tasks)
-        {
-            if (
-                !string.IsNullOrEmpty(task.Definition.RegistrationInfo.Author) &&
-                task.Definition.RegistrationInfo.Author.StartsWith("Microsof")
-            ) continue;
-
-            if (task.State != TaskState.Ready || task.State != TaskState.Running) continue;
-
-            var triggers = task.Definition.Triggers;
-            var triggersFlag = true;
-            foreach (var trigger in triggers)
-            {
-                if (trigger.TriggerType == TaskTriggerType.Logon || trigger.TriggerType == TaskTriggerType.Boot)
-                    triggersFlag = false;
-            }
-
-            if (triggersFlag) continue;
-
-            res.Add(task);
-        }
-
-        foreach (var sfld in fld.SubFolders)
-            res.AddRange(EnumTsTasks(sfld));
-
-        return res;
-    }
 
     /**
      * Convert a CIM date (what would be gotten from WMI) into an ISO date
@@ -157,7 +119,7 @@ public static class DataCache
     public static List<Dictionary<string, object>> Services { get; private set; }
     public static List<Dictionary<string, object>> InstalledApps { get; private set; }
     public static List<Dictionary<string, object>> InstalledHotfixes { get; private set; }
-    public static Dictionary<string, DateTime?> ScheduledTasks { get; private set; }
+    public static List<ScheduledTask> ScheduledTasks { get; private set; }
     public static List<string> AvList { get; private set; }
     public static List<string> FwList { get; private set; }
     public static string HostsFile { get; private set; }
@@ -211,7 +173,9 @@ public static class DataCache
         Services = Data.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
         InstalledApps = Data.GetWmi("Win32_Product", "Name, Version");
         InstalledHotfixes = Data.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
-        ScheduledTasks = GetScheduledTasks();
+        var ts = new TaskService();
+        var rawTaskList = EnumScheduledTasks(ts.RootFolder);
+        ScheduledTasks = rawTaskList.Select(e => new ScheduledTask(e)).ToList();
         RunningProcesses = new List<OutputProcess>();
         ChoiceRegistryValues = RegistryCheck();
         var rawProcesses = Process.GetProcesses();
@@ -310,119 +274,14 @@ public static class DataCache
             bypassSecureBootCheck,hwNotificationCache
         };
     }
-    private static Dictionary<string, DateTime?> GetScheduledTasks()
+    
+    private static List<Task> EnumScheduledTasks(TaskFolder fld)
     {
-        // This starts a cmd process and pipes the output of schtasks /query back to Specified.
-        // I would like a way to do this that doesn't ask to start another process. Defender won't appreciate this.
-        string command = "schtasks /query";
-        ProcessStartInfo procStartInfo = new ProcessStartInfo("cmd", "/c " + command);
-        procStartInfo.RedirectStandardOutput = true;
-        procStartInfo.UseShellExecute = false;
-        procStartInfo.CreateNoWindow = true;
-        Process proc = new Process();
-        proc.StartInfo = procStartInfo;
-        proc.Start();
+        var res = fld.Tasks.ToList();
+        foreach (var sfld in fld.SubFolders)
+            res.AddRange(EnumScheduledTasks(sfld));
 
-        string tasklist = proc.StandardOutput.ReadToEnd();
-
-        // Trim the output of the previous command into something more workable.
-        var splitTaskList = tasklist.Split('\n');
-        var trimmedTaskList = TrimTaskList(splitTaskList);
-
-        Dictionary<string, DateTime?> returnList = new Dictionary<string, DateTime?>();
-
-        // Iterate the trimmed task list and convert each task into serializable data.
-        foreach (var task in trimmedTaskList)
-        {
-            // There is a method to ignore empty strings, however .NET 4.6 has an overload selection bug that will not allow the app to compile when using that method.
-            var splitTask = task.Split(' ');
-
-            // Inefficient method to remove empty strings. The resulting list is:
-            // [0]: Task name
-            // [1]: Scheduled DateTime
-            // [2]: Status (Ready/Disabled)
-            // [3]: '\r'
-            List<string> SplitTaskAsList = new List<string>();
-            for (int i = 0; i < splitTask.Length; i++)
-            {
-                var segment = splitTask[i];
-                if (segment.Count() == 0)
-                {
-                    continue;
-                }
-                // If the list is empty, you're working on the task name. Combine strings to get the full task name.
-                if (SplitTaskAsList.Count == 0)
-                {
-                    for (int j = i + 1; j < splitTask.Length; j++)
-                    {
-                        // An empty string marks the end of a name.
-                        if (splitTask[j].Count() == 0)
-                        {
-                            break;
-                        }
-
-                        // A string labeled "N/A" is an empty datetime field.
-                        if (splitTask[j].StartsWith(@"N/A"))
-                        {
-                            break;
-                        }
-
-                        // If the string is a valid date, it is no longer part of the task name.
-                        if (DateTime.TryParse(splitTask[j], out DateTime discard))
-                        {
-                            break;
-                        }
-
-                        segment += $" {splitTask[j]}";
-                        i++;
-                    }
-                }
-                // If the list contains one element, you're working on the scheduled datetime. segment (splitTask[i]) is the date, splitTask[i+1] is the time.
-                if (SplitTaskAsList.Count == 1)
-                {
-                    segment += $" {splitTask[i + 1]}";
-                    i++;
-                }
-                SplitTaskAsList.Add(segment);
-            }
-
-            DateTime? ScheduledTime;
-            // I can't do TryParse(string, out Datetime?) ?! That seems absurd.
-            DateTime RidiculousVariable;
-
-            if (!DateTime.TryParse(SplitTaskAsList[1], out RidiculousVariable))
-            {
-                // The task is not scheduled.
-                ScheduledTime = null;
-            }
-            else
-            {
-                ScheduledTime = RidiculousVariable;
-            }
-
-
-            try
-            {
-                returnList.Add(SplitTaskAsList[0], ScheduledTime);
-            }
-            catch (ArgumentException)
-            {
-                // If there is already a task of the same name in the dictionary, ignore the new task. This is probably unwise.
-                continue;
-            }
-        }
-        return returnList;
-    }
-    private static List<string> TrimTaskList(IEnumerable<string> taskList)
-    {
-        return (from line in taskList
-                where line.Any()
-                where char.IsLetterOrDigit(line[0])
-                where !line.StartsWith("Folder:")
-                where !line.StartsWith("===")
-                where !line.StartsWith("TaskName")
-                where !line.StartsWith("INFO:")
-                select line).ToList();
+        return res;
     }
 
     public static void MakeHardwareData()
@@ -1450,5 +1309,28 @@ public class RegistryValue<T> : IRegistryValue
         Path = path;
         Name = name;
         Value = Data.GetRegistryValue<T>(regKey, path, name);
+    }
+}
+
+public class ScheduledTask
+{
+    public string Path;
+    public string Name;
+    [JsonConverter(typeof(StringEnumConverter))]
+    public TaskState State;
+
+    public bool IsActive;
+    public string Author;
+    [JsonProperty (ItemConverterType = typeof(StringEnumConverter))]
+    public List<TaskTriggerType> TriggerTypes;
+
+    public ScheduledTask(Task t)
+    {
+        Name = t.Name;
+        Path = t.Path;
+        State = t.State;
+        IsActive = t.IsActive;
+        Author = t.Definition.RegistrationInfo.Author;
+        TriggerTypes = t.Definition.Triggers.Select(e => e.TriggerType).ToList();
     }
 }

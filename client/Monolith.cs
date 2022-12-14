@@ -5,6 +5,7 @@ using System.IO;
 using System.Management;
 using System.Net;
 using Microsoft.Win32;
+using Microsoft.Win32.TaskScheduler;
 using Newtonsoft.Json;
 
 namespace specify_client;
@@ -170,7 +171,7 @@ public class MonolithSystem
     public List<Dictionary<string, object>> Services;
     public List<Dictionary<string, object>> InstalledApps;
     public List<Dictionary<string, object>> InstalledHotfixes;
-    public Dictionary<string, DateTime?> ScheduledTasks;
+    public List<ScheduledTask> ScheduledTasks;
     public List<IRegistryValue> ChoiceRegistryValues;
 
     public MonolithSystem()
