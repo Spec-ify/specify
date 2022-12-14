@@ -9,7 +9,7 @@ namespace specify_client;
 public class Program
 {
     public const string SpecifyVersion = "v0.2";
-    public static Stopwatch time;
+    public static Stopwatch Time;
     static void Main()
     {
         DataCache.Issues = new List<string>();
@@ -18,6 +18,7 @@ public class Program
         Console.WriteLine($"Specify {SpecifyVersion}");
         Console.WriteLine("This tool gathers information about your computer.  It does not collect any sensitive information.");
             
+        // TODO: make settings better
         while (true)
         {
             Console.Write("[Enter] - continue, [q] - quit, ");
@@ -26,7 +27,16 @@ public class Program
                 Console.ForegroundColor = ConsoleColor.Black;
                 Console.BackgroundColor = ConsoleColor.White;
             }
-            Console.Write("[1] - Toggle Redact username");
+            Console.Write("[1] - Toggle Redact Username");
+            Console.ForegroundColor = initialConsoleFg;
+            Console.BackgroundColor = initialConsoleBg;
+            Console.Write(" ");
+            if (!Settings.DontUpload)
+            {
+                Console.ForegroundColor = ConsoleColor.Black;
+                Console.BackgroundColor = ConsoleColor.White;
+            }
+            Console.Write("[2] - Don't Upload");
             Console.ForegroundColor = initialConsoleFg;
             Console.BackgroundColor = initialConsoleBg;
             var key = Console.ReadKey(true);
@@ -38,14 +48,16 @@ public class Program
             if (key.Key == ConsoleKey.Enter) break;
             if (key.Key is ConsoleKey.D1 or ConsoleKey.NumPad1)
                 Settings.RedactUsername = !Settings.RedactUsername;
+            if (key.Key is ConsoleKey.D2 or ConsoleKey.NumPad2)
+                Settings.DontUpload = !Settings.DontUpload;
                 
             Console.Write("\r");
         }
 
         Console.WriteLine("\n");
 
-        time = new Stopwatch();
-        time.Start();
+        Time = new Stopwatch();
+        Time.Start();
 
         var pList = new ProgressList();
         pList.PrintStatuses();
@@ -56,7 +68,6 @@ public class Program
         pList.RunItem("Security");
         pList.RunItem("Network");
         pList.RunItem("Hardware");
-        pList.RunItem("RegistryCheck");
         pList.RunItem("Assemble");
         // pList.RunItem("MainData");
         //Console.WriteLine("Last boot up time: " + Data.CimToIsoDate((string) DataCache.Os["LastBootUpTime"]));

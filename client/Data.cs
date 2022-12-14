@@ -18,7 +18,6 @@ using LibreHardwareMonitor.Hardware;
 using System.Xml;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-using System.Security.Cryptography.X509Certificates;
 //using System.Threading.Tasks;
 
 namespace specify_client;
@@ -148,7 +147,7 @@ public static class DataCache
     [NonSerialized]
     public const int AF_INET = 2;    // IP_v4 = System.Net.Sockets.AddressFamily.InterNetwork
     [NonSerialized]
-    public const int AF_INET6 = 23;  // IP_v6 = System.Net.Sockets.AddressFamily.InterNetworkV6
+    public const int AF_INET6 = 23; // IP_v6 = System.Net.Sockets.AddressFamily.InterNetworkV6
     public static List<string> Issues { get; set; }
     public static Dictionary<string, object> Os { get; private set; }
     public static Dictionary<string, object> Cs { get; private set; }
@@ -183,67 +182,8 @@ public static class DataCache
     public static List<TempMeasurement> Temperatures { get; private set; }
     public static List<BatteryData> Batteries { get; private set; }
     public static bool? SecureBootEnabled { get; private set; }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct MIB_TCPROW_OWNER_PID
-    {
-        public uint state;
-        public uint localAddr;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public byte[] localPort;
-        public uint remoteAddr;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public byte[] remotePort;
-        public uint owningPid;
-    }
-    [StructLayout(LayoutKind.Sequential)]
-    public struct MIB_TCPTABLE_OWNER_PID
-    {
-        public uint dwNumEntries;
-        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.Struct, SizeConst = 1)]
-        public MIB_TCPROW_OWNER_PID[] table;
-    }
-    [StructLayout(LayoutKind.Sequential)]
-    public struct MIB_TCP6ROW_OWNER_PID
-    {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public byte[] localAddr;
-        public uint localScopeId;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public byte[] localPort;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public byte[] remoteAddr;
-        public uint remoteScopeId;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public byte[] remotePort;
-        public uint state;
-        public uint owningPid;
-    }
-    [StructLayout(LayoutKind.Sequential)]
-    public struct MIB_TCP6TABLE_OWNER_PID
-    {
-        public uint dwNumEntries;
-        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.Struct, SizeConst = 1)]
-        public MIB_TCP6ROW_OWNER_PID[] table;
-    }
-    public enum TCP_TABLE_CLASS
-    {
-        TCP_TABLE_BASIC_LISTENER,
-        TCP_TABLE_BASIC_CONNECTIONS,
-        TCP_TABLE_BASIC_ALL,
-        TCP_TABLE_OWNER_PID_LISTENER,
-        TCP_TABLE_OWNER_PID_CONNECTIONS,
-        TCP_TABLE_OWNER_PID_ALL,
-        TCP_TABLE_OWNER_MODULE_LISTENER,
-        TCP_TABLE_OWNER_MODULE_CONNECTIONS,
-        TCP_TABLE_OWNER_MODULE_ALL
-    }
-    [DllImport("iphlpapi.dll", SetLastError = true)]
-    static extern uint GetExtendedTcpTable(
-        IntPtr pTcpTable, ref int dwOutBufLen, bool sort, int ipVersion, TCP_TABLE_CLASS tblClass, uint reserved = 0);
-
-    [DllImport("kernel32", SetLastError = true)] // this function is used to get the pointer on the process heap required by AllocateAndGetTcpExTableFromStack
-    public static extern IntPtr GetProcessHeap();
+    public static List<IRegistryValue> ChoiceRegistryValues { get; private set; }
+    
     private static readonly List<string> SystemProcesses = new List<string>()
     {
         "Memory Compression",
@@ -273,6 +213,7 @@ public static class DataCache
         InstalledHotfixes = Data.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
         ScheduledTasks = GetScheduledTasks();
         RunningProcesses = new List<OutputProcess>();
+        ChoiceRegistryValues = RegistryCheck();
         var rawProcesses = Process.GetProcesses();
 
         foreach (var rawProcess in rawProcesses)
@@ -294,16 +235,16 @@ public static class DataCache
             try
             {
                 // capacity must be declared so it can be referenced.
-                int capacity = 2000;
+                var capacity = 2000;
 
-                StringBuilder sb = new StringBuilder(capacity);
-                IntPtr ptr = Interop.OpenProcess(Interop.ProcessAccessFlags.QueryLimitedInformation, false, rawProcess.Id);
+                var sb = new StringBuilder(capacity);
+                var ptr = Interop.OpenProcess(Interop.ProcessAccessFlags.QueryLimitedInformation, false, rawProcess.Id);
 
                 if (!Interop.QueryFullProcessImageName(ptr, 0, sb, ref capacity))
                 {
                     if (!SystemProcesses.Contains(rawProcess.ProcessName))
                     {
-                        exePath = "null - Not found";
+                        exePath = "Not Found";
                         Issues.Add($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})");
                     }
                     else
@@ -333,69 +274,41 @@ public static class DataCache
             });
         }
     }
-    public static void RegistryCheck()
+    public static List<IRegistryValue> RegistryCheck()
     {
-        var TdrLevel = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"System\CurrentControlSet\Control\GraphicsDrivers", "TdrLevel");
-        if (TdrLevel != null)
-        {
-            Issues.Add($"TdrLevel set to {TdrLevel}");
-        }
+        var tdrLevel = new RegistryValue<int?>
+            (Registry.LocalMachine, @"System\CurrentControlSet\Control\GraphicsDrivers", "TdrLevel");
+        var nbFLimit = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit");
+        var throttlingIndex = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "NetworkThrottlingIndex");
+        var superFetch = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters", "EnableSuperfetch");
+        var disableAv = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiVirus");
+        var disableAs = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiSpyware");
+        var puaProtection = new RegistryValue<int?>
+            (Registry.LocalMachine, @"\SOFTWARE\Policies\Microsoft\Windows Defender", "PUAProtection");
+        var drii = new RegistryValue<int?>
+            (Registry.LocalMachine, @"\Software\Policies\Microsoft\MRT", "DontReportInfectionInformation");
+        var disableWer = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting", "Disabled");
+        var unsupportedTpmOrCpu = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SYSTEM\Setup\MoSetup", "AllowUpgradesWithUnsupportedTPMOrCPU");
+        var bypassCpuCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassCPUCheck");
+        var bypassStorageCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassStorageCheck");
+        var bypassTpmCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassTPMCheck");
+        var bypassRamCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassRAMCheck");
+        var bypassSecureBootCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassSecureBootCheck");
+        var hwNotificationCache = new RegistryValue<int?>(Registry.CurrentUser, @"Control Panel\UnsupportedHardwareNotificationCache", "SV2");
 
-        var NBFLimit = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit");
-        if (NBFLimit != null && NBFLimit != 80)
+        return new List<IRegistryValue>()
         {
-            Issues.Add($"NonBestEffortLimit set to {NBFLimit}");
-        }
-
-        var ThrottlingIndex = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "NetworkThrottlingIndex");
-        if (ThrottlingIndex == 0xFFFFFFFF)
-        {
-            Issues.Add("Network Throttling Disabled");
-        }
-
-        var Superfetch = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters", "EnableSuperfetch");
-        if (Superfetch == 0)
-        {
-            Issues.Add("Superfetch Disabled");
-        }
-
-        var DisableAV = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiVirus");
-        var DisableAS = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiSpyware");
-        var PUAProtection = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"\SOFTWARE\Policies\Microsoft\Windows Defender", "PUAProtection");
-        var DRII = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"\Software\Policies\Microsoft\MRT", "DontReportInfectionInformation");
-        if (DisableAV == 1 ||
-            DisableAS == 1 ||
-            PUAProtection == 0 ||
-            DRII == 1)
-        {
-            Issues.Add("Windows Defender Disabled");
-        }
-
-        var DisableWER = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting", "Disabled");
-        if(DisableWER == 1)
-        {
-            Issues.Add("Windows Error Reporting Disabled");
-        }
-
-        var UnsupportedTPMOrCPU = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\MoSetup", "AllowUpgradesWithUnsupportedTPMOrCPU");
-        var BypassCPUCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassCPUCheck");
-        var BypassStorageCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassStorageCheck");
-        var BypassTPMCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassTPMCheck");
-        var BypassRAMCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassRAMCheck");
-        var BypassSecureBootCheck = Data.GetRegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassSecureBootCheck");
-        var HWNotificationCache = Data.GetRegistryValue<int?>(Registry.CurrentUser, @"Control Panel\UnsupportedHardwareNotificationCache", "SV2");
-
-        if(
-            UnsupportedTPMOrCPU == 1 ||
-            BypassCPUCheck == 1 ||
-            BypassStorageCheck == 1 ||
-            BypassTPMCheck == 1 ||
-            BypassRAMCheck == 1 ||
-            BypassSecureBootCheck == 1 ||
-            HWNotificationCache == 0)
-        {
-            Issues.Add("Windows hardware checks bypassed");
-        }
+            tdrLevel, nbFLimit, throttlingIndex, superFetch, disableAv, disableAs, puaProtection, drii, disableWer,
+            unsupportedTpmOrCpu, bypassCpuCheck, bypassStorageCheck, bypassRamCheck, bypassTpmCheck,
+            bypassSecureBootCheck,hwNotificationCache
+        };
     }
     private static Dictionary<string, DateTime?> GetScheduledTasks()
     {
@@ -1283,14 +1196,14 @@ public static class DataCache
 
         return Temps;
     }
-    public static List<MIB_TCPROW_OWNER_PID> GetAllTCPv4Connections()
+    public static List<Interop.MIB_TCPROW_OWNER_PID> GetAllTCPv4Connections()
     {
-        return GetTCPConnections<MIB_TCPROW_OWNER_PID, MIB_TCPTABLE_OWNER_PID>(AF_INET);
+        return GetTCPConnections<Interop.MIB_TCPROW_OWNER_PID, Interop.MIB_TCPTABLE_OWNER_PID>(AF_INET);
     }
 
-    public static List<MIB_TCP6ROW_OWNER_PID> GetAllTCPv6Connections()
+    public static List<Interop.MIB_TCP6ROW_OWNER_PID> GetAllTCPv6Connections()
     {
-        return GetTCPConnections<MIB_TCP6ROW_OWNER_PID, MIB_TCP6TABLE_OWNER_PID>(AF_INET6);
+        return GetTCPConnections<Interop.MIB_TCP6ROW_OWNER_PID, Interop.MIB_TCP6TABLE_OWNER_PID>(AF_INET6);
     }
 
     public static List<IPR> GetTCPConnections<IPR, IPT>(int ipVersion)
@@ -1300,12 +1213,12 @@ public static class DataCache
         int buffSize = 0;
         var dwNumEntriesField = typeof(IPT).GetField("dwNumEntries");
 
-        uint ret = GetExtendedTcpTable(IntPtr.Zero, ref buffSize, true, ipVersion, TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_ALL);
+        uint ret = Interop.GetExtendedTcpTable(IntPtr.Zero, ref buffSize, true, ipVersion, Interop.TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_ALL);
         IntPtr tcpTablePtr = Marshal.AllocHGlobal(buffSize);
 
         try
         {
-            ret = GetExtendedTcpTable(tcpTablePtr, ref buffSize, true, ipVersion, TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_ALL);
+            ret = Interop.GetExtendedTcpTable(tcpTablePtr, ref buffSize, true, ipVersion, Interop.TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_ALL);
             if (ret != 0) return new List<IPR>();
 
             IPT table = (IPT)Marshal.PtrToStructure(tcpTablePtr, typeof(IPT));
@@ -1527,6 +1440,7 @@ public class DiskDrive
     public List<SmartAttribute> SmartData;
     [NonSerialized()] public string InstanceId; // Only used to link SmartData, do not serialize. Unless you really want to.
 }
+
 public class Partition
 {
     public ulong PartitionCapacity;
@@ -1535,18 +1449,21 @@ public class Partition
     public string Filesystem;
     [NonSerialized()]public string Caption; // Only used to link partitions, do not serialize.
 }
+
 public class SmartAttribute
 {
     public byte Id;
     public string Name;
     public string RawValue;
 }
+
 public class TempMeasurement
 {
     public string Hardware;
     public string SensorName;
     public float SensorValue;
 }
+
 public class NetworkConnection
 {
     public string LocalIPAddress;
@@ -1555,6 +1472,7 @@ public class NetworkConnection
     public int RemotePort;
     public uint OwningPID;
 }
+
 public class BatteryData
 {
     public string Name;
@@ -1577,4 +1495,22 @@ public class SensorUpdateVisitor : IVisitor
     }
     public void VisitSensor(ISensor sensor) { }
     public void VisitParameter(IParameter parameter) { }
+}
+
+public interface IRegistryValue { }
+
+public class RegistryValue<T> : IRegistryValue
+{
+    public string HKey;
+    public string Path;
+    public string Name;
+    public T Value;
+    
+    public RegistryValue(RegistryKey regKey, string path, string name)
+    {
+        HKey = regKey.Name;
+        Path = path;
+        Name = name;
+        Value = Data.GetRegistryValue<T>(regKey, path, name);
+    }
 }
