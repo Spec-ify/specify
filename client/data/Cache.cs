@@ -17,7 +17,7 @@ public static partial class Cache
     public static IDictionary UserVariables { get; private set; }
     public static List<OutputProcess> RunningProcesses { get; private set; }
     public static List<Dictionary<string, object>> Services { get; private set; }
-    public static List<Dictionary<string, object>> InstalledApps { get; private set; }
+    public static List<InstalledApp> InstalledApps { get; private set; }
     public static List<Dictionary<string, object>> InstalledHotfixes { get; private set; }
     public static List<ScheduledTask> ScheduledTasks { get; private set; }
     public static List<string> AvList { get; private set; }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -38,7 +39,7 @@ public static partial class Cache
         SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
         UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
         Services = Utils.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
-        InstalledApps = Utils.GetWmi("Win32_Product", "Name, Version");
+        InstalledApps = GetInstalledApps();
         InstalledHotfixes = Utils.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
         var ts = new TaskService();
         var rawTaskList = EnumScheduledTasks(ts.RootFolder);
@@ -1240,5 +1241,85 @@ public static partial class Cache
         timer.Stop();
         cmd.Close();
         return BatteryInfo;
+    }
+    private static List<InstalledApp> GetInstalledApps()
+    {
+
+        // Code Adapted from https://social.msdn.microsoft.com/Forums/en-US/94c2f14d-c45e-4b55-9ba0-eb091bac1035/c-get-installed-programs, thanks Rajasekhar.R! - K97i
+        // Currently throws a hissy fit, NullReferenceException when actually adding to the Class
+
+        string appName, appVersion;
+        RegistryKey key;
+
+        // Current User
+        key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
+        foreach (String keyName in key.GetSubKeyNames())
+        {
+            RegistryKey subkey = key.OpenSubKey(keyName);
+            appName = subkey.GetValue("DisplayName") as string;
+            appVersion = subkey.GetValue("DisplayVersion") as string;
+            //appDate = subkey.GetValue("InstallDate") as string;
+
+            //if (appDate == null)
+            //{
+            //    appDate = "null ";
+            //}
+
+            InstalledApps.Add(
+                new InstalledApp
+                {
+                    Name = appName,
+                    Version = appVersion,
+                    //InstallDate = appDate
+                });
+        }
+
+        // Local Machine 32
+        key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
+        foreach (String keyName in key.GetSubKeyNames())
+        {
+            RegistryKey subkey = key.OpenSubKey(keyName);
+            appName = subkey.GetValue("DisplayName") as string;
+            appVersion = subkey.GetValue("DisplayVersion") as string;
+            //appDate = subkey.GetValue("InstallDate") as string;
+
+            //if (appDate == null)
+            //{
+            //    appDate = "null";
+            //}
+
+            InstalledApps.Add(
+                new InstalledApp
+                {
+                    Name = appName,
+                    Version = appVersion,
+                    //InstallDate = appDate
+                });
+        }
+
+        // Local Machine 64
+        key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall");
+        foreach (String keyName in key.GetSubKeyNames())
+        {
+            RegistryKey subkey = key.OpenSubKey(keyName);
+            appName = subkey.GetValue("DisplayName") as string;
+            appVersion = subkey.GetValue("DisplayVersion") as string;
+            //appDate = subkey.GetValue("InstallDate") as string;
+
+            //if (appDate == null)
+            //{
+            //    appDate = "null";
+            //}
+
+            InstalledApps.Add(
+                new InstalledApp
+                {
+                    Name = appName,
+                    Version = appVersion,
+                    //InstallDate = appDate
+                });
+        }
+
+        return InstalledApps;
     }
 }
