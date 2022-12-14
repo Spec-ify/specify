@@ -733,7 +733,7 @@ public static class DataCache
                 Issues.Add($"Could not retrieve serial number of drive @ index {diskNumber}");
             }
 
-            drive.DiskNumber = diskNumber;
+            drive.DiskNumber = (UInt32)driveWmi["Index"];
 
             try
             {
@@ -766,10 +766,18 @@ public static class DataCache
             var partition = new Partition()
             {
                 PartitionCapacity = (UInt64)partitionWmi["Size"],
+                Caption = (string)partitionWmi["Caption"]
             };
             var diskIndex = (UInt32)partitionWmi["DiskIndex"];
 
-            drives[(int)diskIndex].Partitions.Add(partition);
+            foreach (var disk in drives)
+            {
+                if (disk.DiskNumber == diskIndex)
+                {
+                    disk.Partitions.Add(partition);
+                    break;
+                }
+            }
         }
         try
         {
@@ -824,6 +832,39 @@ public static class DataCache
         {
             Issues.Add("Error retrieving SMART Data." + e.Message);
         }
+        var LDtoP = Data.GetWmiObj("Win32_LogicalDiskToPartition");
+        for (var di = 0; di < drives.Count(); di++)
+        {
+            for (var pi = 0; pi < drives[di].Partitions.Count(); pi++)
+            {
+                foreach (var logicalDisk in LDtoP)
+                {
+                    try
+                    {
+                        if (((string)logicalDisk["Antecedent"]).Contains(drives[di].Partitions[pi].Caption))
+                        {
+                            var dependent = (string)logicalDisk["Dependent"];
+                            var whatIActuallyWantFromDependent = dependent.Split('"')[1].Replace("\\", string.Empty);
+                            var runningOutOfVariableNames = Data.GetWmiObj("Win32_LogicalDisk");
+                            foreach (var lackingCreativity in runningOutOfVariableNames)
+                            {
+                                if (whatIActuallyWantFromDependent == (string)lackingCreativity["DeviceID"])
+                                {
+                                    drives[di].Partitions[pi].PartitionLabel = whatIActuallyWantFromDependent;
+                                    drives[di].Partitions[pi].PartitionFree = (UInt64)lackingCreativity["FreeSpace"];
+                                    drives[di].Partitions[pi].Filesystem = (string)lackingCreativity["FileSystem"];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        throw new Exception("CATCH POINT ONE");
+                    }
+                }
+            }
+        }
         var partitionInfo = Data.GetWmiObj("Win32_Volume");
         foreach (var partition in partitionInfo)
         {
@@ -850,24 +891,20 @@ public static class DataCache
             // Otherwise, store into non-specific partition list.
             var found = false;
             var unique = true;
+            //var LDtoP = Data.GetWmiObj("Win32_LogicalDiskToPartition");
             for (var di = 0; di < drives.Count(); di++)
             {
                 for (var pi = 0; pi < drives[di].Partitions.Count(); pi++)
                 {
+                    if(drives[di].Partitions[pi].Filesystem != null)
+                    {
+                        continue;
+                    }    
                     var fileSystem = (string)partition["FileSystem"];
                     if (fileSystem.ToLower().Equals("ntfs"))
                     {
-                        if (partitionSize != drives[di].Partitions[pi].PartitionCapacity &&
-                            partitionSize + blockSize != drives[di].Partitions[pi].PartitionCapacity &&
-                            partitionSize - blockSize != drives[di].Partitions[pi].PartitionCapacity &&
-                            partitionSize + 2048 != drives[di].Partitions[pi].PartitionCapacity &&
-                            partitionSize - 2048 != drives[di].Partitions[pi].PartitionCapacity &&
-                            partitionSize + 1024 != drives[di].Partitions[pi].PartitionCapacity &&
-                            partitionSize - 1024 != drives[di].Partitions[pi].PartitionCapacity &&
-                            partitionSize + 4096 != drives[di].Partitions[pi].PartitionCapacity &&
-                            partitionSize - 4096 != drives[di].Partitions[pi].PartitionCapacity &&
-                            partitionSize + 512 != drives[di].Partitions[pi].PartitionCapacity &&
-                            partitionSize - 512 != drives[di].Partitions[pi].PartitionCapacity) continue;
+                        if (Math.Abs((float)partitionSize - drives[di].Partitions[pi].PartitionCapacity) > 8192)
+                            continue;
                         // If it hasn't been found yet, this is a potential match.
                         if (!found)
                         {
@@ -903,7 +940,8 @@ public static class DataCache
                     }
                 }
                 // If it is not unique, no drive or partition index is valid. Stop checking.
-                if (unique) continue;
+                if (unique) 
+                    continue;
                 dIndex = -1;
                 pIndex = -1;
                 break;
@@ -914,6 +952,7 @@ public static class DataCache
                 // Prevent the exception by continuing the loop.
                 if (dIndex == -1 || pIndex == -1)
                 {
+                    Issues.Add($"di/pi = -1 for partition {partitionSize} - this is a Specify error.");
                     continue;
                 }
                 var matchingPartition = drives[dIndex].Partitions[pIndex];
@@ -928,15 +967,20 @@ public static class DataCache
                 {
                     matchingPartition.Filesystem = (string)fileSystem;
                 }
+                Issues.Add($"{partitionSize} found. FS: {fileSystem} - DL: {driveLetter}");
             }
             else
             {
-                var driveLetter = partition["DriveLetter"];
-                var letter = "";
-                if (driveLetter != null)
+                var driveLetter = "";
+                var fileSystem = "";
+                try
                 {
+                    driveLetter = (string)partition["DriveLetter"];
+                    fileSystem = (string)partition["FileSystem"];
                 }
-                Issues.Add($"Partition link could not be established for {partitionSize} B partition - Drive Label: {letter}");
+                catch
+                { }
+                Issues.Add($"Partition link could not be established for {partitionSize} byte partition - Drive Label: {driveLetter} -  File System: {fileSystem}");
             }
         }
         foreach (var d in drives)
@@ -945,7 +989,7 @@ public static class DataCache
             UInt64 free = 0;
             foreach (var partition in d.Partitions)
             {
-                if (partition.PartitionFree == null || partition.PartitionFree == 0)
+                if (partition.PartitionFree == 0)
                 {
                     complete = false;
                 }
@@ -956,7 +1000,24 @@ public static class DataCache
             }
             if (!complete)
             {
-                // Use Libre here.
+                var LetteredDrives = DriveInfo.GetDrives();
+                foreach (var letteredDrive in LetteredDrives)
+                {
+                    foreach(var partition in d.Partitions)
+                    {
+                        try
+                        {
+                            if (letteredDrive.Name.Contains(partition.PartitionLabel[0]))
+                            {
+                                d.DiskFree = (UInt64)letteredDrive.AvailableFreeSpace;
+                            }
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+                    }
+                }
             }
             else
             {
@@ -1458,7 +1519,7 @@ public class DiskDrive
 {
     public string DeviceName;
     public string SerialNumber;
-    public int? DiskNumber;
+    public UInt32 DiskNumber;
     public ulong? DiskCapacity;
     public ulong? DiskFree;
     public uint? BlockSize;
@@ -1472,6 +1533,7 @@ public class Partition
     public ulong PartitionFree;
     public string PartitionLabel;
     public string Filesystem;
+    [NonSerialized()]public string Caption; // Only used to link partitions, do not serialize.
 }
 public class SmartAttribute
 {
