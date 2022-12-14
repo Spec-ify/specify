@@ -160,5 +160,5 @@ public class InstalledApp
 {
     public string Name;
     public string Version;
-    //public string InstallDate;
+    public string InstallDate;
 }

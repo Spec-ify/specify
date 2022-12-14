@@ -1248,7 +1248,7 @@ public static partial class Cache
         // Code Adapted from https://social.msdn.microsoft.com/Forums/en-US/94c2f14d-c45e-4b55-9ba0-eb091bac1035/c-get-installed-programs, thanks Rajasekhar.R! - K97i
         // Currently throws a hissy fit, NullReferenceException when actually adding to the Class
 
-        string appName, appVersion;
+        string appName, appVersion, appDate;
         RegistryKey key;
 
         // Current User
@@ -1256,22 +1256,33 @@ public static partial class Cache
         foreach (String keyName in key.GetSubKeyNames())
         {
             RegistryKey subkey = key.OpenSubKey(keyName);
-            appName = subkey.GetValue("DisplayName") as string;
-            appVersion = subkey.GetValue("DisplayVersion") as string;
-            //appDate = subkey.GetValue("InstallDate") as string;
 
-            //if (appDate == null)
-            //{
-            //    appDate = "null ";
-            //}
+            appName = subkey.GetValue("DisplayName") as string;
 
             InstalledApps.Add(
-                new InstalledApp
-                {
-                    Name = appName,
-                    Version = appVersion,
-                    //InstallDate = appDate
-                });
+                    new InstalledApp
+                    {
+                        Name = appName
+                    });
+
+            appVersion = subkey.GetValue("DisplayVersion") as string;
+
+            InstalledApps.Add(
+                    new InstalledApp
+                    {
+                        Version = appVersion
+                     });
+
+            appDate = subkey.GetValue("InstallDate") as string;
+
+            //if (appDate != null)
+            //{
+                InstalledApps.Add(
+                    new InstalledApp
+                    {
+                        InstallDate = appDate
+                    });
+            //}
         }
 
         // Local Machine 32
@@ -1281,20 +1292,18 @@ public static partial class Cache
             RegistryKey subkey = key.OpenSubKey(keyName);
             appName = subkey.GetValue("DisplayName") as string;
             appVersion = subkey.GetValue("DisplayVersion") as string;
-            //appDate = subkey.GetValue("InstallDate") as string;
+            appDate = subkey.GetValue("InstallDate") as string;
 
-            //if (appDate == null)
-            //{
-            //    appDate = "null";
-            //}
-
-            InstalledApps.Add(
-                new InstalledApp
-                {
-                    Name = appName,
-                    Version = appVersion,
-                    //InstallDate = appDate
-                });
+            if (appDate != null)
+            {
+                InstalledApps.Add(
+                    new InstalledApp
+                    {
+                        Name = appName,
+                        Version = appVersion,
+                        InstallDate = appDate
+                    });
+            }
         }
 
         // Local Machine 64
@@ -1304,20 +1313,19 @@ public static partial class Cache
             RegistryKey subkey = key.OpenSubKey(keyName);
             appName = subkey.GetValue("DisplayName") as string;
             appVersion = subkey.GetValue("DisplayVersion") as string;
-            //appDate = subkey.GetValue("InstallDate") as string;
+            appDate = subkey.GetValue("InstallDate") as string;
 
-            //if (appDate == null)
-            //{
-            //    appDate = "null";
-            //}
-
-            InstalledApps.Add(
-                new InstalledApp
-                {
-                    Name = appName,
-                    Version = appVersion,
-                    //InstallDate = appDate
-                });
+            if (appDate != null)
+            {
+                InstalledApps.Add(
+                    new InstalledApp
+                    {
+                        Name = appName,
+                        Version = appVersion,
+                        InstallDate = appDate
+                    });
+            }
+            
         }
 
         return InstalledApps;
