@@ -45,6 +45,7 @@ public static partial class Cache
     public static List<BatteryData> Batteries { get; private set; }
     public static bool? SecureBootEnabled { get; private set; }
     public static List<IRegistryValue> ChoiceRegistryValues { get; private set; }
+    public static List<Monitor> MonitorInfo { get; private set; }
     
     private static readonly List<string> SystemProcesses = new List<string>()
     {

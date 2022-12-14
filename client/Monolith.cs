@@ -101,7 +101,7 @@ public class MonolithBasicInfo
 
         Edition = (string)os["Caption"];
         Version = (string)os["Version"];
-        FriendlyVersion = Utils.GetRegistryValue<string>(Registry.LocalMachine, 
+        FriendlyVersion = Utils.GetRegistryValue<string>(Registry.LocalMachine,
             @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
             "DisplayVersion");
         InstallDate = Utils.CimToIsoDate((string)os["InstallDate"]);
@@ -144,12 +144,13 @@ public class MonolithHardware
     public List<Dictionary<string, object>> Gpu;
     public Dictionary<string, object> Motherboard;
     public List<Dictionary<string, object>> AudioDevices;
+    public List<Monitor> Monitors;
     public List<Dictionary<string, object>> Drivers;
     public List<Dictionary<string, object>> Devices;
     public List<DiskDrive> Storage;
     public List<TempMeasurement> Temperatures;
     public List<BatteryData> Batteries;
-        
+
     public MonolithHardware()
     {
         Ram = data.Cache.Ram;
@@ -157,6 +158,7 @@ public class MonolithHardware
         Gpu = data.Cache.Gpu;
         Motherboard = data.Cache.Motherboard;
         AudioDevices = data.Cache.AudioDevices;
+        Monitors = data.Cache.MonitorInfo;
         Drivers = data.Cache.Drivers;
         Devices = data.Cache.Devices;
         Storage = data.Cache.Disks;

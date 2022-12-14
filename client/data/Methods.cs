@@ -20,7 +20,8 @@ using Newtonsoft.Json.Linq;
 namespace specify_client.data;
 
 public static partial class Cache
-{public static void MakeMainData()
+{
+    public static void MakeMainData()
     {
         Os = Utils.GetWmi("Win32_OperatingSystem").First();
         Cs = Utils.GetWmi("Win32_ComputerSystem").First();
@@ -159,6 +160,7 @@ public static partial class Cache
             + "CurrentRefreshRate, CurrentBitsPerPixel");
         Motherboard = Utils.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").First();
         AudioDevices = Utils.GetWmi("Win32_SoundDevice", "Name, Manufacturer, Status, DeviceID");
+        MonitorInfo = GetMonitorInfo();
         Drivers = Utils.GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
         Devices = Utils.GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
         Ram = GetSMBiosMemoryInfo();
@@ -340,6 +342,109 @@ public static partial class Cache
                 break;
             }
         }
+    }
+    public static List<Monitor> GetMonitorInfo()
+    {
+        List<Monitor> MonitorInfo = new List<Monitor>();
+        String path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+
+        Process cmd = new Process
+        {
+            StartInfo =
+            {
+                FileName = "cmd",
+                WorkingDirectory = path,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                Arguments = "/Q /C dxdiag /x dxinfo.xml"
+            }
+        };
+
+        if (File.Exists(Path.Combine(path, "dxinfo.xml")))
+        {
+            File.Delete(Path.Combine(path, "dxinfo.xml"));
+        }
+
+        cmd.Start();
+
+        Stopwatch timer = Stopwatch.StartNew();
+        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(60));
+            
+        while (timer.Elapsed < timeout)
+
+            if (File.Exists(Path.Combine(path, "dxinfo.xml")) && Process.GetProcessesByName("dxdiag").Length == 0)
+                {
+                XmlDocument doc = new XmlDocument();
+                doc.Load(Path.Combine(path, "dxinfo.xml"));
+                List<JToken> Monitor = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["DxDiag"]["DisplayDevices"].Children().Children().ToList();
+
+                var videoid = 0;
+
+                // very inefficient while loop right here, but as long as it works, thats what matters -K97i
+                while (true)
+                {
+
+                    try
+                    {
+                        foreach (JToken DisplayDevice in Monitor)
+
+                            if (DisplayDevice.HasValues)
+                            {
+
+                                MonitorInfo.Add(
+                                    new Monitor
+                                    {
+                                        Name = (string)DisplayDevice[videoid]["CardName"],
+                                        ChipType = (string)DisplayDevice[videoid]["ChipType"],
+                                        DedicatedMemory = (string)DisplayDevice[videoid]["DedicatedMemory"],
+                                        MonitorModel = (string)DisplayDevice[videoid]["MonitorModel"],
+                                        CurrentMode = (string)DisplayDevice[videoid]["CurrentMode"]
+                                    });
+
+                                videoid++;
+
+                            }
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        break;
+                    }
+
+                    catch (ArgumentException)
+                    {
+                        foreach (JToken DisplayDevice in Monitor)
+
+                            if (DisplayDevice.HasValues)
+                            {
+
+                                MonitorInfo.Add(
+                                    new Monitor
+                                    {
+                                        Name = (string)DisplayDevice["CardName"],
+                                        ChipType = (string)DisplayDevice["ChipType"],
+                                        DedicatedMemory = (string)DisplayDevice["DedicatedMemory"],
+                                        MonitorModel = (string)DisplayDevice["MonitorModel"],
+                                        CurrentMode = (string)DisplayDevice["CurrentMode"]
+                                    });
+
+                                break;
+                            }
+                        break;
+                    }
+                }
+
+                break;
+            }
+        if (timer.Elapsed > timeout)
+            Issues.Add("Monitor report was not generated before the timeout!");
+
+        timer.Stop();
+        cmd.Close();
+
+        File.Delete(Path.Combine(path, "dxinfo.xml"));
+
+        return MonitorInfo;
     }
     private static List<DiskDrive> GetDiskDriveData()
     {
@@ -911,10 +1016,12 @@ public static partial class Cache
                     { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
                     );
             }
-        } catch (OverflowException)
+        }
+        catch (OverflowException)
         {
             Issues.Add("Absolute value overflow occured when fetching temperature data");
-        } finally
+        }
+        finally
         {
             computer.Close();
         }
@@ -1091,8 +1198,9 @@ public static partial class Cache
             }
         };
         cmd.Start();
+
         Stopwatch timer = Stopwatch.StartNew();
-        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(10));
+        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(60));
 
         while (timer.Elapsed < timeout)
             if (File.Exists(Path.Combine(path, "battery-report.xml")) &&

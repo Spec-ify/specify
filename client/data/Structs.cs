@@ -146,3 +146,12 @@ public class ScheduledTask
         TriggerTypes = t.Definition.Triggers.Select(e => e.TriggerType).ToList();
     }
 }
+
+public class Monitor
+{
+    public string Name;
+    public string ChipType;
+    public string DedicatedMemory;
+    public string MonitorModel;
+    public string CurrentMode;
+}
