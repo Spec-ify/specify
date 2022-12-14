@@ -49,6 +49,7 @@ public class Monolith
     public static void WriteFile()
     {
         Program.Time.Stop();
+        MonolithCache.Monolith.Meta.GenerationDate = DateTime.Now;
 
         var serialized = MonolithCache.Monolith.Serialize();
 
@@ -72,6 +73,7 @@ public class Monolith
 public struct MonolithMeta
 {
     public long ElapsedTime;
+    public DateTime GenerationDate;
 }
 
 [Serializable]
