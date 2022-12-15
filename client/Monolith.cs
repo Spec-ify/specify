@@ -174,7 +174,7 @@ public class MonolithSystem
     public IDictionary SystemVariables;
     public List<OutputProcess> RunningProcesses;
     public List<Dictionary<string, object>> Services;
-    public List<Dictionary<string, object>> InstalledApps;
+    public List<InstalledApp> InstalledApps;
     public List<Dictionary<string, object>> InstalledHotfixes;
     public List<ScheduledTask> ScheduledTasks;
     public List<IRegistryValue> ChoiceRegistryValues;
