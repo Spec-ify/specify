@@ -15,6 +15,12 @@ public class NetworkRoute
     public List<int> AverageLatency = new List<int>();
     public List<double> PacketLoss = new List<double>();
 }
+public class InstalledApp
+{
+    public string Name;
+    public string Version;
+    public string InstallDate;
+}
 public class OutputProcess
 {
     public string ProcessName;
@@ -154,11 +160,4 @@ public class Monitor
     public string DedicatedMemory;
     public string MonitorModel;
     public string CurrentMode;
-}
-
-public class InstalledApp
-{
-    public string Name;
-    public string Version;
-    public string InstallDate;
 }

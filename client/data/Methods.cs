@@ -1178,7 +1178,6 @@ public static partial class Cache
         }
         return connectionsList;
     }
-
     private static List<BatteryData> GetBatteryData()
     {
         List<BatteryData> BatteryInfo = new List<BatteryData>();
@@ -1248,6 +1247,8 @@ public static partial class Cache
         // Code Adapted from https://social.msdn.microsoft.com/Forums/en-US/94c2f14d-c45e-4b55-9ba0-eb091bac1035/c-get-installed-programs, thanks Rajasekhar.R! - K97i
         // Currently throws a hissy fit, NullReferenceException when actually adding to the Class
 
+        List<InstalledApp> InstalledApps = new List<InstalledApp>();
+
         string appName, appVersion, appDate;
         RegistryKey key;
 
@@ -1256,33 +1257,17 @@ public static partial class Cache
         foreach (String keyName in key.GetSubKeyNames())
         {
             RegistryKey subkey = key.OpenSubKey(keyName);
-
             appName = subkey.GetValue("DisplayName") as string;
-
-            InstalledApps.Add(
-                    new InstalledApp
-                    {
-                        Name = appName
-                    });
-
             appVersion = subkey.GetValue("DisplayVersion") as string;
-
-            InstalledApps.Add(
-                    new InstalledApp
-                    {
-                        Version = appVersion
-                     });
-
             appDate = subkey.GetValue("InstallDate") as string;
 
-            //if (appDate != null)
-            //{
-                InstalledApps.Add(
-                    new InstalledApp
-                    {
-                        InstallDate = appDate
-                    });
-            //}
+            InstalledApps.Add(
+                new InstalledApp()
+                {
+                    Name = appName,
+                    Version = appVersion,
+                    InstallDate = appDate
+                });
         }
 
         // Local Machine 32
@@ -1294,16 +1279,13 @@ public static partial class Cache
             appVersion = subkey.GetValue("DisplayVersion") as string;
             appDate = subkey.GetValue("InstallDate") as string;
 
-            if (appDate != null)
-            {
-                InstalledApps.Add(
-                    new InstalledApp
-                    {
-                        Name = appName,
-                        Version = appVersion,
-                        InstallDate = appDate
-                    });
-            }
+            InstalledApps.Add(
+                new InstalledApp()
+                {
+                    Name = appName,
+                    Version = appVersion,
+                    InstallDate = appDate
+                });
         }
 
         // Local Machine 64
@@ -1315,16 +1297,13 @@ public static partial class Cache
             appVersion = subkey.GetValue("DisplayVersion") as string;
             appDate = subkey.GetValue("InstallDate") as string;
 
-            if (appDate != null)
-            {
-                InstalledApps.Add(
-                    new InstalledApp
-                    {
-                        Name = appName,
-                        Version = appVersion,
-                        InstallDate = appDate
-                    });
-            }
+            InstalledApps.Add(
+                new InstalledApp()
+                {
+                    Name = appName,
+                    Version = appVersion,
+                    InstallDate = appDate
+                });
             
         }
 
