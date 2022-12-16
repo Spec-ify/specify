@@ -18,7 +18,7 @@ public class Program
         Time.Start();
 
         var pList = new ProgressList();
-        pList.PrintStatuses();
+        //pList.PrintStatuses();
         pList.RunItem("WriteFile");
         pList.RunItem("MainData");
         //pList.RunItem("DummyTimer");

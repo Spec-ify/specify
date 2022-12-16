@@ -28,22 +28,22 @@ namespace specify_client
 
         private void UploadOn(object sender, RoutedEventArgs e)
         {
-            specify_client.Settings.DontUpload = true;
+            Settings.DontUpload = true;
             UploadToggle.Background = new SolidColorBrush(Colors.Green);
         }
         private void UploadOff(object sender, RoutedEventArgs e)
         {
-            specify_client.Settings.DontUpload = false;
+            Settings.DontUpload = false;
             UploadToggle.Background = new SolidColorBrush(Colors.White);
         }
         private void UsernameOn(object sender, RoutedEventArgs e)
         {
-            specify_client.Settings.RedactUsername = true;
+            Settings.RedactUsername = true;
             Username.Background = new SolidColorBrush(Colors.Green);
         }
         private void UsernameOff(object sender, RoutedEventArgs e)
         {
-            specify_client.Settings.RedactUsername = false;
+            Settings.RedactUsername = false;
             Username.Background = new SolidColorBrush(Colors.White);
         }
         private void StartAction(object sender, RoutedEventArgs e)
