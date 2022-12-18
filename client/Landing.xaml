@@ -18,7 +18,8 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="50"/>
-            <RowDefinition Height="125*"/>
+            <RowDefinition Height="100*"/>
+            <RowDefinition Height="25*"/>
             <RowDefinition Height="40*"/>
             <RowDefinition Height="50*"/>
             <RowDefinition Height="25*"/>
@@ -48,17 +49,59 @@
             <Image 
                 Source="/Images/specifycl-logo-white pscrop.png" 
                 Stretch="Uniform"
-                Height="162" Width="240"/>
+                Height="139" Width="240"/>
 
         </StackPanel>
 
-        <StackPanel Grid.Row="3" Grid.RowSpan="3" Margin="0,50,0,0">
+        <StackPanel Grid.Row="2" Grid.RowSpan="1">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment = "Center" 
+                        VerticalAlignment = "Center">
+                <TextBlock TextWrapping="Wrap" 
+                           Text="This tool gathers information about your computer. " 
+                           FontFamily="Consolas" Foreground="White"
+                           HorizontalAlignment = "Center" 
+                           VerticalAlignment = "Center"/>
+            </StackPanel>
+            
+            <TextBlock TextWrapping="Wrap" 
+                           Text="It does not collect any private information other than your username, which you can redact." 
+                           FontFamily="Consolas" Foreground="White"
+                           HorizontalAlignment = "Center" 
+                           VerticalAlignment = "Bottom"/>
+        </StackPanel>
+
+            <StackPanel Grid.Row="4" Grid.RowSpan="2" Margin="0,50,0,0">
             <StackPanel Orientation="Vertical"
                         HorizontalAlignment = "Left" 
                         VerticalAlignment = "Bottom">
 
-                <TextBlock TextWrapping="Wrap" 
-                           Text="Made by the Specify Team!" FontFamily="Consolas" Height="30" Margin="5,30,0,0" Foreground="White"/>
+                <TextBlock TextWrapping="Wrap"
+                           FontFamily="Consolas" 
+                           Height="30" 
+                           Margin="5,30,0,0" 
+                           Foreground="White">
+                    
+                    <Hyperlink NavigateUri="https://github.com/Spec-ify/specify/graphs/contributors"
+                               RequestNavigate="Hyperlink_RequestNavigate">
+                        
+                        <Hyperlink.Style>
+                            
+                            <Style TargetType="Hyperlink"
+                                   BasedOn="{StaticResource {x:Type Hyperlink}}">
+                            
+                                <Setter Property="Foreground" 
+                                    Value="White"/>
+                        
+                            </Style>
+                        
+                        </Hyperlink.Style>
+                        
+                        Made by the Specify Team!
+                        
+                    </Hyperlink>
+
+                </TextBlock>
 
             </StackPanel>
         </StackPanel>

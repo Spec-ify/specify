@@ -1245,7 +1245,6 @@ namespace specify_client.data
         {
 
             // Code Adapted from https://social.msdn.microsoft.com/Forums/en-US/94c2f14d-c45e-4b55-9ba0-eb091bac1035/c-get-installed-programs, thanks Rajasekhar.R! - K97i
-            // Currently throws a hissy fit, NullReferenceException when actually adding to the Class
 
             List<InstalledApp> InstalledApps = new List<InstalledApp>();
 
