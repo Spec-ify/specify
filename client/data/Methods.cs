@@ -128,6 +128,18 @@ public static partial class Cache
             (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting", "Disabled");
         var unsupportedTpmOrCpu = new RegistryValue<int?>
             (Registry.LocalMachine, @"SYSTEM\Setup\MoSetup", "AllowUpgradesWithUnsupportedTPMOrCPU");
+        var hwSchMode = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "HwSchMode");
+        var WUServer = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "UseWUServer");
+        var noAutoUpdate = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate");
+        var fastBoot = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Power", "HiberbootEnabled");
+        var auditBoot = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SYSTEM\Setup\Status\", "AuditBoot");
+        var previewBuilds = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\PreviewBuilds\", "AllowBuildPreview");
         var bypassCpuCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassCPUCheck");
         var bypassStorageCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassStorageCheck");
         var bypassTpmCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassTPMCheck");
@@ -138,8 +150,8 @@ public static partial class Cache
         return new List<IRegistryValue>()
         {
             tdrLevel, nbFLimit, throttlingIndex, superFetch, disableAv, disableAs, puaProtection, drii, disableWer,
-            unsupportedTpmOrCpu, bypassCpuCheck, bypassStorageCheck, bypassRamCheck, bypassTpmCheck,
-            bypassSecureBootCheck,hwNotificationCache
+            unsupportedTpmOrCpu, hwSchMode, WUServer, noAutoUpdate, fastBoot, auditBoot, previewBuilds, bypassCpuCheck, 
+            bypassStorageCheck, bypassRamCheck, bypassTpmCheck, bypassSecureBootCheck, hwNotificationCache
         };
     }
     
