@@ -177,6 +177,9 @@ public class MonolithSystem
     public List<InstalledApp> InstalledApps;
     public List<Dictionary<string, object>> InstalledHotfixes;
     public List<ScheduledTask> ScheduledTasks;
+    public List<Dictionary<string, object>> PowerProfiles;
+    public List<MicroCode> MicroCodeCheck;
+    public List<Minidump> MinidumpCount;
     public List<IRegistryValue> ChoiceRegistryValues;
 
     public MonolithSystem()
@@ -188,6 +191,9 @@ public class MonolithSystem
         InstalledApps = data.Cache.InstalledApps;
         InstalledHotfixes = data.Cache.InstalledHotfixes;
         ScheduledTasks = data.Cache.ScheduledTasks;
+        PowerProfiles = data.Cache.PowerProfiles;
+        MicroCodeCheck = data.Cache.MicroCodeCheck;
+        MinidumpCount = data.Cache.MinidumpCount;
         ChoiceRegistryValues = data.Cache.ChoiceRegistryValues;
     }
 }

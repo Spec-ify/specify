@@ -46,6 +46,9 @@ public static partial class Cache
         ScheduledTasks = rawTaskList.Select(e => new ScheduledTask(e)).ToList();
         RunningProcesses = new List<OutputProcess>();
         ChoiceRegistryValues = RegistryCheck();
+        PowerProfiles = Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
+        MicroCodeCheck = CheckForMicroCode();
+        MinidumpCount = CountMinidumps();
         var rawProcesses = Process.GetProcesses();
 
         foreach (var rawProcess in rawProcesses)
@@ -106,6 +109,79 @@ public static partial class Cache
             });
         }
     }
+    public static List<MicroCode> CheckForMicroCode()
+    {
+        List<MicroCode> Check = new List<MicroCode>();
+
+        var IntelPath = "C:\\Windows\\System32\\mcupdate_genuineintel.dll";
+        var AMDPath = "C:\\Windows\\System32\\mcupdate_authenticamd.dll";
+
+        if (File.Exists(AMDPath) == false && File.Exists(IntelPath) == false)
+        {
+            Check.Add(
+                new MicroCode
+                {
+                    Name = IntelPath,
+                    Exists = 0
+                });
+
+            Check.Add(
+                new MicroCode
+                {
+                    Name = AMDPath,
+                    Exists = 0
+                });
+        }
+
+        else
+        {
+            Check.Add(
+                new MicroCode
+                {
+                    Name = IntelPath,
+                    Exists = 1
+                });
+
+            Check.Add(
+                new MicroCode
+                {
+                    Name = AMDPath,
+                    Exists = 1
+                });
+        }
+
+        return Check;
+    }
+    public static List<Minidump> CountMinidumps()
+    {
+        List<Minidump> Count = new List<Minidump>();
+
+        var DumpPath = "C:\\Windows\\Minidump";
+
+        string[] files = System.IO.Directory.GetFiles(DumpPath);
+
+        int count = 0;
+
+        foreach (string file in files)
+        {
+            DateTime lastWriteTime = System.IO.File.GetLastWriteTime(file);
+
+            if (lastWriteTime > DateTime.Now.AddDays(-7))
+            {
+                count++;
+            }
+
+        }
+
+        Count.Add(
+            new Minidump
+            {
+                Count = count
+            });
+
+        return Count;
+    }
+
     public static List<IRegistryValue> RegistryCheck()
     {
         var tdrLevel = new RegistryValue<int?>

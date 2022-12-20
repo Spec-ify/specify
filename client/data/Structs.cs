@@ -21,6 +21,16 @@ public class InstalledApp
     public string Version;
     public string InstallDate;
 }
+
+public class MicroCode
+{
+    public string Name;
+    public int Exists;
+}
+public class Minidump
+{
+    public int Count;
+}
 public class OutputProcess
 {
     public string ProcessName;
