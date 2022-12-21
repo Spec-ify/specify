@@ -27,6 +27,10 @@ public class MicroCode
     public string Name;
     public bool Exists;
 }
+public class StaticCore
+{
+    public bool On;
+}
 public class Minidump
 {
     public int Count;
