@@ -116,39 +116,19 @@ public static partial class Cache
         var IntelPath = "C:\\Windows\\System32\\mcupdate_genuineintel.dll";
         var AMDPath = "C:\\Windows\\System32\\mcupdate_authenticamd.dll";
 
-        if (File.Exists(AMDPath) == false && File.Exists(IntelPath) == false)
-        {
-            Check.Add(
+        Check.Add(
                 new MicroCode
                 {
                     Name = IntelPath,
-                    Exists = 0
+                    Exists = File.Exists(IntelPath)
                 });
 
-            Check.Add(
-                new MicroCode
-                {
-                    Name = AMDPath,
-                    Exists = 0
-                });
-        }
-
-        else
-        {
-            Check.Add(
-                new MicroCode
-                {
-                    Name = IntelPath,
-                    Exists = 1
-                });
-
-            Check.Add(
-                new MicroCode
-                {
-                    Name = AMDPath,
-                    Exists = 1
-                });
-        }
+        Check.Add(
+            new MicroCode
+            {
+                Name = AMDPath,
+                Exists = File.Exists(AMDPath)
+            });
 
         return Check;
     }

@@ -25,7 +25,7 @@ public class InstalledApp
 public class MicroCode
 {
     public string Name;
-    public int Exists;
+    public bool Exists;
 }
 public class Minidump
 {
