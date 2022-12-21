@@ -49,6 +49,7 @@ public static partial class Cache
         PowerProfiles = Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
         MicroCodeCheck = CheckForMicroCode();
         MinidumpCount = CountMinidumps();
+        StaticCoreCheck = CheckStaticCore();
         var rawProcesses = Process.GetProcesses();
 
         foreach (var rawProcess in rawProcesses)
@@ -131,6 +132,43 @@ public static partial class Cache
             });
 
         return Check;
+    }
+    public static List<StaticCore> CheckStaticCore()
+    {
+        List<StaticCore> Cores = new List<StaticCore>();
+
+        string output = string.Empty;
+
+        ProcessStartInfo procStartInfo = new ProcessStartInfo("bcdedit", "/enum");
+        procStartInfo.RedirectStandardOutput = true;
+        procStartInfo.UseShellExecute = false;
+        procStartInfo.CreateNoWindow = true;
+
+        using (Process proc = new Process())
+        {
+            proc.StartInfo = procStartInfo;
+            proc.Start();
+            output = proc.StandardOutput.ReadToEnd();
+        }
+
+        if (output.Contains("numproc"))
+        {
+            Cores.Add(
+                new StaticCore
+                {
+                On = true
+                });
+        }
+        else
+        {
+            Cores.Add(
+                new StaticCore
+                {
+                    On = false
+                });
+        }
+
+        return Cores;
     }
     public static List<Minidump> CountMinidumps()
     {
@@ -232,6 +270,7 @@ public static partial class Cache
         MonitorInfo = GetMonitorInfo();
         Drivers = Utils.GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
         Devices = Utils.GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
+        BiosInfo = Utils.GetWmi("Win32_bios");
         Ram = GetSMBiosMemoryInfo();
         Disks = GetDiskDriveData();
         Temperatures = GetTemps();

@@ -147,6 +147,7 @@ public class MonolithHardware
     public List<Monitor> Monitors;
     public List<Dictionary<string, object>> Drivers;
     public List<Dictionary<string, object>> Devices;
+    public List<Dictionary<string, object>> BiosInfo;
     public List<DiskDrive> Storage;
     public List<TempMeasurement> Temperatures;
     public List<BatteryData> Batteries;
@@ -161,6 +162,7 @@ public class MonolithHardware
         Monitors = data.Cache.MonitorInfo;
         Drivers = data.Cache.Drivers;
         Devices = data.Cache.Devices;
+        BiosInfo = data.Cache.BiosInfo;
         Storage = data.Cache.Disks;
         Temperatures = data.Cache.Temperatures;
         Batteries = data.Cache.Batteries;
@@ -180,6 +182,7 @@ public class MonolithSystem
     public List<Dictionary<string, object>> PowerProfiles;
     public List<MicroCode> MicroCodeCheck;
     public List<Minidump> MinidumpCount;
+    public List<StaticCore> StaticCoreCheck;
     public List<IRegistryValue> ChoiceRegistryValues;
 
     public MonolithSystem()
@@ -194,6 +197,7 @@ public class MonolithSystem
         PowerProfiles = data.Cache.PowerProfiles;
         MicroCodeCheck = data.Cache.MicroCodeCheck;
         MinidumpCount = data.Cache.MinidumpCount;
+        StaticCoreCheck= data.Cache.StaticCoreCheck;
         ChoiceRegistryValues = data.Cache.ChoiceRegistryValues;
     }
 }
