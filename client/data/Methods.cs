@@ -46,6 +46,10 @@ public static partial class Cache
         ScheduledTasks = rawTaskList.Select(e => new ScheduledTask(e)).ToList();
         RunningProcesses = new List<OutputProcess>();
         ChoiceRegistryValues = RegistryCheck();
+        PowerProfiles = Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
+        MicroCodeCheck = CheckForMicroCode();
+        MinidumpCount = CountMinidumps();
+        StaticCoreCheck = CheckStaticCore();
         var rawProcesses = Process.GetProcesses();
 
         foreach (var rawProcess in rawProcesses)
@@ -106,6 +110,96 @@ public static partial class Cache
             });
         }
     }
+    public static List<MicroCode> CheckForMicroCode()
+    {
+        List<MicroCode> Check = new List<MicroCode>();
+
+        var IntelPath = "C:\\Windows\\System32\\mcupdate_genuineintel.dll";
+        var AMDPath = "C:\\Windows\\System32\\mcupdate_authenticamd.dll";
+
+        Check.Add(
+                new MicroCode
+                {
+                    Name = IntelPath,
+                    Exists = File.Exists(IntelPath)
+                });
+
+        Check.Add(
+            new MicroCode
+            {
+                Name = AMDPath,
+                Exists = File.Exists(AMDPath)
+            });
+
+        return Check;
+    }
+    public static List<StaticCore> CheckStaticCore()
+    {
+        List<StaticCore> Cores = new List<StaticCore>();
+
+        string output = string.Empty;
+
+        ProcessStartInfo procStartInfo = new ProcessStartInfo("bcdedit", "/enum");
+        procStartInfo.RedirectStandardOutput = true;
+        procStartInfo.UseShellExecute = false;
+        procStartInfo.CreateNoWindow = true;
+
+        using (Process proc = new Process())
+        {
+            proc.StartInfo = procStartInfo;
+            proc.Start();
+            output = proc.StandardOutput.ReadToEnd();
+        }
+
+        if (output.Contains("numproc"))
+        {
+            Cores.Add(
+                new StaticCore
+                {
+                On = true
+                });
+        }
+        else
+        {
+            Cores.Add(
+                new StaticCore
+                {
+                    On = false
+                });
+        }
+
+        return Cores;
+    }
+    public static List<Minidump> CountMinidumps()
+    {
+        List<Minidump> Count = new List<Minidump>();
+
+        var DumpPath = "C:\\Windows\\Minidump";
+
+        string[] files = System.IO.Directory.GetFiles(DumpPath);
+
+        int count = 0;
+
+        foreach (string file in files)
+        {
+            DateTime lastWriteTime = System.IO.File.GetLastWriteTime(file);
+
+            if (lastWriteTime > DateTime.Now.AddDays(-7))
+            {
+                count++;
+            }
+
+        }
+
+        Count.Add(
+            new Minidump
+            {
+                Count = count
+            });
+
+        return Count;
+    }
+
     public static List<IRegistryValue> RegistryCheck()
     {
         var tdrLevel = new RegistryValue<int?>
@@ -128,6 +222,18 @@ public static partial class Cache
             (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting", "Disabled");
         var unsupportedTpmOrCpu = new RegistryValue<int?>
             (Registry.LocalMachine, @"SYSTEM\Setup\MoSetup", "AllowUpgradesWithUnsupportedTPMOrCPU");
+        var hwSchMode = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "HwSchMode");
+        var WUServer = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "UseWUServer");
+        var noAutoUpdate = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate");
+        var fastBoot = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Power", "HiberbootEnabled");
+        var auditBoot = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SYSTEM\Setup\Status\", "AuditBoot");
+        var previewBuilds = new RegistryValue<int?>
+            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\PreviewBuilds\", "AllowBuildPreview");
         var bypassCpuCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassCPUCheck");
         var bypassStorageCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassStorageCheck");
         var bypassTpmCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassTPMCheck");
@@ -138,8 +244,8 @@ public static partial class Cache
         return new List<IRegistryValue>()
         {
             tdrLevel, nbFLimit, throttlingIndex, superFetch, disableAv, disableAs, puaProtection, drii, disableWer,
-            unsupportedTpmOrCpu, bypassCpuCheck, bypassStorageCheck, bypassRamCheck, bypassTpmCheck,
-            bypassSecureBootCheck,hwNotificationCache
+            unsupportedTpmOrCpu, hwSchMode, WUServer, noAutoUpdate, fastBoot, auditBoot, previewBuilds, bypassCpuCheck, 
+            bypassStorageCheck, bypassRamCheck, bypassTpmCheck, bypassSecureBootCheck, hwNotificationCache
         };
     }
     
@@ -164,6 +270,7 @@ public static partial class Cache
         MonitorInfo = GetMonitorInfo();
         Drivers = Utils.GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
         Devices = Utils.GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
+        BiosInfo = Utils.GetWmi("Win32_bios");
         Ram = GetSMBiosMemoryInfo();
         Disks = GetDiskDriveData();
         Temperatures = GetTemps();
