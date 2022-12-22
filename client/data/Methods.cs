@@ -1367,6 +1367,8 @@ public static partial class Cache
             appName = subkey.GetValue("DisplayName") as string;
             appVersion = subkey.GetValue("DisplayVersion") as string;
             appDate = subkey.GetValue("InstallDate") as string;
+            
+            if (appName != null) { 
 
             InstalledApps.Add(
                 new InstalledApp()
@@ -1375,6 +1377,7 @@ public static partial class Cache
                     Version = appVersion,
                     InstallDate = appDate
                 });
+            }
         }
 
         // Local Machine 32
@@ -1386,13 +1389,17 @@ public static partial class Cache
             appVersion = subkey.GetValue("DisplayVersion") as string;
             appDate = subkey.GetValue("InstallDate") as string;
 
-            InstalledApps.Add(
-                new InstalledApp()
-                {
-                    Name = appName,
-                    Version = appVersion,
-                    InstallDate = appDate
-                });
+            if (appName != null)
+            {
+
+                InstalledApps.Add(
+                    new InstalledApp()
+                    {
+                        Name = appName,
+                        Version = appVersion,
+                        InstallDate = appDate
+                    });
+            }
         }
 
         // Local Machine 64
@@ -1404,14 +1411,18 @@ public static partial class Cache
             appVersion = subkey.GetValue("DisplayVersion") as string;
             appDate = subkey.GetValue("InstallDate") as string;
 
-            InstalledApps.Add(
-                new InstalledApp()
-                {
-                    Name = appName,
-                    Version = appVersion,
-                    InstallDate = appDate
-                });
-            
+            if (appName != null)
+            {
+
+                InstalledApps.Add(
+                    new InstalledApp()
+                    {
+                        Name = appName,
+                        Version = appVersion,
+                        InstallDate = appDate
+                    });
+            }
+
         }
 
         return InstalledApps;
