@@ -5,7 +5,6 @@ using System.IO;
 using System.Management;
 using System.Net;
 using Microsoft.Win32;
-using Microsoft.Win32.TaskScheduler;
 using Newtonsoft.Json;
 using specify_client.data;
 
@@ -40,7 +39,7 @@ public class Monolith
         Hardware = new MonolithHardware();
         Security = new MonolithSecurity();
         Network = new MonolithNetwork();
-        Issues = data.Cache.Issues;
+        Issues = Cache.Issues;
     }
 
     public string Serialize()
@@ -48,16 +47,16 @@ public class Monolith
         return JsonConvert.SerializeObject(this, Formatting.Indented) + Environment.NewLine;
     }
 
-    public static void WriteFile()
+    public static void Specificialize()
     {
         Program.Time.Stop();
-        MonolithCache.Monolith.Meta.GenerationDate = DateTime.Now;
-
-        var serialized = MonolithCache.Monolith.Serialize();
+        var m = new Monolith();
+        m.Meta.GenerationDate = DateTime.Now;
+        var serialized = m.Serialize();
 
         if (Settings.RedactUsername)
         {
-            serialized = serialized.Replace(data.Cache.Username, "[REDACTED]");
+            serialized = serialized.Replace(Cache.Username, "[REDACTED]");
         }
 
         if (!Settings.DontUpload)
@@ -95,9 +94,9 @@ public class MonolithBasicInfo
     public MonolithBasicInfo()
     {
         //win32 operating system class
-        var os = data.Cache.Os;
+        var os = Cache.Os;
         //win32 computersystem wmi class
-        var cs = data.Cache.Cs;
+        var cs = Cache.Cs;
 
         Edition = (string)os["Caption"];
         Version = (string)os["Version"];
@@ -108,7 +107,7 @@ public class MonolithBasicInfo
         Uptime = (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"]))
             .ToString("g");
         Hostname = Dns.GetHostName();
-        Username = data.Cache.Username;
+        Username = Cache.Username;
         Domain = Environment.GetEnvironmentVariable("userdomain");
         BootMode = Environment.GetEnvironmentVariable("firmware_type");
         BootState = (string)cs["BootupState"];
@@ -127,12 +126,12 @@ public class MonolithSecurity
 
     public MonolithSecurity()
     {
-        AvList = data.Cache.AvList;
-        FwList = data.Cache.FwList;
-        UacEnabled = data.Cache.UacEnabled;
-        SecureBootEnabled = data.Cache.SecureBootEnabled;
-        Tpm = data.Cache.Tpm;
-        UacLevel = data.Cache.UacLevel;
+        AvList = Cache.AvList;
+        FwList = Cache.FwList;
+        UacEnabled = Cache.UacEnabled;
+        SecureBootEnabled = Cache.SecureBootEnabled;
+        Tpm = Cache.Tpm;
+        UacLevel = Cache.UacLevel;
     }
 }
 
@@ -154,18 +153,18 @@ public class MonolithHardware
 
     public MonolithHardware()
     {
-        Ram = data.Cache.Ram;
-        Cpu = data.Cache.Cpu;
-        Gpu = data.Cache.Gpu;
-        Motherboard = data.Cache.Motherboard;
-        AudioDevices = data.Cache.AudioDevices;
-        Monitors = data.Cache.MonitorInfo;
-        Drivers = data.Cache.Drivers;
-        Devices = data.Cache.Devices;
-        BiosInfo = data.Cache.BiosInfo;
-        Storage = data.Cache.Disks;
-        Temperatures = data.Cache.Temperatures;
-        Batteries = data.Cache.Batteries;
+        Ram = Cache.Ram;
+        Cpu = Cache.Cpu;
+        Gpu = Cache.Gpu;
+        Motherboard = Cache.Motherboard;
+        AudioDevices = Cache.AudioDevices;
+        Monitors = Cache.MonitorInfo;
+        Drivers = Cache.Drivers;
+        Devices = Cache.Devices;
+        BiosInfo = Cache.BiosInfo;
+        Storage = Cache.Disks;
+        Temperatures = Cache.Temperatures;
+        Batteries = Cache.Batteries;
     }
 }
 
@@ -180,25 +179,25 @@ public class MonolithSystem
     public List<Dictionary<string, object>> InstalledHotfixes;
     public List<ScheduledTask> ScheduledTasks;
     public List<Dictionary<string, object>> PowerProfiles;
-    public List<MicroCode> MicroCodeCheck;
-    public List<Minidump> MinidumpCount;
+    public List<string> MicroCodes;
+    public int RecentMinidumps;
     public List<StaticCore> StaticCoreCheck;
     public List<IRegistryValue> ChoiceRegistryValues;
 
     public MonolithSystem()
     {
-        UserVariables = data.Cache.UserVariables;
-        SystemVariables = data.Cache.SystemVariables;
-        RunningProcesses = data.Cache.RunningProcesses;
-        Services = data.Cache.Services;
-        InstalledApps = data.Cache.InstalledApps;
-        InstalledHotfixes = data.Cache.InstalledHotfixes;
-        ScheduledTasks = data.Cache.ScheduledTasks;
-        PowerProfiles = data.Cache.PowerProfiles;
-        MicroCodeCheck = data.Cache.MicroCodeCheck;
-        MinidumpCount = data.Cache.MinidumpCount;
-        StaticCoreCheck= data.Cache.StaticCoreCheck;
-        ChoiceRegistryValues = data.Cache.ChoiceRegistryValues;
+        UserVariables = Cache.UserVariables;
+        SystemVariables = Cache.SystemVariables;
+        RunningProcesses = Cache.RunningProcesses;
+        Services = Cache.Services;
+        InstalledApps = Cache.InstalledApps;
+        InstalledHotfixes = Cache.InstalledHotfixes;
+        ScheduledTasks = Cache.ScheduledTasks;
+        PowerProfiles = Cache.PowerProfiles;
+        MicroCodes = Cache.MicroCodes;
+        RecentMinidumps = Cache.RecentMinidumps;
+        StaticCoreCheck = Cache.StaticCoreCheck;
+        ChoiceRegistryValues = Cache.ChoiceRegistryValues;
     }
 }
 
@@ -212,10 +211,10 @@ public class MonolithNetwork
 
     public MonolithNetwork()
     {
-        Adapters = data.Cache.NetAdapters;
-        Routes = data.Cache.IPRoutes;
-        NetworkConnections = data.Cache.NetworkConnections;
-        HostsFile = data.Cache.HostsFile;
+        Adapters = Cache.NetAdapters;
+        Routes = Cache.IPRoutes;
+        NetworkConnections = Cache.NetworkConnections;
+        HostsFile = Cache.HostsFile;
     }
 }
 

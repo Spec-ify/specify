@@ -27,12 +27,6 @@ public static partial class Cache
         Os = Utils.GetWmi("Win32_OperatingSystem").First();
         Cs = Utils.GetWmi("Win32_ComputerSystem").First();
     }
-
-    public static void DummyTimer()
-    {
-        Thread.Sleep(5000);
-    }
-
     public static void MakeSystemData()
     {
 
@@ -46,15 +40,23 @@ public static partial class Cache
         ScheduledTasks = rawTaskList.Select(e => new ScheduledTask(e)).ToList();
         RunningProcesses = new List<OutputProcess>();
         ChoiceRegistryValues = RegistryCheck();
-        PowerProfiles = Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
-        MicroCodeCheck = CheckForMicroCode();
-        MinidumpCount = CountMinidumps();
+        try
+        {
+            PowerProfiles = Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
+        }
+        catch (COMException _)
+        {
+            Issues.Add("Could not get power profiles");
+        }
+
+        MicroCodes = GetMicroCodes();
+        RecentMinidumps = CountMinidumps();
         StaticCoreCheck = CheckStaticCore();
         var rawProcesses = Process.GetProcesses();
 
         foreach (var rawProcess in rawProcesses)
         {
-            double cpuPercent = -1.0; // TODO: make this actually work properly
+            var cpuPercent = -1.0; // TODO: make this actually work properly
             var exePath = "";
             /*try
             {
@@ -110,30 +112,18 @@ public static partial class Cache
             });
         }
     }
-    public static List<MicroCode> CheckForMicroCode()
+    private static List<string> GetMicroCodes()
     {
-        List<MicroCode> Check = new List<MicroCode>();
+        const string intelPath = @"C:\Windows\System32\mcupdate_genuineintel.dll";
+        const string amdPath = @"C:\Windows\System32\mcupdate_authenticamd.dll";
 
-        var IntelPath = "C:\\Windows\\System32\\mcupdate_genuineintel.dll";
-        var AMDPath = "C:\\Windows\\System32\\mcupdate_authenticamd.dll";
+        var res = new List<string>();
+        if (File.Exists(intelPath)) res.Add(intelPath);
+        if (File.Exists(amdPath)) res.Add(amdPath);
 
-        Check.Add(
-                new MicroCode
-                {
-                    Name = IntelPath,
-                    Exists = File.Exists(IntelPath)
-                });
-
-        Check.Add(
-            new MicroCode
-            {
-                Name = AMDPath,
-                Exists = File.Exists(AMDPath)
-            });
-
-        return Check;
+        return res;
     }
-    public static List<StaticCore> CheckStaticCore()
+    private static List<StaticCore> CheckStaticCore()
     {
         List<StaticCore> Cores = new List<StaticCore>();
 
@@ -170,19 +160,17 @@ public static partial class Cache
 
         return Cores;
     }
-    public static List<Minidump> CountMinidumps()
+    private static int CountMinidumps()
     {
-        List<Minidump> Count = new List<Minidump>();
+        const string dumpPath = @"C:\Windows\Minidump";
+        var count = 0;
 
-        var DumpPath = "C:\\Windows\\Minidump";
+        if (!Directory.Exists(dumpPath)) return 0;
+        var files = Directory.GetFiles(dumpPath);
 
-        string[] files = System.IO.Directory.GetFiles(DumpPath);
-
-        int count = 0;
-
-        foreach (string file in files)
+        foreach (var file in files)
         {
-            DateTime lastWriteTime = System.IO.File.GetLastWriteTime(file);
+            var lastWriteTime = File.GetLastWriteTime(file);
 
             if (lastWriteTime > DateTime.Now.AddDays(-7))
             {
@@ -190,17 +178,10 @@ public static partial class Cache
             }
 
         }
-
-        Count.Add(
-            new Minidump
-            {
-                Count = count
-            });
-
-        return Count;
+        
+        return count;
     }
-
-    public static List<IRegistryValue> RegistryCheck()
+    private static List<IRegistryValue> RegistryCheck()
     {
         var tdrLevel = new RegistryValue<int?>
             (Registry.LocalMachine, @"System\CurrentControlSet\Control\GraphicsDrivers", "TdrLevel");
@@ -248,7 +229,6 @@ public static partial class Cache
             bypassStorageCheck, bypassRamCheck, bypassTpmCheck, bypassSecureBootCheck, hwNotificationCache
         };
     }
-    
     private static List<Task> EnumScheduledTasks(TaskFolder fld)
     {
         var res = fld.Tasks.ToList();
@@ -257,7 +237,6 @@ public static partial class Cache
 
         return res;
     }
-
     public static void MakeHardwareData()
     {
         Cpu = Utils.GetWmi("Win32_Processor",
@@ -276,7 +255,6 @@ public static partial class Cache
         Temperatures = GetTemps();
         Batteries = GetBatteryData();
     }
-
     public static void MakeSecurityData()
     {
         AvList = Utils.GetWmi("AntivirusProduct", "displayName", @"root\SecurityCenter2")
@@ -451,7 +429,7 @@ public static partial class Cache
             }
         }
     }
-    public static List<Monitor> GetMonitorInfo()
+    private static List<Monitor> GetMonitorInfo()
     {
         List<Monitor> MonitorInfo = new List<Monitor>();
         String path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
@@ -1136,17 +1114,16 @@ public static partial class Cache
 
         return Temps;
     }
-    public static List<Interop.MIB_TCPROW_OWNER_PID> GetAllTCPv4Connections()
+
+    private static List<Interop.MIB_TCPROW_OWNER_PID> GetAllTCPv4Connections()
     {
         return GetTCPConnections<Interop.MIB_TCPROW_OWNER_PID, Interop.MIB_TCPTABLE_OWNER_PID>(AF_INET);
     }
-
-    public static List<Interop.MIB_TCP6ROW_OWNER_PID> GetAllTCPv6Connections()
+    private static List<Interop.MIB_TCP6ROW_OWNER_PID> GetAllTCPv6Connections()
     {
         return GetTCPConnections<Interop.MIB_TCP6ROW_OWNER_PID, Interop.MIB_TCP6TABLE_OWNER_PID>(AF_INET6);
     }
-
-    public static List<IPR> GetTCPConnections<IPR, IPT>(int ipVersion)
+    private static List<IPR> GetTCPConnections<IPR, IPT>(int ipVersion)
     {
 
         IPR[] tableRows;
@@ -1350,7 +1327,6 @@ public static partial class Cache
     }
     private static List<InstalledApp> GetInstalledApps()
     {
-
         // Code Adapted from https://social.msdn.microsoft.com/Forums/en-US/94c2f14d-c45e-4b55-9ba0-eb091bac1035/c-get-installed-programs, thanks Rajasekhar.R! - K97i
         // Currently throws a hissy fit, NullReferenceException when actually adding to the Class
 

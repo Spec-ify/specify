@@ -58,8 +58,12 @@ public class Utils
     }
 
     /**
-     * Convert a CIM date (what would be gotten from WMI) into an ISO date
-     * See https://learn.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime
+     * <summary>
+     * <p>Convert a CIM date (what would be gotten from WMI) into an ISO date</p>
+     * <p><a href="https://learn.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime">
+     *      CIM DateTime on learn.microsoft.com
+     * </a></p>
+     * </summary>
      */
     public static string CimToIsoDate(string cim)
     {

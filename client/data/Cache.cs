@@ -47,8 +47,8 @@ public static partial class Cache
     public static bool? SecureBootEnabled { get; private set; }
     public static List<IRegistryValue> ChoiceRegistryValues { get; private set; }
     public static List<Dictionary<string, object>> PowerProfiles { get; private set; }
-    public static List<MicroCode> MicroCodeCheck { get; private set; }
-    public static List<Minidump> MinidumpCount { get; private set; }
+    public static List<string> MicroCodes { get; private set; }
+    public static int RecentMinidumps { get; private set; }
     public static List<StaticCore> StaticCoreCheck { get; private set; }
     public static List<Monitor> MonitorInfo { get; private set; }
     

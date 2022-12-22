@@ -61,18 +61,12 @@ public class Program
 
         var pList = new ProgressList();
         pList.PrintStatuses();
-        pList.RunItem("WriteFile");
         pList.RunItem("MainData");
-        //pList.RunItem("DummyTimer");
         pList.RunItem("SystemData");
         pList.RunItem("Security");
         pList.RunItem("Network");
         pList.RunItem("Hardware");
-        pList.RunItem("Assemble");
-        // pList.RunItem("MainData");
-        //Console.WriteLine("Last boot up time: " + Data.CimToIsoDate((string) data.Cache.Os["LastBootUpTime"]));
-        //Console.WriteLine("Time now: " + Data.DateTimeToIsoDate(DateTime.Now));
-        //PrettyPrintObject(MonolithBasicInfo.Create());
+        pList.RunItem(ProgressList.Specificializing);
     }
     
         

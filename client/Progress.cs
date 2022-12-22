@@ -37,24 +37,20 @@ public class ProgressStatus
 public class ProgressList
 {
     public Dictionary<string, ProgressStatus> Items { get; set; }
+    public const string Specificializing = "Specificializing";
 
     public ProgressList()
     {
         Items = new Dictionary<string, ProgressStatus>(){
             { "MainData", new ProgressStatus("Main Data", data.Cache.MakeMainData) },
             { "SystemData", new ProgressStatus("System Data", data.Cache.MakeSystemData) },
-            // { "DummyTimer", new ProgressStatus("Dummy 5 second timer", data.Cache.DummyTimer) },
             { "Security", new ProgressStatus("Security Info", data.Cache.MakeSecurityData) },
             { "Network", new ProgressStatus("Network Info", data.Cache.MakeNetworkData) },
             { "Hardware", new ProgressStatus("Hardware Info", data.Cache.MakeHardwareData) },
             {
-                "Assemble",
-                new ProgressStatus("Monolith ... Assemble", MonolithCache.AssembleCache,
-                    new List<string>{"MainData", "SystemData", "Security", "Network", "Hardware"})
-            },
-            {
-                "WriteFile",
-                new ProgressStatus("Write the file", Monolith.WriteFile, new List<string>(){ "Assemble" })
+                Specificializing,
+                new ProgressStatus(Specificializing, Monolith.Specificialize, 
+                    new List<string>(){ "MainData", "SystemData", "Security", "Network", "Hardware" })
             }
         };
     }
