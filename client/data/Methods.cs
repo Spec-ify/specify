@@ -431,10 +431,12 @@ public static partial class Cache
     }
     private static List<Monitor> GetMonitorInfo()
     {
-        List<Monitor> MonitorInfo = new List<Monitor>();
-        String path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+        var monitorInfo = new List<Monitor>();
+        //String path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+        var path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
-        Process cmd = new Process
+        var cmd = new Process
         {
             StartInfo =
             {
@@ -454,74 +456,61 @@ public static partial class Cache
 
         cmd.Start();
 
-        Stopwatch timer = Stopwatch.StartNew();
-        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(60));
-            
+        var timer = Stopwatch.StartNew();
+        var timeout = new TimeSpan().Add(TimeSpan.FromSeconds(60));
+
         while (timer.Elapsed < timeout)
+        {
+            if (!File.Exists(Path.Combine(path, "dxinfo.xml")) ||
+                Process.GetProcessesByName("dxdiag").Length != 0) continue;
+            var doc = new XmlDocument();
+            doc.Load(Path.Combine(path, "dxinfo.xml"));
+            var monitor = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["DxDiag"]["DisplayDevices"]
+                .Children().Children().ToList();
+            var videoId = 0;
 
-            if (File.Exists(Path.Combine(path, "dxinfo.xml")) && Process.GetProcessesByName("dxdiag").Length == 0)
+            // very inefficient while loop right here, but as long as it works, thats what matters -K97i
+            while (true)
+            {
+                try
                 {
-                XmlDocument doc = new XmlDocument();
-                doc.Load(Path.Combine(path, "dxinfo.xml"));
-                List<JToken> Monitor = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["DxDiag"]["DisplayDevices"].Children().Children().ToList();
-
-                var videoid = 0;
-
-                // very inefficient while loop right here, but as long as it works, thats what matters -K97i
-                while (true)
-                {
-
-                    try
+                    foreach (var displayDevice in monitor.Where(e => e.HasValues))
                     {
-                        foreach (JToken DisplayDevice in Monitor)
-
-                            if (DisplayDevice.HasValues)
-                            {
-
-                                MonitorInfo.Add(
-                                    new Monitor
-                                    {
-                                        Name = (string)DisplayDevice[videoid]["CardName"],
-                                        ChipType = (string)DisplayDevice[videoid]["ChipType"],
-                                        DedicatedMemory = (string)DisplayDevice[videoid]["DedicatedMemory"],
-                                        MonitorModel = (string)DisplayDevice[videoid]["MonitorModel"],
-                                        CurrentMode = (string)DisplayDevice[videoid]["CurrentMode"]
-                                    });
-
-                                videoid++;
-
-                            }
-                    }
-                    catch (ArgumentOutOfRangeException)
-                    {
-                        break;
-                    }
-
-                    catch (ArgumentException)
-                    {
-                        foreach (JToken DisplayDevice in Monitor)
-
-                            if (DisplayDevice.HasValues)
-                            {
-
-                                MonitorInfo.Add(
-                                    new Monitor
-                                    {
-                                        Name = (string)DisplayDevice["CardName"],
-                                        ChipType = (string)DisplayDevice["ChipType"],
-                                        DedicatedMemory = (string)DisplayDevice["DedicatedMemory"],
-                                        MonitorModel = (string)DisplayDevice["MonitorModel"],
-                                        CurrentMode = (string)DisplayDevice["CurrentMode"]
-                                    });
-
-                                break;
-                            }
-                        break;
+                        monitorInfo.Add(new Monitor
+                        {
+                            Name = (string)displayDevice[videoId]["CardName"],
+                            ChipType = (string)displayDevice[videoId]["ChipType"],
+                            DedicatedMemory = (string)displayDevice[videoId]["DedicatedMemory"],
+                            MonitorModel = (string)displayDevice[videoId]["MonitorModel"],
+                            CurrentMode = (string)displayDevice[videoId]["CurrentMode"]
+                        });
+                        videoId++;
                     }
                 }
-
-                break;
+                catch (ArgumentOutOfRangeException)
+                {
+                    break;
+                }
+                catch (ArgumentException)
+                {
+                    foreach (var displayDevice in monitor.Where(e => e.HasValues))
+                    {
+                        monitorInfo.Add(new Monitor
+                        {
+                            Name = (string)displayDevice["CardName"],
+                            ChipType = (string)displayDevice["ChipType"],
+                            DedicatedMemory = (string)displayDevice["DedicatedMemory"],
+                            MonitorModel = (string)displayDevice["MonitorModel"],
+                            CurrentMode = (string)displayDevice["CurrentMode"]
+                        });
+                        break;
+                    }
+                    break;
+                }
             }
+            break;
+        }
+
         if (timer.Elapsed > timeout)
             Issues.Add("Monitor report was not generated before the timeout!");
 
@@ -530,7 +519,7 @@ public static partial class Cache
 
         File.Delete(Path.Combine(path, "dxinfo.xml"));
 
-        return MonitorInfo;
+        return monitorInfo;
     }
     private static List<DiskDrive> GetDiskDriveData()
     {
