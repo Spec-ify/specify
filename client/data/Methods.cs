@@ -290,6 +290,9 @@ public static partial class Cache
             "Description, DHCPEnabled, DHCPServer, DNSDomain, DNSDomainSuffixSearchOrder, DNSHostName, "
             + "DNSServerSearchOrder, IPEnabled, IPAddress, IPSubnet, DHCPLeaseObtained, DHCPLeaseExpires, "
             + "DefaultIPGateway, MACAddress, InterfaceIndex");
+        NetAdapters2 = Utils.GetWmi("MSFT_NetAdapter", 
+            "InterfaceIndex,InterfaceDescription,ConnectorPresent,InterfaceType,NdisPhysicalMedium",
+            @"root\standardcimv2");
         IPRoutes = Utils.GetWmi("Win32_IP4RouteTable",
             "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
         HostsFile = File.ReadAllText(@"C:\Windows\system32\drivers\etc\hosts");

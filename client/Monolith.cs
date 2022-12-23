@@ -205,6 +205,7 @@ public class MonolithSystem
 public class MonolithNetwork
 {
     public List<Dictionary<string, object>> Adapters;
+    public List<Dictionary<string, object>> Adapters2;
     public List<Dictionary<string, object>> Routes;
     public List<NetworkConnection> NetworkConnections;
     public string HostsFile;
@@ -212,6 +213,7 @@ public class MonolithNetwork
     public MonolithNetwork()
     {
         Adapters = Cache.NetAdapters;
+        Adapters2 = Cache.NetAdapters2;
         Routes = Cache.IPRoutes;
         NetworkConnections = Cache.NetworkConnections;
         HostsFile = Cache.HostsFile;
