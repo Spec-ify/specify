@@ -181,7 +181,7 @@ public class MonolithSystem
     public List<Dictionary<string, object>> PowerProfiles;
     public List<string> MicroCodes;
     public int RecentMinidumps;
-    public List<StaticCore> StaticCoreCheck;
+    public bool? StaticCoreCount;
     public List<IRegistryValue> ChoiceRegistryValues;
 
     public MonolithSystem()
@@ -196,7 +196,7 @@ public class MonolithSystem
         PowerProfiles = Cache.PowerProfiles;
         MicroCodes = Cache.MicroCodes;
         RecentMinidumps = Cache.RecentMinidumps;
-        StaticCoreCheck = Cache.StaticCoreCheck;
+        StaticCoreCount = Cache.StaticCoreCount;
         ChoiceRegistryValues = Cache.ChoiceRegistryValues;
     }
 }

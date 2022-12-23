@@ -49,7 +49,7 @@ public static partial class Cache
     public static List<Dictionary<string, object>> PowerProfiles { get; private set; }
     public static List<string> MicroCodes { get; private set; }
     public static int RecentMinidumps { get; private set; }
-    public static List<StaticCore> StaticCoreCheck { get; private set; }
+    public static bool? StaticCoreCount { get; private set; }
     public static List<Monitor> MonitorInfo { get; private set; }
     
     private static readonly List<string> SystemProcesses = new List<string>()

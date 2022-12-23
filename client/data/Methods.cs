@@ -44,14 +44,14 @@ public static partial class Cache
         {
             PowerProfiles = Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
         }
-        catch (COMException _)
+        catch (COMException)
         {
             Issues.Add("Could not get power profiles");
         }
 
         MicroCodes = GetMicroCodes();
         RecentMinidumps = CountMinidumps();
-        StaticCoreCheck = CheckStaticCore();
+        StaticCoreCount = GetStaticCoreCount();
         var rawProcesses = Process.GetProcesses();
 
         foreach (var rawProcess in rawProcesses)
@@ -123,42 +123,29 @@ public static partial class Cache
 
         return res;
     }
-    private static List<StaticCore> CheckStaticCore()
+    private static bool? GetStaticCoreCount()
     {
-        List<StaticCore> Cores = new List<StaticCore>();
-
         string output = string.Empty;
 
-        ProcessStartInfo procStartInfo = new ProcessStartInfo("bcdedit", "/enum");
-        procStartInfo.RedirectStandardOutput = true;
-        procStartInfo.UseShellExecute = false;
-        procStartInfo.CreateNoWindow = true;
+        var procStartInfo = new ProcessStartInfo("bcdedit", "/enum")
+        {
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
 
-        using (Process proc = new Process())
+        using (var proc = new Process())
         {
             proc.StartInfo = procStartInfo;
             proc.Start();
             output = proc.StandardOutput.ReadToEnd();
+            if (output.Contains("The boot configuration data store could not be opened"))
+            {
+                Issues.Add("Could not check whether there is a static core count");
+                return null;
+            }
+            return output.Contains("numproc");
         }
-
-        if (output.Contains("numproc"))
-        {
-            Cores.Add(
-                new StaticCore
-                {
-                On = true
-                });
-        }
-        else
-        {
-            Cores.Add(
-                new StaticCore
-                {
-                    On = false
-                });
-        }
-
-        return Cores;
     }
     private static int CountMinidumps()
     {
@@ -267,7 +254,7 @@ public static partial class Cache
         if (enableLua == null) Issues.Add($"Security data: could not get EnableLUA value");
         else UacEnabled = enableLua == 1;
 
-        if (Environment.GetEnvironmentVariable("firmware_type").Equals("UEFI"))
+        if (Environment.GetEnvironmentVariable("firmware_type")!.Equals("UEFI"))
         {
             var secBootEnabled = Utils.GetRegistryValue<int?>(
                 Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\SecureBoot\State",
@@ -1103,7 +1090,6 @@ public static partial class Cache
 
         return Temps;
     }
-
     private static List<Interop.MIB_TCPROW_OWNER_PID> GetAllTCPv4Connections()
     {
         return GetTCPConnections<Interop.MIB_TCPROW_OWNER_PID, Interop.MIB_TCPTABLE_OWNER_PID>(AF_INET);
