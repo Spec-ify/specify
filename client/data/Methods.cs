@@ -27,12 +27,6 @@ public static partial class Cache
         Os = Utils.GetWmi("Win32_OperatingSystem").First();
         Cs = Utils.GetWmi("Win32_ComputerSystem").First();
     }
-
-    public static void DummyTimer()
-    {
-        Thread.Sleep(5000);
-    }
-
     public static void MakeSystemData()
     {
 
@@ -46,14 +40,23 @@ public static partial class Cache
         ScheduledTasks = rawTaskList.Select(e => new ScheduledTask(e)).ToList();
         RunningProcesses = new List<OutputProcess>();
         ChoiceRegistryValues = RegistryCheck();
-        PowerProfiles = Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
-        MicroCodeCheck = CheckForMicroCode();
-        MinidumpCount = CountMinidumps();
+        try
+        {
+            PowerProfiles = Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
+        }
+        catch (COMException _)
+        {
+            Issues.Add("Could not get power profiles");
+        }
+
+        MicroCodes = GetMicroCodes();
+        RecentMinidumps = CountMinidumps();
+        StaticCoreCheck = CheckStaticCore();
         var rawProcesses = Process.GetProcesses();
 
         foreach (var rawProcess in rawProcesses)
         {
-            double cpuPercent = -1.0; // TODO: make this actually work properly
+            var cpuPercent = -1.0; // TODO: make this actually work properly
             var exePath = "";
             /*try
             {
@@ -109,42 +112,65 @@ public static partial class Cache
             });
         }
     }
-    public static List<MicroCode> CheckForMicroCode()
+    private static List<string> GetMicroCodes()
     {
-        List<MicroCode> Check = new List<MicroCode>();
+        const string intelPath = @"C:\Windows\System32\mcupdate_genuineintel.dll";
+        const string amdPath = @"C:\Windows\System32\mcupdate_authenticamd.dll";
 
-        var IntelPath = "C:\\Windows\\System32\\mcupdate_genuineintel.dll";
-        var AMDPath = "C:\\Windows\\System32\\mcupdate_authenticamd.dll";
+        var res = new List<string>();
+        if (File.Exists(intelPath)) res.Add(intelPath);
+        if (File.Exists(amdPath)) res.Add(amdPath);
 
-        Check.Add(
-                new MicroCode
-                {
-                    Name = IntelPath,
-                    Exists = File.Exists(IntelPath)
-                });
-
-        Check.Add(
-            new MicroCode
-            {
-                Name = AMDPath,
-                Exists = File.Exists(AMDPath)
-            });
-
-        return Check;
+        return res;
     }
-    public static List<Minidump> CountMinidumps()
+    private static List<StaticCore> CheckStaticCore()
     {
-        List<Minidump> Count = new List<Minidump>();
+        List<StaticCore> Cores = new List<StaticCore>();
 
-        var DumpPath = "C:\\Windows\\Minidump";
+        string output = string.Empty;
 
-        string[] files = System.IO.Directory.GetFiles(DumpPath);
+        ProcessStartInfo procStartInfo = new ProcessStartInfo("bcdedit", "/enum");
+        procStartInfo.RedirectStandardOutput = true;
+        procStartInfo.UseShellExecute = false;
+        procStartInfo.CreateNoWindow = true;
 
-        int count = 0;
-
-        foreach (string file in files)
+        using (Process proc = new Process())
         {
-            DateTime lastWriteTime = System.IO.File.GetLastWriteTime(file);
+            proc.StartInfo = procStartInfo;
+            proc.Start();
+            output = proc.StandardOutput.ReadToEnd();
+        }
+
+        if (output.Contains("numproc"))
+        {
+            Cores.Add(
+                new StaticCore
+                {
+                On = true
+                });
+        }
+        else
+        {
+            Cores.Add(
+                new StaticCore
+                {
+                    On = false
+                });
+        }
+
+        return Cores;
+    }
+    private static int CountMinidumps()
+    {
+        const string dumpPath = @"C:\Windows\Minidump";
+        var count = 0;
+
+        if (!Directory.Exists(dumpPath)) return 0;
+        var files = Directory.GetFiles(dumpPath);
+
+        foreach (var file in files)
+        {
+            var lastWriteTime = File.GetLastWriteTime(file);
 
             if (lastWriteTime > DateTime.Now.AddDays(-7))
             {
@@ -152,17 +178,10 @@ public static partial class Cache
             }
 
         }
-
-        Count.Add(
-            new Minidump
-            {
-                Count = count
-            });
-
-        return Count;
+        
+        return count;
     }
-
-    public static List<IRegistryValue> RegistryCheck()
+    private static List<IRegistryValue> RegistryCheck()
     {
         var tdrLevel = new RegistryValue<int?>
             (Registry.LocalMachine, @"System\CurrentControlSet\Control\GraphicsDrivers", "TdrLevel");
@@ -210,7 +229,6 @@ public static partial class Cache
             bypassStorageCheck, bypassRamCheck, bypassTpmCheck, bypassSecureBootCheck, hwNotificationCache
         };
     }
-    
     private static List<Task> EnumScheduledTasks(TaskFolder fld)
     {
         var res = fld.Tasks.ToList();
@@ -219,7 +237,6 @@ public static partial class Cache
 
         return res;
     }
-
     public static void MakeHardwareData()
     {
         Cpu = Utils.GetWmi("Win32_Processor",
@@ -232,12 +249,12 @@ public static partial class Cache
         MonitorInfo = GetMonitorInfo();
         Drivers = Utils.GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
         Devices = Utils.GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
+        BiosInfo = Utils.GetWmi("Win32_bios");
         Ram = GetSMBiosMemoryInfo();
         Disks = GetDiskDriveData();
         Temperatures = GetTemps();
         Batteries = GetBatteryData();
     }
-
     public static void MakeSecurityData()
     {
         AvList = Utils.GetWmi("AntivirusProduct", "displayName", @"root\SecurityCenter2")
@@ -412,12 +429,14 @@ public static partial class Cache
             }
         }
     }
-    public static List<Monitor> GetMonitorInfo()
+    private static List<Monitor> GetMonitorInfo()
     {
-        List<Monitor> MonitorInfo = new List<Monitor>();
-        String path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+        var monitorInfo = new List<Monitor>();
+        //String path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+        var path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
-        Process cmd = new Process
+        var cmd = new Process
         {
             StartInfo =
             {
@@ -437,74 +456,61 @@ public static partial class Cache
 
         cmd.Start();
 
-        Stopwatch timer = Stopwatch.StartNew();
-        TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(60));
-            
+        var timer = Stopwatch.StartNew();
+        var timeout = new TimeSpan().Add(TimeSpan.FromSeconds(60));
+
         while (timer.Elapsed < timeout)
+        {
+            if (!File.Exists(Path.Combine(path, "dxinfo.xml")) ||
+                Process.GetProcessesByName("dxdiag").Length != 0) continue;
+            var doc = new XmlDocument();
+            doc.Load(Path.Combine(path, "dxinfo.xml"));
+            var monitor = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["DxDiag"]["DisplayDevices"]
+                .Children().Children().ToList();
+            var videoId = 0;
 
-            if (File.Exists(Path.Combine(path, "dxinfo.xml")) && Process.GetProcessesByName("dxdiag").Length == 0)
+            // very inefficient while loop right here, but as long as it works, thats what matters -K97i
+            while (true)
+            {
+                try
                 {
-                XmlDocument doc = new XmlDocument();
-                doc.Load(Path.Combine(path, "dxinfo.xml"));
-                List<JToken> Monitor = JObject.Parse(JsonConvert.SerializeXmlNode(doc))["DxDiag"]["DisplayDevices"].Children().Children().ToList();
-
-                var videoid = 0;
-
-                // very inefficient while loop right here, but as long as it works, thats what matters -K97i
-                while (true)
-                {
-
-                    try
+                    foreach (var displayDevice in monitor.Where(e => e.HasValues))
                     {
-                        foreach (JToken DisplayDevice in Monitor)
-
-                            if (DisplayDevice.HasValues)
-                            {
-
-                                MonitorInfo.Add(
-                                    new Monitor
-                                    {
-                                        Name = (string)DisplayDevice[videoid]["CardName"],
-                                        ChipType = (string)DisplayDevice[videoid]["ChipType"],
-                                        DedicatedMemory = (string)DisplayDevice[videoid]["DedicatedMemory"],
-                                        MonitorModel = (string)DisplayDevice[videoid]["MonitorModel"],
-                                        CurrentMode = (string)DisplayDevice[videoid]["CurrentMode"]
-                                    });
-
-                                videoid++;
-
-                            }
-                    }
-                    catch (ArgumentOutOfRangeException)
-                    {
-                        break;
-                    }
-
-                    catch (ArgumentException)
-                    {
-                        foreach (JToken DisplayDevice in Monitor)
-
-                            if (DisplayDevice.HasValues)
-                            {
-
-                                MonitorInfo.Add(
-                                    new Monitor
-                                    {
-                                        Name = (string)DisplayDevice["CardName"],
-                                        ChipType = (string)DisplayDevice["ChipType"],
-                                        DedicatedMemory = (string)DisplayDevice["DedicatedMemory"],
-                                        MonitorModel = (string)DisplayDevice["MonitorModel"],
-                                        CurrentMode = (string)DisplayDevice["CurrentMode"]
-                                    });
-
-                                break;
-                            }
-                        break;
+                        monitorInfo.Add(new Monitor
+                        {
+                            Name = (string)displayDevice[videoId]["CardName"],
+                            ChipType = (string)displayDevice[videoId]["ChipType"],
+                            DedicatedMemory = (string)displayDevice[videoId]["DedicatedMemory"],
+                            MonitorModel = (string)displayDevice[videoId]["MonitorModel"],
+                            CurrentMode = (string)displayDevice[videoId]["CurrentMode"]
+                        });
+                        videoId++;
                     }
                 }
-
-                break;
+                catch (ArgumentOutOfRangeException)
+                {
+                    break;
+                }
+                catch (ArgumentException)
+                {
+                    foreach (var displayDevice in monitor.Where(e => e.HasValues))
+                    {
+                        monitorInfo.Add(new Monitor
+                        {
+                            Name = (string)displayDevice["CardName"],
+                            ChipType = (string)displayDevice["ChipType"],
+                            DedicatedMemory = (string)displayDevice["DedicatedMemory"],
+                            MonitorModel = (string)displayDevice["MonitorModel"],
+                            CurrentMode = (string)displayDevice["CurrentMode"]
+                        });
+                        break;
+                    }
+                    break;
+                }
             }
+            break;
+        }
+
         if (timer.Elapsed > timeout)
             Issues.Add("Monitor report was not generated before the timeout!");
 
@@ -513,7 +519,7 @@ public static partial class Cache
 
         File.Delete(Path.Combine(path, "dxinfo.xml"));
 
-        return MonitorInfo;
+        return monitorInfo;
     }
     private static List<DiskDrive> GetDiskDriveData()
     {
@@ -1097,17 +1103,16 @@ public static partial class Cache
 
         return Temps;
     }
-    public static List<Interop.MIB_TCPROW_OWNER_PID> GetAllTCPv4Connections()
+
+    private static List<Interop.MIB_TCPROW_OWNER_PID> GetAllTCPv4Connections()
     {
         return GetTCPConnections<Interop.MIB_TCPROW_OWNER_PID, Interop.MIB_TCPTABLE_OWNER_PID>(AF_INET);
     }
-
-    public static List<Interop.MIB_TCP6ROW_OWNER_PID> GetAllTCPv6Connections()
+    private static List<Interop.MIB_TCP6ROW_OWNER_PID> GetAllTCPv6Connections()
     {
         return GetTCPConnections<Interop.MIB_TCP6ROW_OWNER_PID, Interop.MIB_TCP6TABLE_OWNER_PID>(AF_INET6);
     }
-
-    public static List<IPR> GetTCPConnections<IPR, IPT>(int ipVersion)
+    private static List<IPR> GetTCPConnections<IPR, IPT>(int ipVersion)
     {
 
         IPR[] tableRows;
@@ -1311,7 +1316,6 @@ public static partial class Cache
     }
     private static List<InstalledApp> GetInstalledApps()
     {
-
         // Code Adapted from https://social.msdn.microsoft.com/Forums/en-US/94c2f14d-c45e-4b55-9ba0-eb091bac1035/c-get-installed-programs, thanks Rajasekhar.R! - K97i
         // Currently throws a hissy fit, NullReferenceException when actually adding to the Class
 
@@ -1328,6 +1332,8 @@ public static partial class Cache
             appName = subkey.GetValue("DisplayName") as string;
             appVersion = subkey.GetValue("DisplayVersion") as string;
             appDate = subkey.GetValue("InstallDate") as string;
+            
+            if (appName != null) { 
 
             InstalledApps.Add(
                 new InstalledApp()
@@ -1336,6 +1342,7 @@ public static partial class Cache
                     Version = appVersion,
                     InstallDate = appDate
                 });
+            }
         }
 
         // Local Machine 32
@@ -1347,13 +1354,17 @@ public static partial class Cache
             appVersion = subkey.GetValue("DisplayVersion") as string;
             appDate = subkey.GetValue("InstallDate") as string;
 
-            InstalledApps.Add(
-                new InstalledApp()
-                {
-                    Name = appName,
-                    Version = appVersion,
-                    InstallDate = appDate
-                });
+            if (appName != null)
+            {
+
+                InstalledApps.Add(
+                    new InstalledApp()
+                    {
+                        Name = appName,
+                        Version = appVersion,
+                        InstallDate = appDate
+                    });
+            }
         }
 
         // Local Machine 64
@@ -1365,14 +1376,18 @@ public static partial class Cache
             appVersion = subkey.GetValue("DisplayVersion") as string;
             appDate = subkey.GetValue("InstallDate") as string;
 
-            InstalledApps.Add(
-                new InstalledApp()
-                {
-                    Name = appName,
-                    Version = appVersion,
-                    InstallDate = appDate
-                });
-            
+            if (appName != null)
+            {
+
+                InstalledApps.Add(
+                    new InstalledApp()
+                    {
+                        Name = appName,
+                        Version = appVersion,
+                        InstallDate = appDate
+                    });
+            }
+
         }
 
         return InstalledApps;
