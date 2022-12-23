@@ -78,8 +78,11 @@ public class ProgressList
 
     public void PrintStatuses()
     {
+        const int maxKeyLength = 20;
+
         new Thread(() =>
         {
+            //Console.WriteLine();
             var allComplete = true;
             var cPos = new List<int>();
             var oldStatus = new List<ProgressType>();
@@ -87,10 +90,10 @@ public class ProgressList
             for (var i = 0; i < Items.Count; i++)
             {
                 var item = Items.ElementAt(i).Value;
-                Console.Write(item.Name + " - " + item.Status);
-                cPos.Add(Console.CursorTop);
-                oldStatus.Add(item.Status);
+                Console.Write(item.Name.PadRight(maxKeyLength) + " "); PrintColorType(item.Status);
                 Console.WriteLine();
+                cPos.Add(Console.CursorTop - 1);
+                oldStatus.Add(item.Status);
             }
 
             do
@@ -100,15 +103,17 @@ public class ProgressList
                 for (var i = 0; i < Items.Count; i++)
                 {
                     var item = Items.ElementAt(i).Value;
-                    if (!item.SkipProgressWait && item.Status != ProgressType.Complete)
+                    if (item.Status != ProgressType.Complete)
                     {
                         allComplete = false;
                     }
 
                     if (item.Status == oldStatus[i]) continue;
-                        
+                    
                     Console.SetCursorPosition(0, cPos[i]);
-                    Console.WriteLine((item.Name + " - " + item.Status).PadRight(Console.BufferWidth));
+                    ClearCurrentConsoleLine();
+                    Console.Write(item.Name.PadRight(maxKeyLength) + " "); PrintColorType(item.Status);
+                    Console.WriteLine();
                     oldStatus[i] = item.Status;
                 }
                     
@@ -118,6 +123,21 @@ public class ProgressList
                 
             Console.SetCursorPosition(0, cPos.Last() + 1);
         }).Start();
+    }
+
+    private static void PrintColorType(ProgressType status)
+    {
+        var originalColor = Console.ForegroundColor;
+        var colorList = new List<ConsoleColor>()
+        {
+            originalColor,
+            ConsoleColor.Yellow,
+            ConsoleColor.Green,
+            ConsoleColor.Red
+        };
+        Console.ForegroundColor = colorList[(int) status];
+        Console.Write(status);
+        Console.ForegroundColor = originalColor;
     }
         
     /**
