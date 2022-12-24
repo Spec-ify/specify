@@ -61,8 +61,8 @@ public class Monolith
 
         if (Settings.RedactOneDriveCommercial)
         {
-            string stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
-            stringToRedact = stringToRedact.Replace("\\","\\\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
+            var stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
+            stringToRedact = stringToRedact.Replace(@"\",@"\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
             serialized = serialized.Replace(stringToRedact, "[REDACTED]");
         }
 
@@ -190,6 +190,9 @@ public class MonolithSystem
     public int RecentMinidumps;
     public bool? StaticCoreCount;
     public List<IRegistryValue> ChoiceRegistryValues;
+    public bool? UsernameSpecialCharacters;
+    public int? OneDriveCommercialPathLength;
+    public int? OneDriveCommercialNameLength;
 
     public MonolithSystem()
     {
@@ -205,6 +208,9 @@ public class MonolithSystem
         RecentMinidumps = Cache.RecentMinidumps;
         StaticCoreCount = Cache.StaticCoreCount;
         ChoiceRegistryValues = Cache.ChoiceRegistryValues;
+        UsernameSpecialCharacters = Cache.UsernameSpecialCharacters;
+        OneDriveCommercialPathLength = Cache.OneDriveCommercialPathLength;
+        OneDriveCommercialNameLength = Cache.OneDriveCommercialNameLength;
     }
 }
 

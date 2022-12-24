@@ -52,7 +52,9 @@ public static partial class Cache
     public static int RecentMinidumps { get; private set; }
     public static bool? StaticCoreCount { get; private set; }
     public static List<Monitor> MonitorInfo { get; private set; }
-    
+    public static bool? UsernameSpecialCharacters { get; private set; }
+    public static int? OneDriveCommercialPathLength { get; private set; }
+    public static int? OneDriveCommercialNameLength { get; private set; }
     private static readonly List<string> SystemProcesses = new List<string>()
     {
         "Memory Compression",

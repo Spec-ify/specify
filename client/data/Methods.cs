@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 using LibreHardwareMonitor.Hardware;
@@ -33,10 +34,13 @@ public static partial class Cache
         SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
         UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
 
-        string pathOneDriveCommercial = (string)UserVariables["OneDriveCommercial"];
-        string actualOneDriveCommercial = (pathOneDriveCommercial.Split(new string[] { "OneDrive - " }, StringSplitOptions.None))[1];
-        UserVariables.Add("OneDriveCommercialPathLength", pathOneDriveCommercial.Length);
-        UserVariables.Add("OneDriveCommercialNameLength", actualOneDriveCommercial.Length);
+        if (UserVariables["OneDriveCommercial"] is string pathOneDriveCommercial)
+        {
+            var actualOneDriveCommercial = 
+                pathOneDriveCommercial.Split(new string[] { "OneDrive - " }, StringSplitOptions.None)[1];
+            OneDriveCommercialPathLength = pathOneDriveCommercial.Length;
+            OneDriveCommercialNameLength = actualOneDriveCommercial.Length;
+        }
 
         Services = Utils.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
         InstalledApps = GetInstalledApps();
@@ -116,6 +120,9 @@ public static partial class Cache
                 WorkingSet = rawProcess.WorkingSet64,
                 CpuPercent = cpuPercent
             });
+            
+            // Check if username contains non-alphanumeric characters
+            UsernameSpecialCharacters = !Regex.IsMatch(Environment.UserName, @"^[a-zA-Z0-9]+$");
         }
     }
     private static List<string> GetMicroCodes()

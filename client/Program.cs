@@ -50,6 +50,7 @@ public class Program
             Console.Write("[3] - Don't Upload");
             Console.ForegroundColor = initialConsoleFg;
             Console.BackgroundColor = initialConsoleBg;
+            
             var key = Console.ReadKey(true);
             if (key.Key == ConsoleKey.Q)
             {
