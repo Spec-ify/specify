@@ -31,12 +31,23 @@ public class Program
             Console.ForegroundColor = initialConsoleFg;
             Console.BackgroundColor = initialConsoleBg;
             Console.Write(" ");
+            if (Settings.RedactOneDriveCommercial)
+            {
+                Console.ForegroundColor = ConsoleColor.Black;
+                Console.BackgroundColor = ConsoleColor.White;
+            }
+            Console.Write("[2] - Toggle Redact Commercial OneDrive");
+            // If the next message is used, the output is repeated every time the user presses a key
+            /*Console.Write("[2] - Toggle Redact Commercial OneDrive name");*/
+            Console.ForegroundColor = initialConsoleFg;
+            Console.BackgroundColor = initialConsoleBg;
+            Console.Write(" ");
             if (!Settings.DontUpload)
             {
                 Console.ForegroundColor = ConsoleColor.Black;
                 Console.BackgroundColor = ConsoleColor.White;
             }
-            Console.Write("[2] - Don't Upload");
+            Console.Write("[3] - Don't Upload");
             Console.ForegroundColor = initialConsoleFg;
             Console.BackgroundColor = initialConsoleBg;
             var key = Console.ReadKey(true);
@@ -49,6 +60,8 @@ public class Program
             if (key.Key is ConsoleKey.D1 or ConsoleKey.NumPad1)
                 Settings.RedactUsername = !Settings.RedactUsername;
             if (key.Key is ConsoleKey.D2 or ConsoleKey.NumPad2)
+                Settings.RedactOneDriveCommercial = !Settings.RedactOneDriveCommercial;
+            if (key.Key is ConsoleKey.D3 or ConsoleKey.NumPad3)
                 Settings.DontUpload = !Settings.DontUpload;
                 
             Console.Write("\r");

@@ -59,6 +59,13 @@ public class Monolith
             serialized = serialized.Replace(Cache.Username, "[REDACTED]");
         }
 
+        if (Settings.RedactOneDriveCommercial)
+        {
+            string stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
+            stringToRedact = stringToRedact.Replace("\\","\\\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
+            serialized = serialized.Replace(stringToRedact, "[REDACTED]");
+        }
+
         if (!Settings.DontUpload)
         {
             File.WriteAllText("specify_specs.json", serialized);

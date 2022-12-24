@@ -32,6 +32,12 @@ public static partial class Cache
 
         SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
         UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
+
+        string pathOneDriveCommercial = (string)UserVariables["OneDriveCommercial"];
+        string actualOneDriveCommercial = (pathOneDriveCommercial.Split(new string[] { "OneDrive - " }, StringSplitOptions.None))[1];
+        UserVariables.Add("OneDriveCommercialPathLength", pathOneDriveCommercial.Length);
+        UserVariables.Add("OneDriveCommercialNameLength", actualOneDriveCommercial.Length);
+
         Services = Utils.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
         InstalledApps = GetInstalledApps();
         InstalledHotfixes = Utils.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
