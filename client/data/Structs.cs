@@ -6,6 +6,7 @@ using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 
 namespace specify_client.data;
 
@@ -174,4 +175,28 @@ public class Monitor
     public string DedicatedMemory;
     public string MonitorModel;
     public string CurrentMode;
+}
+public class Browser
+{
+    public string Name;
+    public List<BrowserProfile> Profiles;
+    public class BrowserProfile
+    {
+        public string name;
+        public List<Extension> Extensions;
+    }
+    public class Extension
+    {
+        public string name;
+        public string version;
+        public string description;
+    }
+}
+//This is an easy way to serialize data from multiple extension manifest formats without making the Browser object a nightmare
+public class ChromiumManifest
+{
+    public string name;
+    public string description;
+    public string version;
+    public string default_locale;
 }

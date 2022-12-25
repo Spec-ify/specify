@@ -190,6 +190,7 @@ public class MonolithSystem
     public int RecentMinidumps;
     public bool? StaticCoreCount;
     public List<IRegistryValue> ChoiceRegistryValues;
+    public List<Browser> BrowserExtensions;
 
     public MonolithSystem()
     {
@@ -205,6 +206,7 @@ public class MonolithSystem
         RecentMinidumps = Cache.RecentMinidumps;
         StaticCoreCount = Cache.StaticCoreCount;
         ChoiceRegistryValues = Cache.ChoiceRegistryValues;
+        BrowserExtensions = Cache.BrowserExtensions;
     }
 }
 
