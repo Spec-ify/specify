@@ -10,6 +10,7 @@ public class Program
 {
     public const string SpecifyVersion = "v0.2";
     public static Stopwatch Time;
+    
     static void Main()
     {
         data.Cache.Issues = new List<string>();
@@ -42,7 +43,7 @@ public class Program
             Console.ForegroundColor = initialConsoleFg;
             Console.BackgroundColor = initialConsoleBg;
             Console.Write(" ");
-            if (!Settings.DontUpload)
+            if (Settings.DontUpload)
             {
                 Console.ForegroundColor = ConsoleColor.Black;
                 Console.BackgroundColor = ConsoleColor.White;

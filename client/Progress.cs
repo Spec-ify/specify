@@ -59,7 +59,7 @@ public class ProgressList
     {
         var item = Items.ContainsKey(key) ? Items[key] : throw new Exception($"Progress item {key} doesn't exist!");
             
-        new Thread(() =>
+        var t = new Thread(() =>
         {
             foreach (var k in item.Dependencies)
             {
@@ -73,7 +73,9 @@ public class ProgressList
             item.Status = ProgressType.Processing;
             item.Action();
             item.Status = ProgressType.Complete;
-        }).Start();
+        });
+        if (key.Equals(Specificializing)) t.SetApartmentState(ApartmentState.STA);
+        t.Start();
     }
 
     public void PrintStatuses()

@@ -6,7 +6,13 @@ using System.Management;
 using System.Net;
 using Microsoft.Win32;
 using Newtonsoft.Json;
+using RestSharp;
 using specify_client.data;
+using System.Diagnostics;
+using System.Linq;
+using System.Net.Http;
+using System.Windows;
+using System.Windows.Forms;
 
 namespace specify_client;
 
@@ -46,9 +52,14 @@ public class Monolith
     {
         return JsonConvert.SerializeObject(this, Formatting.Indented) + Environment.NewLine;
     }
-
+    
     public static void Specificialize()
     {
+        // const string specifiedUploadDomain = "http://localhost";
+        // const string specifiedUploadEndpoint = "specified/upload.php";
+        const string specifiedUploadDomain = "https://spec-ify.com";
+        const string specifiedUploadEndpoint = "upload.php";
+        
         Program.Time.Stop();
         var m = new Monolith();
         m.Meta.GenerationDate = DateTime.Now;
@@ -66,12 +77,43 @@ public class Monolith
             serialized = serialized.Replace(stringToRedact, "[REDACTED]");
         }
 
-        if (!Settings.DontUpload)
+        if (Settings.DontUpload)
         {
             File.WriteAllText("specify_specs.json", serialized);
+            return;
         }
+
+        // TODO: can we implement this with just System.Net.Http?
+        var client = new RestClient(specifiedUploadDomain);
+        var request = new RestRequest(specifiedUploadEndpoint, Method.Post);
+        request.AddHeader("Content-Type", "application/json");
+        request.AddBody(serialized);
+        var response = client.Post(request);
+        //Console.WriteLine("request done");
+        // TODO: add error handling
+        if (response.StatusCode != HttpStatusCode.Created)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("\nCould not upload. The file has been saved to specify_specs.json.");
+            Console.WriteLine($"Please go to {specifiedUploadDomain} to upload the file manually.");
+            Console.WriteLine("Press any key to exit.");
+            Console.ReadKey();
+        }
+
+            var location = response.Headers!.First(t=> t.Name?.Equals("Location") ?? false).Value!.ToString();
+        var url = specifiedUploadDomain + location;
+        Clipboard.SetText(url);
+        //Console.WriteLine(location);
+        Process.Start(specifiedUploadDomain + location);
     }
 
+    private async void DoRequest(string str)
+    {
+        var specifiedUploadEndpoint = "http";
+        var client = new HttpClient();
+        //var response = await client.PostAsync()
+    }
+    
     private static void CacheError(object thing)
     {
         throw new Exception("MonolithCache item doesn't exist: " + nameof(thing));
