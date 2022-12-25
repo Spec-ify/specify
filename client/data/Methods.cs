@@ -10,8 +10,6 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Xml;
 using LibreHardwareMonitor.Hardware;
 using Microsoft.Win32;

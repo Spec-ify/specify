@@ -6,7 +6,6 @@ using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
 
 namespace specify_client.data;
 
