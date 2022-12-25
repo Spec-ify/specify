@@ -290,7 +290,7 @@ public static partial class Cache
             Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
             "ConsentPromptBehaviorAdmin");
     }
-    public static void MakeNetworkData()
+    public static async void MakeNetworkData()
     {
         NetAdapters = Utils.GetWmi("Win32_NetworkAdapterConfiguration",
             "Description, DHCPEnabled, DHCPServer, DNSDomain, DNSDomainSuffixSearchOrder, DNSHostName, "
@@ -301,7 +301,7 @@ public static partial class Cache
             @"root\standardcimv2");
         IPRoutes = Utils.GetWmi("Win32_IP4RouteTable",
             "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
-        HostsFile = File.ReadAllText(@"C:\Windows\system32\drivers\etc\hosts");
+        HostsFile = await GetHostsFile();
         NetworkConnections = GetNetworkConnections();
 
         // Uncomment the block below to run a traceroute to Google's DNS
@@ -310,6 +310,23 @@ public static partial class Cache
         {
             Console.WriteLine($"{i}: {NetStats.Address[i]} --- Lat: {NetStats.AverageLatency[i]} --- PL: {NetStats.PacketLoss[i]}");
         }*/
+    }
+    private static async System.Threading.Tasks.Task<string> GetHostsFile()
+    {
+        string hostsFile = "";
+        try
+        {
+            foreach (var str in File.ReadAllLines(@"C:\Windows\System32\drivers\etc\hosts"))
+            {
+                hostsFile += $"{str}\n";
+            }
+        }
+        catch (FileNotFoundException)
+        {
+            Issues.Add("Hosts file not found.");
+            return "";
+        }
+        return hostsFile;
     }
     private static async System.Threading.Tasks.Task<NetworkRoute> GetNetworkRoutes(string ipAddress, int pingCount = 100, int timeout = 10000, int bufferSize = 100)
     {
