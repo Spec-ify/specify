@@ -309,7 +309,8 @@ public static partial class Cache
             @"root\standardcimv2");
         IPRoutes = Utils.GetWmi("Win32_IP4RouteTable",
             "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
-        HostsFile = await GetHostsFile();
+        HostsFile = GetHostsFile();
+        HostsFileHash = GetHostsFileHash();
         NetworkConnections = GetNetworkConnections();
 
         // Uncomment the block below to run a traceroute to Google's DNS
@@ -319,9 +320,9 @@ public static partial class Cache
             Console.WriteLine($"{i}: {NetStats.Address[i]} --- Lat: {NetStats.AverageLatency[i]} --- PL: {NetStats.PacketLoss[i]}");
         }*/
     }
-    private static async System.Threading.Tasks.Task<string> GetHostsFile()
+    private static string GetHostsFile()
     {
-        string hostsFile = "";
+        var hostsFile = "";
         try
         {
             foreach (var str in File.ReadAllLines(@"C:\Windows\System32\drivers\etc\hosts"))
@@ -335,6 +336,14 @@ public static partial class Cache
             return "";
         }
         return hostsFile;
+    }
+
+    public static string GetHostsFileHash()
+    {
+        using var sha256 = System.Security.Cryptography.SHA256.Create();
+        using var stream = File.OpenRead(@"C:\Windows\System32\drivers\etc\hosts");
+        var hash = sha256.ComputeHash(stream);
+        return BitConverter.ToString(hash).Replace("-", "");
     }
     private static async System.Threading.Tasks.Task<NetworkRoute> GetNetworkRoutes(string ipAddress, int pingCount = 100, int timeout = 10000, int bufferSize = 100)
     {

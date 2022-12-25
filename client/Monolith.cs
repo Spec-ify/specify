@@ -269,6 +269,7 @@ public class MonolithNetwork
     public List<Dictionary<string, object>> Routes;
     public List<NetworkConnection> NetworkConnections;
     public string HostsFile;
+    public string HostsFileHash;
 
     public MonolithNetwork()
     {
@@ -277,6 +278,7 @@ public class MonolithNetwork
         Routes = Cache.IPRoutes;
         NetworkConnections = Cache.NetworkConnections;
         HostsFile = Cache.HostsFile;
+        HostsFileHash = Cache.HostsFileHash;
     }
 }
 

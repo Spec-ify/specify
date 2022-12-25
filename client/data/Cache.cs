@@ -24,6 +24,7 @@ public static partial class Cache
     public static List<string> AvList { get; private set; }
     public static List<string> FwList { get; private set; }
     public static string HostsFile { get; private set; }
+    public static string HostsFileHash { get; private set; }
     public static bool? UacEnabled { get; private set; }
     public static int? UacLevel { get; private set; }
     public static List<Dictionary<string, object>> NetAdapters { get; private set; }
