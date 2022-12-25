@@ -34,9 +34,12 @@ public static partial class Cache
         UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
 
         string pathOneDriveCommercial = (string)UserVariables["OneDriveCommercial"];
-        string actualOneDriveCommercial = (pathOneDriveCommercial.Split(new string[] { "OneDrive - " }, StringSplitOptions.None))[1];
-        UserVariables.Add("OneDriveCommercialPathLength", pathOneDriveCommercial.Length);
-        UserVariables.Add("OneDriveCommercialNameLength", actualOneDriveCommercial.Length);
+        if (pathOneDriveCommercial != null)
+        {
+            string actualOneDriveCommercial = (pathOneDriveCommercial.Split(new string[] { "OneDrive - " }, StringSplitOptions.None))[1];
+            UserVariables.Add("OneDriveCommercialPathLength", pathOneDriveCommercial.Length);
+            UserVariables.Add("OneDriveCommercialNameLength", actualOneDriveCommercial.Length);
+        }
 
         Services = Utils.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
         InstalledApps = GetInstalledApps();
@@ -288,7 +291,7 @@ public static partial class Cache
 
         UacLevel = Utils.GetRegistryValue<int?>(
             Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
-            "ConsentPromptBehaviorAdmin");
+            "ConsentPromptBehaviorUser");
     }
     public static async void MakeNetworkData()
     {
