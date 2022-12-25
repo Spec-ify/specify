@@ -235,6 +235,7 @@ public class MonolithSystem
     public bool? UsernameSpecialCharacters;
     public int? OneDriveCommercialPathLength;
     public int? OneDriveCommercialNameLength;
+    public List<Browser> BrowserExtensions;
 
     public MonolithSystem()
     {
@@ -253,6 +254,7 @@ public class MonolithSystem
         UsernameSpecialCharacters = Cache.UsernameSpecialCharacters;
         OneDriveCommercialPathLength = Cache.OneDriveCommercialPathLength;
         OneDriveCommercialNameLength = Cache.OneDriveCommercialNameLength;
+        BrowserExtensions = Cache.BrowserExtensions;
     }
 }
 
