@@ -133,7 +133,6 @@ public class Utils
                 throw e;
             else
                 return null;
-            //DirectoryNotFoundException can occur with certain browsers when a profile exists but no extensions are installed
         }
     }
 }

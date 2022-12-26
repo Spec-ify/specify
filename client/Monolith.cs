@@ -239,6 +239,7 @@ public class MonolithSystem
     public int? OneDriveCommercialPathLength;
     public int? OneDriveCommercialNameLength;
     public List<Browser> BrowserExtensions;
+    public string DefaultBrowser;
 
     public MonolithSystem()
     {
@@ -258,6 +259,7 @@ public class MonolithSystem
         OneDriveCommercialPathLength = Cache.OneDriveCommercialPathLength;
         OneDriveCommercialNameLength = Cache.OneDriveCommercialNameLength;
         BrowserExtensions = Cache.BrowserExtensions;
+        DefaultBrowser = Cache.DefaultBrowser;
     }
 }
 

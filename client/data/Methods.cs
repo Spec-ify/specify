@@ -11,7 +11,6 @@ using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Xml;
 using LibreHardwareMonitor.Hardware;
 using Microsoft.Win32;
@@ -62,8 +61,12 @@ public static partial class Cache
         MicroCodes = GetMicroCodes();
         RecentMinidumps = CountMinidumps();
         StaticCoreCount = GetStaticCoreCount();
+        BrowserExtensions= GetBrowserExtensions();
+        string defaultBrowserProgID = Utils.GetRegistryValue<string>(Registry.CurrentUser, "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID");
+        string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser, 
+            "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
+        DefaultBrowser = (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
         var rawProcesses = Process.GetProcesses();
-        BrowserExtensions = GetBrowserExtensions();
 
         foreach (var rawProcess in rawProcesses)
         {
@@ -1565,22 +1568,27 @@ public static partial class Cache
                             name = new DirectoryInfo(dir).Name,
                             Extensions = new List<Browser.Extension>()
                         };
-
-                        foreach (string edir in Directory.GetDirectories(string.Concat(dir, "\\Extensions")))
+                        try
                         {
-                            if (new DirectoryInfo(edir).Name.Equals("Temp"))
-                                continue;
+                            foreach (string edir in Directory.GetDirectories(string.Concat(dir, "\\Extensions")))
+                            {
+                                if (new DirectoryInfo(edir).Name.Equals("Temp"))
+                                    continue;
 
-                            try
-                            {
-                                profile.Extensions.Add(Utils.ParseChromiumExtension(edir));
+                                try
+                                {
+                                    profile.Extensions.Add(Utils.ParseChromiumExtension(edir));
+                                }
+                                catch (Exception e)
+                                {
+                                    if (e is FileNotFoundException || e is JsonException)
+                                        Issues.Add(string.Concat("Malformed or missing manifest or locale data for extension at ", edir));
+                                    //DirectoryNotFoundException can occur with certain browsers when a profile exists but no extensions are installed
+                                }
                             }
-                            catch (Exception e)
-                            {
-                                if (e is FileNotFoundException || e is JsonException)
-                                    Issues.Add(string.Concat("Malformed or missing manifest or locale data for extension at ", edir));
-                                //DirectoryNotFoundException can occur with certain browsers when a profile exists but no extensions are installed
-                            }
+                        } catch (DirectoryNotFoundException)
+                        {
+                            //Do nothing, this means no extensions are installed
                         }
 
                         browser.Profiles.Add(profile);

@@ -32,6 +32,7 @@ public static partial class Cache
     public static List<Dictionary<string, object>> IPRoutes { get; private set; }
     public static List<NetworkConnection> NetworkConnections { get; private set; }
     public static List<Browser> BrowserExtensions { get; private set; }
+    public static string DefaultBrowser { get; private set; }
 
     public static string Username => Environment.UserName;
     // all the hardware stuff
