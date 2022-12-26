@@ -818,7 +818,6 @@ public static partial class Cache
                 {
                     matchingPartition.Filesystem = (string)fileSystem;
                 }
-                Issues.Add($"{partitionSize} found. FS: {fileSystem} - DL: {driveLetter}");
             }
             else
             {
@@ -831,7 +830,10 @@ public static partial class Cache
                 }
                 catch
                 { }
-                Issues.Add($"Partition link could not be established for {partitionSize} byte partition - Drive Label: {driveLetter} -  File System: {fileSystem}");
+                if (driveLetter != "")
+                {
+                    Issues.Add($"Partition link could not be established for {partitionSize} byte partition - Drive Label: {driveLetter} -  File System: {fileSystem}");
+                }
             }
         }
         foreach (var d in drives)
