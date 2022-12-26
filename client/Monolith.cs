@@ -71,9 +71,19 @@ public class Monolith
 
         if (Settings.RedactOneDriveCommercial)
         {
-            var stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
-            stringToRedact = stringToRedact.Replace(@"\",@"\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
-            serialized = serialized.Replace(stringToRedact, "[REDACTED]");
+            try
+            {
+                var stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
+                stringToRedact = stringToRedact.Replace(@"\", @"\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
+                serialized = serialized.Replace(stringToRedact, "[REDACTED]");
+            }
+            catch
+            {
+                m.Issues.Add("Commercial OneDrive redaction failed. This usually happens when Commerical OneDrive is not installed.");
+                Settings.RedactOneDriveCommercial = false;
+                Specificialize();
+                return;
+            }
         }
 
         if (Settings.DontUpload)
