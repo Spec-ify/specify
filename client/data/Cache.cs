@@ -63,6 +63,7 @@ public static partial class Cache
         "Memory Compression",
         "Registry",
         "System",
-        "Idle"
+        "Idle",
+        "Secure System"
     };
 }
