@@ -1449,7 +1449,9 @@ public static partial class Cache
 
                     foreach (string dir in Directory.GetDirectories(string.Concat(UserPath, BrowserPath.Value)))
                     {
-                        List<JToken> extensions = JObject.Parse(File.ReadAllText(string.Concat(dir, "\\addons.json")))["addons"].Children().ToList();
+                        var addonsFile = string.Concat(dir, "\\addons.json");
+                        if (!File.Exists(addonsFile)) continue;
+                        List<JToken> extensions = JObject.Parse(File.ReadAllText(addonsFile))["addons"].Children().ToList();
                         Browser.BrowserProfile profile = new Browser.BrowserProfile()
                         {
                             name = new DirectoryInfo(dir).Name.Substring(8),
@@ -1511,33 +1513,37 @@ public static partial class Cache
                     }                   
                     browser.Profiles.Add(profile);
 
-                    //Fetch side profiles
-                    foreach (string pdir in Directory.GetDirectories(string.Concat(UserPath, BrowserPath.Value, "_side_profiles")))
+                    var sideProfilesPath = string.Concat(UserPath, BrowserPath.Value, "_side_profiles");
+                    if (Directory.Exists(sideProfilesPath))
                     {
-                        profile = JsonConvert.DeserializeObject<Browser.BrowserProfile>(
-                            File.ReadAllText(Directory.GetFiles(pdir, "*sideprofile.json")[0]));
-                        profile.Extensions = new List<Browser.Extension>();
-
-                        foreach (string edir in Directory.GetDirectories(string.Concat(pdir, "\\Extensions")))
+                        //Fetch side profiles
+                        foreach (string pdir in Directory.GetDirectories(sideProfilesPath))
                         {
-                            if (!defaultExtensions.Contains(new DirectoryInfo(edir).Name))
-                            {
-                                if (new DirectoryInfo(edir).Name.Equals("Temp"))
-                                    continue;
+                            profile = JsonConvert.DeserializeObject<Browser.BrowserProfile>(
+                                File.ReadAllText(Directory.GetFiles(pdir, "*sideprofile.json")[0]));
+                            profile.Extensions = new List<Browser.Extension>();
 
-                                try
+                            foreach (string edir in Directory.GetDirectories(string.Concat(pdir, "\\Extensions")))
+                            {
+                                if (!defaultExtensions.Contains(new DirectoryInfo(edir).Name))
                                 {
-                                    profile.Extensions.Add(Utils.ParseChromiumExtension(edir));
-                                }
-                                catch (Exception e)
-                                {
-                                    if (e is FileNotFoundException || e is JsonException)
-                                        Issues.Add(string.Concat("Malformed or missing manifest or locale data for extension at ", edir));
+                                    if (new DirectoryInfo(edir).Name.Equals("Temp"))
+                                        continue;
+
+                                    try
+                                    {
+                                        profile.Extensions.Add(Utils.ParseChromiumExtension(edir));
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        if (e is FileNotFoundException || e is JsonException)
+                                            Issues.Add(string.Concat("Malformed or missing manifest or locale data for extension at ", edir));
+                                    }
                                 }
                             }
-                        }
 
-                        browser.Profiles.Add(profile);
+                            browser.Profiles.Add(profile);
+                        }
                     }
 
                     Browsers.Add(browser);
