@@ -44,7 +44,7 @@ public static partial class Cache
         {
             PowerProfiles = Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
         }
-        catch (COMException _)
+        catch (COMException)
         {
             Issues.Add("Could not get power profiles");
         }

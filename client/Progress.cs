@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Windows.Controls;
 
 namespace specify_client;
 
@@ -74,6 +75,7 @@ public class ProgressList
             item.Action();
             item.Status = ProgressType.Complete;
         }).Start();
+
     }
 
     public void PrintStatuses()
