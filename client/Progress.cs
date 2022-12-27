@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing.Printing;
 using System.Linq;
 using System.Threading;
 
@@ -73,6 +74,10 @@ public class ProgressList
             item.Status = ProgressType.Processing;
             item.Action();
             item.Status = ProgressType.Complete;
+
+            var Main = new Run();
+            Main.Greenify(item.Name);
+
         });
         if (key.Equals(Specificializing)) t.SetApartmentState(ApartmentState.STA);
         t.Start();
