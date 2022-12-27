@@ -2,6 +2,7 @@
 using System.Text;
 
 namespace specify_client;
+
 using System.Runtime.InteropServices;
 
 public static class Interop
@@ -24,7 +25,7 @@ public static class Interop
         ProcessAccessFlags processAccess,
         bool bInheritHandle,
         int processId);
-    
+
     [StructLayout(LayoutKind.Sequential)]
     public struct MIB_TCPROW_OWNER_PID
     {

@@ -12,6 +12,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Threading;
+using System.Windows.Threading;
 
 namespace specify_client;
 
@@ -53,12 +55,7 @@ public class Monolith
     }
     
     public static void Specificialize()
-    {
-        // const string specifiedUploadDomain = "http://localhost";
-        // const string specifiedUploadEndpoint = "specified/upload.php";
-        const string specifiedUploadDomain = "https://spec-ify.com";
-        const string specifiedUploadEndpoint = "upload.php";
-        
+    {   
         Program.Time.Stop();
         var m = new Monolith();
         m.Meta.GenerationDate = DateTime.Now;
@@ -89,15 +86,30 @@ public class Monolith
         if (Settings.DontUpload)
         {
             File.WriteAllText("specify_specs.json", serialized);
+            ProgramDone("1");
             return;
         }
 
         var requestTask = DoRequest(serialized);
         requestTask.Wait();
         var url = requestTask.Result;
-        if (url == null) return;
-        Clipboard.SetText(url);
-        Process.Start(url);
+        if (url == null)
+        {
+
+            App.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                var main = App.Current.MainWindow as Landing;
+                main.UploadFailed();
+            }));
+
+            return;
+        }
+
+        else { 
+            Clipboard.SetText(url);
+            Process.Start(url);
+            ProgramDone("0");
+        }
     }
     
     private static async Task<string> DoRequest(string str)
@@ -114,11 +126,6 @@ public class Monolith
 
         if (!response.IsSuccessStatusCode)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("\nCould not upload. The file has been saved to specify_specs.json.");
-            Console.WriteLine($"Please go to {specifiedUploadDomain} to upload the file manually.");
-            Console.WriteLine("Press any key to exit.");
-            Console.ReadKey();
             return null;
         }
 
@@ -130,6 +137,25 @@ public class Monolith
     private static void CacheError(object thing)
     {
         throw new Exception("MonolithCache item doesn't exist: " + nameof(thing));
+    }
+    private static void ProgramDone(string noUpload)
+    {
+        if (noUpload == "0") 
+        {
+            App.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                var main = App.Current.MainWindow as Landing;
+                main.ProgramFinalize();
+            }));
+        }
+        else
+        {
+            App.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                var main = App.Current.MainWindow as Landing;
+                main.ProgramFinalizeNoUpload();
+            }));
+        }
     }
 }
 
@@ -205,7 +231,7 @@ public class MonolithHardware
     public List<Dictionary<string, object>> Gpu;
     public Dictionary<string, object> Motherboard;
     public List<Dictionary<string, object>> AudioDevices;
-    public List<Monitor> Monitors;
+    public List<data.Monitor> Monitors;
     public List<Dictionary<string, object>> Drivers;
     public List<Dictionary<string, object>> Devices;
     public List<Dictionary<string, object>> BiosInfo;
