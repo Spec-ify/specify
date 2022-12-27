@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Management;
+using System.Text.RegularExpressions;
 using Microsoft.Win32;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.Linq;
 
 namespace specify_client.data;
 
@@ -81,5 +86,53 @@ public class Utils
         if (key == null) return def;
         var value = key.GetValue(name);
         return (T)value;
+    }
+    public static Browser.Extension ParseChromiumExtension(string path)
+    {
+        try
+        {
+            string ldir = string.Concat(Directory.GetDirectories(path).Last(), "\\_locales\\");
+            JToken localeData = JObject.Parse("{}"); //Prevents NullReferenceException when locale does not exist
+            ChromiumManifest manifest = JsonConvert.DeserializeObject<ChromiumManifest>(
+                File.ReadAllText(string.Concat(Directory.GetDirectories(path).Last(), "\\manifest.json")));
+
+            if (Regex.IsMatch(manifest.name, "MSG_(.+)") || Regex.IsMatch(manifest.description, "MSG_(.+)"))
+                localeData = JObject.Parse(File.ReadAllText(string.Concat(ldir, manifest.default_locale, "\\messages.json")));
+            try
+            {
+                return new Browser.Extension()
+                {
+                    name = (Regex.IsMatch(manifest.name, "MSG_(.+)"))
+                    ? (string)localeData[manifest.name.Substring(6, manifest.name.Length - 8)]["message"] : manifest.name,
+                    description = (Regex.IsMatch(manifest.description, "MSG_(.+)"))
+                    ? (string)localeData[manifest.description.Substring(6, manifest.description.Length - 8)]["message"] : manifest.description,
+                    version = manifest.version
+                };
+            } 
+            catch(NullReferenceException) 
+            {
+                /*
+                 * This handles a rare issues with the format between the manifest and locale
+                 * Essentially the contextual code in manifest can be all caps while the corresponding field in messages is not.
+                 * This mismatch created a null reference. Adding ToLower() in a normal context breaks a lot of extensions for reading.
+                 * If you've got a cleaner way of doing this, feel free to do it.
+                */
+                return new Browser.Extension()
+                {
+                    name = (Regex.IsMatch(manifest.name, "MSG_(.+)"))
+                    ? (string)localeData[manifest.name.Substring(6, manifest.name.Length - 8).ToLower()]["message"] : manifest.name,
+                    description = (Regex.IsMatch(manifest.description, "MSG_(.+)"))
+                    ? (string)localeData[manifest.description.Substring(6, manifest.description.Length - 8).ToLower()]["message"] : manifest.description,
+                    version = manifest.version
+                };
+            }
+        }
+        catch (Exception e)
+        {
+            if (e is FileNotFoundException || e is JsonException)
+                throw e;
+            else
+                return null;
+        }
     }
 }

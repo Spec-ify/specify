@@ -24,11 +24,15 @@ public static partial class Cache
     public static List<string> AvList { get; private set; }
     public static List<string> FwList { get; private set; }
     public static string HostsFile { get; private set; }
+    public static string HostsFileHash { get; private set; }
     public static bool? UacEnabled { get; private set; }
     public static int? UacLevel { get; private set; }
     public static List<Dictionary<string, object>> NetAdapters { get; private set; }
+    public static List<Dictionary<string, object>> NetAdapters2 { get; private set; }
     public static List<Dictionary<string, object>> IPRoutes { get; private set; }
     public static List<NetworkConnection> NetworkConnections { get; private set; }
+    public static List<Browser> BrowserExtensions { get; private set; }
+    public static string DefaultBrowser { get; private set; }
 
     public static string Username => Environment.UserName;
     // all the hardware stuff
@@ -49,14 +53,17 @@ public static partial class Cache
     public static List<Dictionary<string, object>> PowerProfiles { get; private set; }
     public static List<string> MicroCodes { get; private set; }
     public static int RecentMinidumps { get; private set; }
-    public static List<StaticCore> StaticCoreCheck { get; private set; }
+    public static bool? StaticCoreCount { get; private set; }
     public static List<Monitor> MonitorInfo { get; private set; }
-    
+    public static bool? UsernameSpecialCharacters { get; private set; }
+    public static int? OneDriveCommercialPathLength { get; private set; }
+    public static int? OneDriveCommercialNameLength { get; private set; }
     private static readonly List<string> SystemProcesses = new List<string>()
     {
         "Memory Compression",
         "Registry",
         "System",
-        "Idle"
+        "Idle",
+        "Secure System"
     };
 }

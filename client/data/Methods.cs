@@ -10,7 +10,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
+using System.Text.RegularExpressions;
 using System.Xml;
 using LibreHardwareMonitor.Hardware;
 using Microsoft.Win32;
@@ -32,6 +32,15 @@ public static partial class Cache
 
         SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
         UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
+        
+        if (UserVariables["OneDriveCommercial"] is string pathOneDriveCommercial)
+        {
+            var actualOneDriveCommercial = 
+                pathOneDriveCommercial.Split(new string[] { "OneDrive - " }, StringSplitOptions.None)[1];
+            OneDriveCommercialPathLength = pathOneDriveCommercial.Length;
+            OneDriveCommercialNameLength = actualOneDriveCommercial.Length;
+        }
+
         Services = Utils.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
         InstalledApps = GetInstalledApps();
         InstalledHotfixes = Utils.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
@@ -51,7 +60,12 @@ public static partial class Cache
 
         MicroCodes = GetMicroCodes();
         RecentMinidumps = CountMinidumps();
-        StaticCoreCheck = CheckStaticCore();
+        StaticCoreCount = GetStaticCoreCount();
+        BrowserExtensions= GetBrowserExtensions();
+        string defaultBrowserProgID = Utils.GetRegistryValue<string>(Registry.CurrentUser, "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID");
+        string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser, 
+            "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
+        DefaultBrowser = (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
         var rawProcesses = Process.GetProcesses();
 
         foreach (var rawProcess in rawProcesses)
@@ -110,6 +124,9 @@ public static partial class Cache
                 WorkingSet = rawProcess.WorkingSet64,
                 CpuPercent = cpuPercent
             });
+            
+            // Check if username contains non-alphanumeric characters
+            UsernameSpecialCharacters = !Regex.IsMatch(Environment.UserName, @"^[a-zA-Z0-9]+$");
         }
     }
     private static List<string> GetMicroCodes()
@@ -123,42 +140,29 @@ public static partial class Cache
 
         return res;
     }
-    private static List<StaticCore> CheckStaticCore()
+    private static bool? GetStaticCoreCount()
     {
-        List<StaticCore> Cores = new List<StaticCore>();
-
         string output = string.Empty;
 
-        ProcessStartInfo procStartInfo = new ProcessStartInfo("bcdedit", "/enum");
-        procStartInfo.RedirectStandardOutput = true;
-        procStartInfo.UseShellExecute = false;
-        procStartInfo.CreateNoWindow = true;
+        var procStartInfo = new ProcessStartInfo("bcdedit", "/enum")
+        {
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
 
-        using (Process proc = new Process())
+        using (var proc = new Process())
         {
             proc.StartInfo = procStartInfo;
             proc.Start();
             output = proc.StandardOutput.ReadToEnd();
+            if (output.Contains("The boot configuration data store could not be opened"))
+            {
+                Issues.Add("Could not check whether there is a static core count");
+                return null;
+            }
+            return output.Contains("numproc");
         }
-
-        if (output.Contains("numproc"))
-        {
-            Cores.Add(
-                new StaticCore
-                {
-                On = true
-                });
-        }
-        else
-        {
-            Cores.Add(
-                new StaticCore
-                {
-                    On = false
-                });
-        }
-
-        return Cores;
     }
     private static int CountMinidumps()
     {
@@ -267,7 +271,7 @@ public static partial class Cache
         if (enableLua == null) Issues.Add($"Security data: could not get EnableLUA value");
         else UacEnabled = enableLua == 1;
 
-        if (Environment.GetEnvironmentVariable("firmware_type").Equals("UEFI"))
+        if (Environment.GetEnvironmentVariable("firmware_type")!.Equals("UEFI"))
         {
             var secBootEnabled = Utils.GetRegistryValue<int?>(
                 Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\SecureBoot\State",
@@ -295,17 +299,21 @@ public static partial class Cache
 
         UacLevel = Utils.GetRegistryValue<int?>(
             Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
-            "ConsentPromptBehaviorAdmin");
+            "ConsentPromptBehaviorUser");
     }
-    public static void MakeNetworkData()
+    public static async void MakeNetworkData()
     {
         NetAdapters = Utils.GetWmi("Win32_NetworkAdapterConfiguration",
             "Description, DHCPEnabled, DHCPServer, DNSDomain, DNSDomainSuffixSearchOrder, DNSHostName, "
             + "DNSServerSearchOrder, IPEnabled, IPAddress, IPSubnet, DHCPLeaseObtained, DHCPLeaseExpires, "
             + "DefaultIPGateway, MACAddress, InterfaceIndex");
+        NetAdapters2 = Utils.GetWmi("MSFT_NetAdapter", 
+            "InterfaceIndex,InterfaceDescription,ConnectorPresent,InterfaceType,NdisPhysicalMedium",
+            @"root\standardcimv2");
         IPRoutes = Utils.GetWmi("Win32_IP4RouteTable",
             "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
-        HostsFile = File.ReadAllText(@"C:\Windows\system32\drivers\etc\hosts");
+        HostsFile = GetHostsFile();
+        HostsFileHash = GetHostsFileHash();
         NetworkConnections = GetNetworkConnections();
 
         // Uncomment the block below to run a traceroute to Google's DNS
@@ -314,6 +322,31 @@ public static partial class Cache
         {
             Console.WriteLine($"{i}: {NetStats.Address[i]} --- Lat: {NetStats.AverageLatency[i]} --- PL: {NetStats.PacketLoss[i]}");
         }*/
+    }
+    private static string GetHostsFile()
+    {
+        var hostsFile = "";
+        try
+        {
+            foreach (var str in File.ReadAllLines(@"C:\Windows\System32\drivers\etc\hosts"))
+            {
+                hostsFile += $"{str}\n";
+            }
+        }
+        catch (FileNotFoundException)
+        {
+            Issues.Add("Hosts file not found.");
+            return "";
+        }
+        return hostsFile;
+    }
+
+    public static string GetHostsFileHash()
+    {
+        using var sha256 = System.Security.Cryptography.SHA256.Create();
+        using var stream = File.OpenRead(@"C:\Windows\System32\drivers\etc\hosts");
+        var hash = sha256.ComputeHash(stream);
+        return BitConverter.ToString(hash).Replace("-", "");
     }
     private static async System.Threading.Tasks.Task<NetworkRoute> GetNetworkRoutes(string ipAddress, int pingCount = 100, int timeout = 10000, int bufferSize = 100)
     {
@@ -785,7 +818,6 @@ public static partial class Cache
                 {
                     matchingPartition.Filesystem = (string)fileSystem;
                 }
-                Issues.Add($"{partitionSize} found. FS: {fileSystem} - DL: {driveLetter}");
             }
             else
             {
@@ -798,7 +830,10 @@ public static partial class Cache
                 }
                 catch
                 { }
-                Issues.Add($"Partition link could not be established for {partitionSize} byte partition - Drive Label: {driveLetter} -  File System: {fileSystem}");
+                if (driveLetter != "")
+                {
+                    Issues.Add($"Partition link could not be established for {partitionSize} byte partition - Drive Label: {driveLetter} -  File System: {fileSystem}");
+                }
             }
         }
         foreach (var d in drives)
@@ -1103,7 +1138,6 @@ public static partial class Cache
 
         return Temps;
     }
-
     private static List<Interop.MIB_TCPROW_OWNER_PID> GetAllTCPv4Connections()
     {
         return GetTCPConnections<Interop.MIB_TCPROW_OWNER_PID, Interop.MIB_TCPTABLE_OWNER_PID>(AF_INET);
@@ -1392,4 +1426,182 @@ public static partial class Cache
 
         return InstalledApps;
     }
+    private static List<Browser> GetBrowserExtensions()
+    {
+        List<Browser> Browsers = new List<Browser>();
+        string UserPath = string.Concat("C:\\Users\\", Username, "\\Appdata\\");
+        Dictionary<string, string> BrowserPaths = new Dictionary<string, string>()
+        {
+            {"Edge", "Local\\Microsoft\\Edge\\User Data\\"},
+            {"Vivaldi", "Local\\Vivaldi\\User Data\\"},
+            {"Brave", "Local\\BraveSoftware\\Brave-Browser\\User Data\\"},
+            {"Chrome", "Local\\Google\\Chrome\\User Data\\"},
+            {"Firefox", "Roaming\\Mozilla\\Firefox\\Profiles\\"},
+            {"OperaGX","Roaming\\Opera Software\\Opera GX Stable\\"}
+        };
+
+        foreach (KeyValuePair<string, string> BrowserPath in BrowserPaths)
+        {
+            if (Directory.Exists(string.Concat(UserPath, BrowserPath.Value)))
+            {
+                if (BrowserPath.Key.Equals("Firefox"))
+                {
+                    Browser browser = new Browser()
+                    {
+                        Name = "Firefox",
+                        Profiles = new List<Browser.BrowserProfile>()
+                    };
+
+                    foreach (string dir in Directory.GetDirectories(string.Concat(UserPath, BrowserPath.Value)))
+                    {
+                        var addonsFile = string.Concat(dir, "\\addons.json");
+                        if (!File.Exists(addonsFile)) continue;
+                        List<JToken> extensions = JObject.Parse(File.ReadAllText(addonsFile))["addons"].Children().ToList();
+                        Browser.BrowserProfile profile = new Browser.BrowserProfile()
+                        {
+                            name = new DirectoryInfo(dir).Name.Substring(8),
+                            Extensions = new List<Browser.Extension>()
+                        };
+
+                        foreach (JToken extension in extensions)
+                            profile.Extensions.Add(new Browser.Extension()
+                            {
+                                name = (string)extension["name"],
+                                description = (string)extension["description"],
+                                version = (string)extension["version"]
+                            });
+
+                        browser.Profiles.Add(profile);
+                    }
+
+                    Browsers.Add(browser);
+                }
+                else if (BrowserPath.Key.Equals("OperaGX"))
+                {
+                    Browser browser = new Browser()
+                    {
+                        Name = "OperaGX",
+                        Profiles = new List<Browser.BrowserProfile>()
+                    };
+                    List<string> defaultExtensions = new List<string>() //Extensions installed by default, we can ignore these
+                    {
+                        "aelmefcddnelhophneodelaokjogeemi",
+                        "enegjkbbakeegngfapepobipndnebkdk",
+                        "gojhcdgcpbpfigcaejpfhfegekdgiblk",
+                        "kbmoiomgmchbpihhdpabemajcbjpcijk"
+                    };
+                    Browser.BrowserProfile profile = new Browser.BrowserProfile()
+                    {
+                        name = "Default",
+                        Extensions = new List<Browser.Extension>()
+                    };
+
+                    //Default profile logic needs to exist seperately due to OperaGX's AppData file structure.
+                    foreach (string edir in Directory.GetDirectories(string.Concat(UserPath, BrowserPath.Value, "Extensions")))
+                    {
+                        if (!defaultExtensions.Contains(new DirectoryInfo(edir).Name))
+                        {
+                            if (new DirectoryInfo(edir).Name.Equals("Temp"))
+                                continue;
+
+                            try
+                            {
+                                profile.Extensions.Add(Utils.ParseChromiumExtension(edir));
+                            }
+                            catch (Exception e)
+                            {
+                                if (e is FileNotFoundException || e is JsonException)
+                                    Issues.Add(string.Concat("Malformed or missing manifest or locale data for extension at ", edir));
+                                //DirectoryNotFoundException can occur with certain browsers when a profile exists but no extensions are installed
+                            }
+                        }  
+                    }                   
+                    browser.Profiles.Add(profile);
+
+                    var sideProfilesPath = string.Concat(UserPath, BrowserPath.Value, "_side_profiles");
+                    if (Directory.Exists(sideProfilesPath))
+                    {
+                        //Fetch side profiles
+                        foreach (string pdir in Directory.GetDirectories(sideProfilesPath))
+                        {
+                            profile = JsonConvert.DeserializeObject<Browser.BrowserProfile>(
+                                File.ReadAllText(Directory.GetFiles(pdir, "*sideprofile.json")[0]));
+                            profile.Extensions = new List<Browser.Extension>();
+
+                            foreach (string edir in Directory.GetDirectories(string.Concat(pdir, "\\Extensions")))
+                            {
+                                if (!defaultExtensions.Contains(new DirectoryInfo(edir).Name))
+                                {
+                                    if (new DirectoryInfo(edir).Name.Equals("Temp"))
+                                        continue;
+
+                                    try
+                                    {
+                                        profile.Extensions.Add(Utils.ParseChromiumExtension(edir));
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        if (e is FileNotFoundException || e is JsonException)
+                                            Issues.Add(string.Concat("Malformed or missing manifest or locale data for extension at ", edir));
+                                    }
+                                }
+                            }
+
+                            browser.Profiles.Add(profile);
+                        }
+                    }
+
+                    Browsers.Add(browser);
+                }
+                else //Chromium Browsers
+                {
+                    Browser browser = new Browser()
+                    {
+                        Name = BrowserPath.Key,
+                        Profiles = new List<Browser.BrowserProfile>()
+                    };
+                    List<string> directories = Directory.GetDirectories(string.Concat(UserPath, BrowserPath.Value), "Profile*").ToList();
+                    directories.Add(string.Concat(UserPath, BrowserPath.Value, "Default"));
+
+                    foreach (string dir in directories)
+                    {
+                        Browser.BrowserProfile profile = new Browser.BrowserProfile()
+                        {
+                            name = new DirectoryInfo(dir).Name,
+                            Extensions = new List<Browser.Extension>()
+                        };
+                        try
+                        {
+                            foreach (string edir in Directory.GetDirectories(string.Concat(dir, "\\Extensions")))
+                            {
+                                if (new DirectoryInfo(edir).Name.Equals("Temp"))
+                                    continue;
+
+                                try
+                                {
+                                    profile.Extensions.Add(Utils.ParseChromiumExtension(edir));
+                                }
+                                catch (Exception e)
+                                {
+                                    if (e is FileNotFoundException || e is JsonException)
+                                        Issues.Add(string.Concat("Malformed or missing manifest or locale data for extension at ", edir));
+                                    //DirectoryNotFoundException can occur with certain browsers when a profile exists but no extensions are installed
+                                }
+                            }
+                        } catch (DirectoryNotFoundException)
+                        {
+                            //Do nothing, this means no extensions are installed
+                        }
+
+                        browser.Profiles.Add(profile);
+                    }
+
+                    Browsers.Add(browser);
+                }
+            }
+        }
+
+        return Browsers;
+    }
+    
 }

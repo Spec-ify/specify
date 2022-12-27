@@ -7,6 +7,11 @@ using System.Net;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using specify_client.data;
+using System.Diagnostics;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace specify_client;
 
@@ -46,9 +51,14 @@ public class Monolith
     {
         return JsonConvert.SerializeObject(this, Formatting.Indented) + Environment.NewLine;
     }
-
+    
     public static void Specificialize()
     {
+        // const string specifiedUploadDomain = "http://localhost";
+        // const string specifiedUploadEndpoint = "specified/upload.php";
+        const string specifiedUploadDomain = "https://spec-ify.com";
+        const string specifiedUploadEndpoint = "upload.php";
+        
         Program.Time.Stop();
         var m = new Monolith();
         m.Meta.GenerationDate = DateTime.Now;
@@ -59,12 +69,64 @@ public class Monolith
             serialized = serialized.Replace(Cache.Username, "[REDACTED]");
         }
 
-        if (!Settings.DontUpload)
+        if (Settings.RedactOneDriveCommercial)
+        {
+            try
+            {
+                var stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
+                stringToRedact = stringToRedact.Replace(@"\", @"\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
+                serialized = serialized.Replace(stringToRedact, "[REDACTED]");
+            }
+            catch
+            {
+                m.Issues.Add("Commercial OneDrive redaction failed. This usually happens when Commerical OneDrive is not installed.");
+                Settings.RedactOneDriveCommercial = false;
+                Specificialize();
+                return;
+            }
+        }
+
+        if (Settings.DontUpload)
         {
             File.WriteAllText("specify_specs.json", serialized);
+            return;
         }
-    }
 
+        var requestTask = DoRequest(serialized);
+        requestTask.Wait();
+        var url = requestTask.Result;
+        if (url == null) return;
+        Clipboard.SetText(url);
+        Process.Start(url);
+    }
+    
+    private static async Task<string> DoRequest(string str)
+    {
+        // const string specifiedUploadDomain = "http://localhost";
+        // const string specifiedUploadEndpoint = "specified/upload.php";
+        const string specifiedUploadDomain = "https://spec-ify.com";
+        const string specifiedUploadEndpoint = "upload.php";
+        var client = new HttpClient();
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{specifiedUploadDomain}/{specifiedUploadEndpoint}");
+        request.Content = new StringContent(str);
+        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        var response = await client.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("\nCould not upload. The file has been saved to specify_specs.json.");
+            Console.WriteLine($"Please go to {specifiedUploadDomain} to upload the file manually.");
+            Console.WriteLine("Press any key to exit.");
+            Console.ReadKey();
+            return null;
+        }
+
+        var location = response.Headers.Location.ToString();
+        //Console.WriteLine(specifiedUploadDomain + location);
+        return specifiedUploadDomain + location;
+    }
+    
     private static void CacheError(object thing)
     {
         throw new Exception("MonolithCache item doesn't exist: " + nameof(thing));
@@ -181,8 +243,13 @@ public class MonolithSystem
     public List<Dictionary<string, object>> PowerProfiles;
     public List<string> MicroCodes;
     public int RecentMinidumps;
-    public List<StaticCore> StaticCoreCheck;
+    public bool? StaticCoreCount;
     public List<IRegistryValue> ChoiceRegistryValues;
+    public bool? UsernameSpecialCharacters;
+    public int? OneDriveCommercialPathLength;
+    public int? OneDriveCommercialNameLength;
+    public List<Browser> BrowserExtensions;
+    public string DefaultBrowser;
 
     public MonolithSystem()
     {
@@ -196,8 +263,13 @@ public class MonolithSystem
         PowerProfiles = Cache.PowerProfiles;
         MicroCodes = Cache.MicroCodes;
         RecentMinidumps = Cache.RecentMinidumps;
-        StaticCoreCheck = Cache.StaticCoreCheck;
+        StaticCoreCount = Cache.StaticCoreCount;
         ChoiceRegistryValues = Cache.ChoiceRegistryValues;
+        UsernameSpecialCharacters = Cache.UsernameSpecialCharacters;
+        OneDriveCommercialPathLength = Cache.OneDriveCommercialPathLength;
+        OneDriveCommercialNameLength = Cache.OneDriveCommercialNameLength;
+        BrowserExtensions = Cache.BrowserExtensions;
+        DefaultBrowser = Cache.DefaultBrowser;
     }
 }
 
@@ -205,16 +277,20 @@ public class MonolithSystem
 public class MonolithNetwork
 {
     public List<Dictionary<string, object>> Adapters;
+    public List<Dictionary<string, object>> Adapters2;
     public List<Dictionary<string, object>> Routes;
     public List<NetworkConnection> NetworkConnections;
     public string HostsFile;
+    public string HostsFileHash;
 
     public MonolithNetwork()
     {
         Adapters = Cache.NetAdapters;
+        Adapters2 = Cache.NetAdapters2;
         Routes = Cache.IPRoutes;
         NetworkConnections = Cache.NetworkConnections;
         HostsFile = Cache.HostsFile;
+        HostsFileHash = Cache.HostsFileHash;
     }
 }
 
