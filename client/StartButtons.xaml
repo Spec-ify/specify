@@ -17,10 +17,11 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="50"/>
-            <RowDefinition Height="125*"/>
-            <RowDefinition Height="40*"/>
-            <RowDefinition Height="50*"/>
+            <RowDefinition Height="100*"/>
             <RowDefinition Height="25*"/>
+            <RowDefinition Height="25*"/>
+            <RowDefinition Height="50*"/>
+            <RowDefinition Height="20*"/>
         </Grid.RowDefinitions>
 
         <Grid Grid.RowSpan="5">
@@ -37,9 +38,27 @@
                Grid.RowSpan="5"
                NavigationUIVisibility="Hidden"/>
 
+        <StackPanel Grid.Row="1" Grid.RowSpan="3" Height="35" Margin="0,139,0,0" VerticalAlignment="Top">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment = "Center" 
+                        VerticalAlignment = "Center">
+                <TextBlock TextWrapping="Wrap" 
+                           Text="This tool gathers information about your computer. " 
+                           FontFamily="Consolas" Foreground="White"
+                           HorizontalAlignment = "Center" 
+                           VerticalAlignment = "Center"/>
+            </StackPanel>
+
+            <TextBlock TextWrapping="Wrap" 
+                           Text="It does not collect any private information other than your username, which you can redact." 
+                           FontFamily="Consolas" Foreground="White"
+                           HorizontalAlignment = "Center" 
+                           VerticalAlignment = "Bottom"/>
+        </StackPanel>
+
         <!-- Start Button -->
 
-        <StackPanel Grid.Row="2" Grid.RowSpan="1">
+        <StackPanel Grid.Row="3" Grid.RowSpan="1">
 
             <StackPanel Orientation="Horizontal">
             </StackPanel>
@@ -87,7 +106,7 @@
 
         <!-- Toggle Buttons -->
 
-        <StackPanel Grid.Row="3" Grid.RowSpan="1" Margin="0,0,450,0">
+        <StackPanel Grid.Row="4" Grid.RowSpan="1" Margin="0,0,469,0">
 
             <StackPanel Orientation="Horizontal"
                                               HorizontalAlignment="Right" Height="50">
@@ -133,7 +152,7 @@
 
         </StackPanel>
 
-        <StackPanel Grid.Row="3" Grid.RowSpan="1" Margin="450,0,0,0">
+        <StackPanel Grid.Row="4" Grid.RowSpan="1" Margin="349,0,350,0">
 
             <StackPanel Orientation="Horizontal"
                 HorizontalAlignment="Left" Height="50">
@@ -178,8 +197,56 @@
             </StackPanel>
 
         </StackPanel>
+        <StackPanel Grid.Row="4" Grid.RowSpan="1" Margin="466,0,166,0">
 
-        <StackPanel Grid.Row="3" Grid.RowSpan="3" Margin="0,50,0,0">
+            <StackPanel Orientation="Horizontal"
+                HorizontalAlignment="Left" Height="50">
+                <ToggleButton x:Name = "OneDriveToggle" 
+                    Checked = "OneDriveOn" 
+                    Unchecked = "OneDriveOff"
+                    FontSize="12"
+                    FontWeight="Medium">
+
+                    <TextBlock Text="Redact Commercial OneDrive"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"/>
+
+                    <ToggleButton.Style>
+                        <Style TargetType="{x:Type ToggleButton}">
+                            <Setter Property="TextElement.FontFamily"
+                                Value="Fonts/AldoTheApache.ttf #Aldo The Apache"/>
+                            <Setter Property="Cursor"
+                                Value="Hand"/>
+
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver"
+                                    Value="True">
+                                    <Setter Property="Background"
+                                        Value="#3b4252"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ToggleButton.Style>
+
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="{x:Type ToggleButton}">
+                            <Border Width="100"
+                                Height="35"
+                                CornerRadius="16"
+                                Background="{TemplateBinding Background}">
+                                <ContentPresenter VerticalAlignment="Center"
+                                    HorizontalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+
+                </ToggleButton>
+
+            </StackPanel>
+
+        </StackPanel>
+
+        <StackPanel Grid.Row="4" Grid.RowSpan="3" Margin="0,50,0,0">
             <StackPanel Orientation="Vertical"
                         HorizontalAlignment = "Left" 
                         VerticalAlignment = "Bottom">

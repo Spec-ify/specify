@@ -40,7 +40,7 @@
                NavigationUIVisibility="Hidden"/>
 
 
-            <!-- Specify Image-->
+        <!-- Specify Image-->
 
         <StackPanel Grid.Row="1" Grid.RowSpan="1">
 
@@ -53,25 +53,7 @@
 
         </StackPanel>
 
-        <StackPanel Grid.Row="2" Grid.RowSpan="1">
-            <StackPanel Orientation="Horizontal"
-                        HorizontalAlignment = "Center" 
-                        VerticalAlignment = "Center">
-                <TextBlock TextWrapping="Wrap" 
-                           Text="This tool gathers information about your computer. " 
-                           FontFamily="Consolas" Foreground="White"
-                           HorizontalAlignment = "Center" 
-                           VerticalAlignment = "Center"/>
-            </StackPanel>
-            
-            <TextBlock TextWrapping="Wrap" 
-                           Text="It does not collect any private information other than your username, which you can redact." 
-                           FontFamily="Consolas" Foreground="White"
-                           HorizontalAlignment = "Center" 
-                           VerticalAlignment = "Bottom"/>
-        </StackPanel>
-
-            <StackPanel Grid.Row="4" Grid.RowSpan="2" Margin="0,50,0,0">
+        <StackPanel Grid.Row="4" Grid.RowSpan="2" Margin="0,50,0,0">
             <StackPanel Orientation="Vertical"
                         HorizontalAlignment = "Left" 
                         VerticalAlignment = "Bottom">

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing.Printing;
 using System.Linq;
+using System.Windows.Controls;
 using System.Threading;
 
 namespace specify_client;
@@ -49,7 +50,7 @@ public class ProgressList
             { "Network", new ProgressStatus("NetworkDataText", data.Cache.MakeNetworkData) },
             { "Hardware", new ProgressStatus("HardwareDataText", data.Cache.MakeHardwareData) },
             {
-                Specificializing,
+                "Specificializing",
                 new ProgressStatus(Specificializing, Monolith.Specificialize, 
                     new List<string>(){ "MainData", "SystemData", "Security", "Network", "Hardware" })
             }
@@ -59,7 +60,7 @@ public class ProgressList
     public void RunItem(string key)
     {
         var item = Items.ContainsKey(key) ? Items[key] : throw new Exception($"Progress item {key} doesn't exist!");
-            
+
         var t = new Thread(() =>
         {
             foreach (var k in item.Dependencies)
@@ -74,9 +75,6 @@ public class ProgressList
             item.Status = ProgressType.Processing;
             item.Action();
             item.Status = ProgressType.Complete;
-
-            var Main = new Run();
-            Main.Greenify(item.Name);
 
         });
         //if (key.Equals(Specificializing)) 

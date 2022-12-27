@@ -25,10 +25,10 @@ public class Program
         pList.RunItem("Security");
         pList.RunItem("Network");
         pList.RunItem("Hardware");
-        pList.RunItem(ProgressList.Specificializing);
+        pList.RunItem("Specificializing");  
     }
-    
-        
+
+
     public static void PrettyPrintObject(object o)
     {
         var jsonString = JsonConvert.SerializeObject(o, Formatting.Indented);

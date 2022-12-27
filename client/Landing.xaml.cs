@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace specify_client
 {
@@ -48,6 +50,59 @@ namespace specify_client
             Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
             e.Handled = true;
 
+        }
+        public void ProgramFinalize()
+        {
+            if (!Dispatcher.CheckAccess())
+            {
+                // We're not in the UI thread, ask the dispatcher to call this same method in the UI thread, then exit
+                Dispatcher.BeginInvoke(new Action(ProgramFinalize));
+                return;
+            }
+
+            // We're in the UI thread, update the controls
+
+            Frame.Navigate(new ProgramFinalized());
+            this.Activate();
+            this.WindowState = System.Windows.WindowState.Normal;
+            this.Topmost = false;
+            this.Focus();
+        }
+        public void ProgramFinalizeNoUpload()
+        {
+            if (!Dispatcher.CheckAccess())
+            {
+                // We're not in the UI thread, ask the dispatcher to call this same method in the UI thread, then exit
+                Dispatcher.BeginInvoke(new Action(ProgramFinalizeNoUpload));
+                return;
+            }
+
+            // We're in the UI thread, update the controls
+
+            Frame.Navigate(new ProgramFinalizeNoUpload());
+            
+            this.Activate();
+            this.WindowState = WindowState.Normal;
+            this.Topmost = false;
+            this.Focus();
+        }
+        public void UploadFailed()
+        {
+
+            if (!Dispatcher.CheckAccess())
+            {
+                // We're not in the UI thread, ask the dispatcher to call this same method in the UI thread, then exit
+                Dispatcher.BeginInvoke(new Action(UploadFailed));
+                return;
+            }
+
+            // We're in the UI thread, update the controls
+            Frame.Navigate(new StartButtons());
+
+            this.Activate();
+            this.WindowState = System.Windows.WindowState.Normal;
+            this.Topmost = false;
+            this.Focus();
         }
 
     }

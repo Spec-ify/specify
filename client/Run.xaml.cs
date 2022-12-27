@@ -1,9 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Management;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
+using System.Xml.Linq;
+using System.Diagnostics;
+using System.Security.AccessControl;
 
 namespace specify_client
 {
@@ -18,19 +24,6 @@ namespace specify_client
             InitializeComponent();
 
             Program.Main();
-        }
-
-        public void Greenify(string objective)
-        {
-            var txt = StackPanel1.FindName(objective);
-
-            if (txt != null)
-            {
-                txt = StackPanel2.FindName(objective);
-            }
-
-            TextBlock sometxt = txt as TextBlock;
-            sometxt.Foreground = new SolidColorBrush(Colors.Green);
         }
     }
 }

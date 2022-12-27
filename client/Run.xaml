@@ -18,10 +18,10 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="50"/>
-            <RowDefinition Height="125*"/>
+            <RowDefinition Height="75*"/>
             <RowDefinition Height="40*"/>
-            <RowDefinition Height="50*"/>
-            <RowDefinition Height="25*"/>
+            <RowDefinition Height="75*"/>
+
         </Grid.RowDefinitions>
 
         <Grid Grid.RowSpan="5">
@@ -34,72 +34,44 @@
             </Grid.ColumnDefinitions>
         </Grid>
 
-        <StackPanel Grid.Row="2"
-                    VerticalAlignment="Center"
-                    HorizontalAlignment="Left"
-                    Orientation="Horizontal"
-                    x:Name="StackPanel1">
-            <TextBlock x:Name="SystemDataText"
-                       Text="System Data" 
-                       HorizontalAlignment="Stretch" 
-                       TextWrapping="NoWrap" 
-                       Foreground="White" 
-                       FontFamily="Aldo the Apache"
-                       FontStretch="Medium"
-                       Margin="210,0,0,0"/>
-            
-            <TextBlock x:Name="HardwareDataText"
-                       Text="Hardware Data" 
-                       HorizontalAlignment="Stretch" 
-                       TextWrapping="NoWrap" 
-                       Foreground="White" 
-                       FontFamily="Aldo the Apache"
-                       FontStretch="Medium"
-                       Margin="90,0,0,0"/>
-
-            <TextBlock x:Name="SecurityDataText"
-                       Text="Security Data" 
-                       HorizontalAlignment="Stretch" 
-                       TextWrapping="NoWrap" 
-                       Foreground="White" 
-                       FontFamily="Aldo the Apache"
-                       FontStretch="Medium"
-                       Margin="90,0,0,0"/>
+        <StackPanel Grid.Row="2" Grid.RowSpan="1"
+                    HorizontalAlignment = "Center" 
+                    VerticalAlignment = "Center">
+            <Image
+                Source="/Images/sync-alt-inv.png"
+                Width="63"
+                Height="43"
+                RenderTransformOrigin="0.5, 0.5"
+                RenderOptions.BitmapScalingMode="HighQuality">
+                <Image.RenderTransform>
+                    <RotateTransform x:Name="noFreeze" />
+                </Image.RenderTransform>
+                <Image.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation
+                        Storyboard.TargetProperty="(Image.RenderTransform).(RotateTransform.Angle)"
+                        To="360" Duration="0:0:1" RepeatBehavior="Forever" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Image.Triggers>
+            </Image>
 
         </StackPanel>
-
-        <StackPanel Grid.Row="3"
-                    VerticalAlignment="Top"
-                    HorizontalAlignment="Left"
-                    Orientation="Horizontal"
-                    x:Name="StackPanel2">
-            <TextBlock x:Name="NetworkDataText"
-                       Text="Network Data" 
-                       HorizontalAlignment="Stretch" 
-                       TextWrapping="NoWrap" 
-                       Foreground="White" 
-                       FontFamily="Aldo the Apache"
-                       FontStretch="Medium"
-                       Margin="205,0,0,0"/>
-
-            <TextBlock x:Name="MainDataText"
-                       Text="Main Data" 
-                       HorizontalAlignment="Stretch" 
-                       TextWrapping="NoWrap" 
-                       Foreground="White" 
-                       FontFamily="Aldo the Apache"
-                       FontStretch="Medium"
-                       Margin="100,0,0,0"/>
-
-            <TextBlock x:Name="SpecificalizingText"
-                       Text="Specificalizing" 
-                       HorizontalAlignment="Stretch" 
-                       TextWrapping="NoWrap" 
-                       Foreground="White" 
-                       FontFamily="Aldo the Apache"
-                       FontStretch="Medium"
-                       Margin="100,0,0,0"/>
-
+        <StackPanel Grid.Row="3" Grid.RowSpan="1">
+            <TextBlock TextWrapping="Wrap" 
+                           Text="The longest this app is forced to work is 60 seconds." 
+                           FontFamily="Consolas" Foreground="White"
+                           HorizontalAlignment = "Center" 
+                           VerticalAlignment = "Center"/>
+            <TextBlock TextWrapping="Wrap" 
+                           Text="If this app takes longer than forever, let us know in the GitHub link in the corner!" 
+                           FontFamily="Consolas" Foreground="White"
+                           HorizontalAlignment = "Center" 
+                           VerticalAlignment = "Center"/>
         </StackPanel>
+
     </Grid>
 </Page>

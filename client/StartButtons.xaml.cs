@@ -46,6 +46,16 @@ namespace specify_client
             Settings.RedactUsername = false;
             Username.Background = new SolidColorBrush(Colors.White);
         }
+        private void OneDriveOn(object sender, RoutedEventArgs e)
+        {
+            Settings.RedactOneDriveCommercial = true;
+            OneDriveToggle.Background = new SolidColorBrush(Colors.Green);
+        }
+        private void OneDriveOff(object sender, RoutedEventArgs e)
+        {
+            Settings.RedactOneDriveCommercial = false;
+            OneDriveToggle.Background = new SolidColorBrush(Colors.White);
+        }
         private void StartAction(object sender, RoutedEventArgs e)
         {
             var main = App.Current.MainWindow as Landing;
