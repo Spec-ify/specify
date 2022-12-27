@@ -22,8 +22,14 @@ namespace specify_client
 
         public void Greenify(string objective)
         {
-            var txt = FindName(objective);
-            TextBox sometxt = txt as TextBox;
+            var txt = StackPanel1.FindName(objective);
+
+            if (txt != null)
+            {
+                txt = StackPanel2.FindName(objective);
+            }
+
+            TextBlock sometxt = txt as TextBlock;
             sometxt.Foreground = new SolidColorBrush(Colors.Green);
         }
     }

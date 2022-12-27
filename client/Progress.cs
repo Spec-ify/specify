@@ -43,11 +43,11 @@ public class ProgressList
     public ProgressList()
     {
         Items = new Dictionary<string, ProgressStatus>(){
-            { "MainData", new ProgressStatus("Main Data", data.Cache.MakeMainData) },
-            { "SystemData", new ProgressStatus("System Data", data.Cache.MakeSystemData) },
-            { "Security", new ProgressStatus("Security Info", data.Cache.MakeSecurityData) },
-            { "Network", new ProgressStatus("Network Info", data.Cache.MakeNetworkData) },
-            { "Hardware", new ProgressStatus("Hardware Info", data.Cache.MakeHardwareData) },
+            { "MainData", new ProgressStatus("MainDataText", data.Cache.MakeMainData) },
+            { "SystemData", new ProgressStatus("SystemDataText", data.Cache.MakeSystemData) },
+            { "Security", new ProgressStatus("SecurityDataText", data.Cache.MakeSecurityData) },
+            { "Network", new ProgressStatus("NetworkDataText", data.Cache.MakeNetworkData) },
+            { "Hardware", new ProgressStatus("HardwareDataText", data.Cache.MakeHardwareData) },
             {
                 Specificializing,
                 new ProgressStatus(Specificializing, Monolith.Specificialize, 
@@ -79,7 +79,8 @@ public class ProgressList
             Main.Greenify(item.Name);
 
         });
-        if (key.Equals(Specificializing)) t.SetApartmentState(ApartmentState.STA);
+        //if (key.Equals(Specificializing)) 
+        t.SetApartmentState(ApartmentState.STA);
         t.Start();
     }
 

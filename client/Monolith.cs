@@ -53,12 +53,7 @@ public class Monolith
     }
     
     public static void Specificialize()
-    {
-        // const string specifiedUploadDomain = "http://localhost";
-        // const string specifiedUploadEndpoint = "specified/upload.php";
-        const string specifiedUploadDomain = "https://spec-ify.com";
-        const string specifiedUploadEndpoint = "upload.php";
-        
+    {   
         Program.Time.Stop();
         var m = new Monolith();
         m.Meta.GenerationDate = DateTime.Now;

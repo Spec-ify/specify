@@ -37,7 +37,8 @@
         <StackPanel Grid.Row="2"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Left"
-                    Orientation="Horizontal">
+                    Orientation="Horizontal"
+                    x:Name="StackPanel1">
             <TextBlock x:Name="SystemDataText"
                        Text="System Data" 
                        HorizontalAlignment="Stretch" 
@@ -70,7 +71,8 @@
         <StackPanel Grid.Row="3"
                     VerticalAlignment="Top"
                     HorizontalAlignment="Left"
-                    Orientation="Horizontal">
+                    Orientation="Horizontal"
+                    x:Name="StackPanel2">
             <TextBlock x:Name="NetworkDataText"
                        Text="Network Data" 
                        HorizontalAlignment="Stretch" 
@@ -78,7 +80,7 @@
                        Foreground="White" 
                        FontFamily="Aldo the Apache"
                        FontStretch="Medium"
-                       Margin="125,0,0,0"/>
+                       Margin="205,0,0,0"/>
 
             <TextBlock x:Name="MainDataText"
                        Text="Main Data" 
@@ -87,25 +89,16 @@
                        Foreground="White" 
                        FontFamily="Aldo the Apache"
                        FontStretch="Medium"
-                       Margin="103,0,0,0"/>
+                       Margin="100,0,0,0"/>
 
-            <TextBlock x:Name="AssembleText"
-                       Text="Assemble" 
+            <TextBlock x:Name="SpecificalizingText"
+                       Text="Specificalizing" 
                        HorizontalAlignment="Stretch" 
                        TextWrapping="NoWrap" 
                        Foreground="White" 
                        FontFamily="Aldo the Apache"
                        FontStretch="Medium"
-                       Margin="113,0,0,0"/>
-
-            <TextBlock x:Name="WriteFileText"
-                       Text="Write File" 
-                       HorizontalAlignment="Stretch" 
-                       TextWrapping="NoWrap" 
-                       Foreground="White" 
-                       FontFamily="Aldo the Apache"
-                       FontStretch="Medium"
-                       Margin="113,0,0,0"/>
+                       Margin="100,0,0,0"/>
 
         </StackPanel>
     </Grid>
