@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Configuration;
+using System.ComponentModel; 
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -1114,14 +1113,14 @@ public static partial class Cache
                 Temps.AddRange(
                     from subhardware in hardware.SubHardware
                     from sensor in subhardware.Sensors
-                    where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24
+                    where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24 || sensor.Name.ToLower().Contains("tjmax")
                     select new TempMeasurement
                     { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
                     );
 
                 Temps.AddRange(
                     from sensor in hardware.Sensors
-                    where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24
+                    where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24 || sensor.Name.ToLower().Contains("tjmax")
                     select new TempMeasurement
                     { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
                     );
