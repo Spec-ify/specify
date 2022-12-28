@@ -110,8 +110,8 @@
 
             <StackPanel Orientation="Horizontal"
                         HorizontalAlignment="Right" Height="50">
+                        
                 <ToggleButton x:Name = "Username" 
-
                               FontSize="12"
                               FontWeight="Medium"
                               Checked = "UsernameOn" 
@@ -123,8 +123,10 @@
 
                     <ToggleButton.Style>
                         <Style TargetType="{x:Type ToggleButton}">
+                            
                             <Setter Property="TextElement.FontFamily"
                             Value="Bahnschrift SemiBold SemiCondensed"/>
+                            
                             <Setter Property="Cursor"
                                 Value="Hand"/>
 
@@ -171,6 +173,7 @@
                         <Style TargetType="{x:Type ToggleButton}">
                             <Setter Property="TextElement.FontFamily"
                             Value="Bahnschrift SemiBold SemiCondensed"/>
+                            
                             <Setter Property="Cursor"
                                 Value="Hand"/>
 
@@ -219,6 +222,7 @@
                         <Style TargetType="{x:Type ToggleButton}">
                             <Setter Property="TextElement.FontFamily"
                             Value="Bahnschrift SemiBold Condensed"/>
+                            
                             <Setter Property="Cursor"
                                 Value="Hand"/>
 
