@@ -461,7 +461,89 @@ public static partial class Cache
             }
         }
     }
+    private static string MonitorFriendlyName(Interop.LUID adapterId, uint targetId)
+    {
+        Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME deviceName = new Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME();
+        deviceName.header.size = (uint)Marshal.SizeOf(typeof(Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME));
+        deviceName.header.adapterId = adapterId;
+        deviceName.header.id = targetId;
+        deviceName.header.type = Interop.DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+        int error = Interop.DisplayConfigGetDeviceInfo(ref deviceName);
+        if (error != Interop.ERROR_SUCCESS)
+            Issues.Add($"Interop failure during monitor data collection {error}");
+        return deviceName.monitorFriendlyDeviceName;
+    }
     private static List<Monitor> GetMonitorInfo()
+    {
+        List<Monitor> monitors = new();
+        uint PathCount, ModeCount;
+        int error = Interop.GetDisplayConfigBufferSizes(Interop.QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
+            out PathCount, out ModeCount);
+        if (error != Interop.ERROR_SUCCESS)
+            throw new Win32Exception(error);
+
+        Interop.DISPLAYCONFIG_PATH_INFO[] DisplayPaths = new Interop.DISPLAYCONFIG_PATH_INFO[PathCount];
+        Interop.DISPLAYCONFIG_MODE_INFO[] DisplayModes = new Interop.DISPLAYCONFIG_MODE_INFO[ModeCount];
+        error = Interop.QueryDisplayConfig(Interop.QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
+            ref PathCount, DisplayPaths, ref ModeCount, DisplayModes, IntPtr.Zero);
+        if (error != Interop.ERROR_SUCCESS)
+            Issues.Add($"Interop failure during monitor data collection {error}");
+
+        for (int i = 0; i < ModeCount; i++)
+        {
+            if (DisplayModes[i].infoType == Interop.DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET)
+            {
+                Int64 luid = (long)DisplayModes[i].adapterId.LowPart + (long)DisplayModes[i].adapterId.HighPart;
+                RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\DirectX\\");
+                if (key != null)
+                {
+                    foreach (var k in key.GetSubKeyNames())
+                    {
+                        RegistryKey subKey = Registry.LocalMachine.OpenSubKey($"SOFTWARE\\Microsoft\\DirectX\\{k}");
+                        if (subKey != null)
+                        {
+                            try
+                            {
+                                Int64? rluid = (Int64?)subKey.GetValue("AdapterLuid");
+                                if (rluid != null)
+                                {
+                                    if (luid == rluid)
+                                    {
+                                        string adapterName = (string)subKey.GetValue("Description");
+                                        Int64 dedicatedMemory = (Int64)subKey.GetValue("DedicatedVideoMemory");
+
+                                        Monitor monitor = new();
+
+                                        monitor.Name = adapterName;
+                                        monitor.MonitorModel = MonitorFriendlyName(DisplayModes[i].adapterId, DisplayModes[i].id);
+                                        var memory = dedicatedMemory / 1024 / 1024;
+                                        monitor.DedicatedMemory = $"{memory} MB";
+
+                                        string mode = "";
+                                        var targetMode = DisplayModes[i].modeInfo.targetMode.targetVideoSignalInfo;
+
+                                        // ex: 1920 x 1080 @ 59.551 Hz
+                                        mode += $"{targetMode.activeSize.cx} x {targetMode.activeSize.cy} @ " +
+                                            $"{targetMode.vSyncFreq.Numerator / (double)targetMode.vSyncFreq.Denominator} Hz";
+
+                                        monitor.CurrentMode = mode;
+                                        monitors.Add(monitor);
+                                        break;
+                                    }
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Issues.Add("Registry read error during monitor data collection.");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return monitors;
+    }
+    private static List<Monitor> GetMonitorInfoDXDiag()
     {
         var monitorInfo = new List<Monitor>();
         //String path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
