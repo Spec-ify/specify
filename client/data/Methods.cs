@@ -1151,7 +1151,7 @@ public static partial class Cache
                 d.DiskFree = free;
             }
         }
-        DebugLog.LogEvent($"GetDiskDriveInfo() completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}");
+        DebugLog.LogEvent($"GetDiskDriveInfo() completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
         return drives;
     }
     private static SmartAttribute GetAttribute(byte[] data)
@@ -1641,7 +1641,7 @@ public static partial class Cache
             }*/
             if(errorReader != null && errorReader != "")
             {
-                DebugLog.LogEvent($"PowerCfg reported an error: {errorReader}", DebugLog.Region.Hardware);
+                DebugLog.LogEvent($"PowerCfg reported an error: {errorReader}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
                 break;
             }
         }
