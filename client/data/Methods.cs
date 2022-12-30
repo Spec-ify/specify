@@ -648,20 +648,23 @@ public static partial class Cache
         {
             if (DisplayModes[i].infoType == Interop.DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET)
             {
+                // unique display adapter UID, the LUID struct contains a low part and a high part, these are already combined in the registry so we do so here for ease of use - arc
                 Int64 luid = (long)DisplayModes[i].adapterId.LowPart + (long)DisplayModes[i].adapterId.HighPart;
                 RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\DirectX\\");
                 if (key != null)
                 {
+                    // iterate over the DX registry entries and look for entries that match the DX luid, if they match, update the relevant monitor struct
                     foreach (var k in key.GetSubKeyNames())
                     {
+
                         RegistryKey subKey = Registry.LocalMachine.OpenSubKey($"SOFTWARE\\Microsoft\\DirectX\\{k}");
                         if (subKey != null)
                         {
                             try
                             {
                                 Int64? rluid = (Int64?)subKey.GetValue("AdapterLuid");
-                                if (rluid != null)
-                                {
+                                // we also ensure the key isn't empty -arc
+                                // move the null check to wrap this if statement if it excepts when comparing luid and rluid -arc
                                     if (luid == rluid)
                                     {
                                         string adapterName = (string)subKey.GetValue("Description");
@@ -671,13 +674,16 @@ public static partial class Cache
 
                                         monitor.Name = adapterName;
                                         monitor.MonitorModel = MonitorFriendlyName(DisplayModes[i].adapterId, DisplayModes[i].id);
+                                        // this value is given in bytes, so we convert to kilobytes, then convert those kilobytes to megabytes - arc
                                         var memory = dedicatedMemory / 1024 / 1024;
                                         monitor.DedicatedMemory = $"{memory} MB";
 
                                         string mode = "";
-                                        var targetMode = DisplayModes[i].modeInfo.targetMode.targetVideoSignalInfo;
+                                    // https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3dkmdt/ns-d3dkmdt-_d3dkmdt_video_signal_info -arc
+                                    var targetMode = DisplayModes[i].modeInfo.targetMode.targetVideoSignalInfo;
 
                                         // ex: 1920 x 1080 @ 59.551 Hz
+                                        // Active size specifies the active width (cx) and height (cy) of the video signal -arc
                                         mode += $"{targetMode.activeSize.cx} x {targetMode.activeSize.cy} @ " +
                                             $"{targetMode.vSyncFreq.Numerator / (double)targetMode.vSyncFreq.Denominator} Hz";
 
@@ -685,7 +691,6 @@ public static partial class Cache
                                         monitors.Add(monitor);
                                         break;
                                     }
-                                }
                             }
                             catch (Exception e)
                             {
