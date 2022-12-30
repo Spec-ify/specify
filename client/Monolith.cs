@@ -12,6 +12,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Threading;
 
 namespace specify_client;
 
@@ -25,7 +26,11 @@ public class Monolith
     public string Version;
     public MonolithMeta Meta;
     public MonolithBasicInfo BasicInfo;
+
+    // This being called "System" causes compiler issues with windows System objects.
+    // Please change if possible, however it will cause Specified to fail.
     public MonolithSystem System;
+
     public MonolithHardware Hardware;
     public MonolithSecurity Security;
     public MonolithNetwork Network;
@@ -102,17 +107,16 @@ public class Monolith
             await DebugLog.StopDebugLog();
             return;
         }
+        String url = null;
         try
         {
             var requestTask = DoRequest(serialized);
             requestTask.Wait();
-            var url = requestTask.Result;
+            url = requestTask.Result;
             if (url == null)
             {
                 throw new HttpRequestException("Upload failed. See previous log for details");
             }
-            Clipboard.SetText(url);
-            Process.Start(url);
         }
         catch (Exception e)
         {
@@ -121,7 +125,20 @@ public class Monolith
             Settings.DontUpload = true;
             await Specificialize();
         }
-        
+        await DebugLog.LogEventAsync($"File uploaded successfully: {url}", DebugLog.Region.Misc);
+        var t = new Thread(() =>
+        {
+            Clipboard.SetText(url);
+            Process.Start(url);
+        });
+        t.SetApartmentState(ApartmentState.STA);
+        t.Start();
+
+        // 300ms pause to ensure the above Thread 't' is completed. The typical ThreadState check is impossible due to ambiguity.
+        await Task.Delay(300);
+
+        // Program ends here.
+        await DebugLog.StopDebugLog();
     }
     
     private static async Task<string> DoRequest(string str)
@@ -242,7 +259,7 @@ public class MonolithHardware
     public List<Dictionary<string, object>> Gpu;
     public Dictionary<string, object> Motherboard;
     public List<Dictionary<string, object>> AudioDevices;
-    public List<Monitor> Monitors;
+    public List<data.Monitor> Monitors;
     public List<Dictionary<string, object>> Drivers;
     public List<Dictionary<string, object>> Devices;
     public List<Dictionary<string, object>> BiosInfo;
