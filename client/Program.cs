@@ -25,7 +25,8 @@ public class Program
             // TODO: make settings better
             while (true)
             {
-                Console.Write("[Enter] - continue, [q] - quit, ");
+                var settingsLine1 = Console.CursorTop;
+                Console.Write("[Enter] - continue, [q] - quit ");
                 if (Settings.RedactUsername)
                 {
                     Console.ForegroundColor = ConsoleColor.Black;
@@ -45,7 +46,7 @@ public class Program
                 /*Console.Write("[2] - Toggle Redact Commercial OneDrive name");*/
                 Console.ForegroundColor = initialConsoleFg;
                 Console.BackgroundColor = initialConsoleBg;
-                Console.Write(" ");
+                Console.WriteLine();
                 if (Settings.DontUpload)
                 {
                     Console.ForegroundColor = ConsoleColor.Black;
@@ -80,7 +81,7 @@ public class Program
                 if(key.Key is ConsoleKey.D4 or ConsoleKey.NumPad4)
                     Settings.DisableDebug = !Settings.DisableDebug;
 
-                Console.Write("\r");
+                Console.SetCursorPosition(0, settingsLine1);
             }
 
             Console.WriteLine("\n");
