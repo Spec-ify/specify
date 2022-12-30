@@ -52,8 +52,9 @@ public class Monolith
         return JsonConvert.SerializeObject(this, Formatting.Indented) + Environment.NewLine;
     }
     
-    public static void Specificialize()
+    public static async Task Specificialize()
     {
+        await DebugLog.LogEventAsync("Serialization starts");
         // const string specifiedUploadDomain = "http://localhost";
         // const string specifiedUploadEndpoint = "specified/upload.php";
         const string specifiedUploadDomain = "https://spec-ify.com";
@@ -61,12 +62,15 @@ public class Monolith
         
         Program.Time.Stop();
         var m = new Monolith();
+        await DebugLog.LogEventAsync("Monolith created");
         m.Meta.GenerationDate = DateTime.Now;
         var serialized = m.Serialize();
+        await DebugLog.LogEventAsync("Monolith serialized");
 
         if (Settings.RedactUsername)
         {
             serialized = serialized.Replace(Cache.Username, "[REDACTED]");
+            await DebugLog.LogEventAsync("Username Redacted from report");
         }
 
         if (Settings.RedactOneDriveCommercial)
@@ -76,28 +80,48 @@ public class Monolith
                 var stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
                 stringToRedact = stringToRedact.Replace(@"\", @"\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
                 serialized = serialized.Replace(stringToRedact, "[REDACTED]");
+                
             }
-            catch
+            catch(Exception e)
             {
                 m.Issues.Add("Commercial OneDrive redaction failed. This usually happens when Commerical OneDrive is not installed.");
+                await DebugLog.LogEventAsync("Commercial OneDrive redaction failed. Serialization restarts." + e, DebugLog.Region.Misc, DebugLog.EventType.ERROR);
                 Settings.RedactOneDriveCommercial = false;
-                Specificialize();
+                await Specificialize();
                 return;
             }
+            await DebugLog.LogEventAsync("Commercial OneDrive label redacted from report");
         }
 
         if (Settings.DontUpload)
         {
-            File.WriteAllText("specify_specs.json", serialized);
+            var filename = "specify_specs.json";
+            
+            File.WriteAllText(filename, serialized);
+            await DebugLog.LogEventAsync($"Report saved to {filename}");
+            await DebugLog.StopDebugLog();
             return;
         }
-
-        var requestTask = DoRequest(serialized);
-        requestTask.Wait();
-        var url = requestTask.Result;
-        if (url == null) return;
-        Clipboard.SetText(url);
-        Process.Start(url);
+        try
+        {
+            var requestTask = DoRequest(serialized);
+            requestTask.Wait();
+            var url = requestTask.Result;
+            if (url == null)
+            {
+                throw new HttpRequestException("Upload failed. See previous log for details");
+            }
+            Clipboard.SetText(url);
+            Process.Start(url);
+        }
+        catch (Exception e)
+        {
+            await DebugLog.LogEventAsync($"JSON upload failed. Retrying serialization to local file.", DebugLog.Region.Misc, DebugLog.EventType.ERROR);
+            await DebugLog.LogEventAsync($"{e}", DebugLog.Region.Misc, DebugLog.EventType.INFORMATION);
+            Settings.DontUpload = true;
+            await Specificialize();
+        }
+        
     }
     
     private static async Task<string> DoRequest(string str)
@@ -110,21 +134,34 @@ public class Monolith
         var request = new HttpRequestMessage(HttpMethod.Post, $"{specifiedUploadDomain}/{specifiedUploadEndpoint}");
         request.Content = new StringContent(str);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-        var response = await client.SendAsync(request);
 
-        if (!response.IsSuccessStatusCode)
+        await DebugLog.LogEventAsync("File sent. Awaiting HTTP Response.");
+        try
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("\nCould not upload. The file has been saved to specify_specs.json.");
-            Console.WriteLine($"Please go to {specifiedUploadDomain} to upload the file manually.");
-            Console.WriteLine("Press any key to exit.");
-            Console.ReadKey();
+            var response = await client.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await DebugLog.LogEventAsync($"Unsuccessful HTTP Response: {response.StatusCode}", DebugLog.Region.Misc, DebugLog.EventType.ERROR);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\nCould not upload. The file has been saved to specify_specs.json.");
+                Console.WriteLine($"Please go to {specifiedUploadDomain} to upload the file manually.");
+                Console.WriteLine("Press any key to exit.");
+                Console.ReadKey();
+                return null;
+            }
+            var location = response.Headers.Location.ToString();
+            //Console.WriteLine(specifiedUploadDomain + location);
+            return specifiedUploadDomain + location;
+        }
+        catch (Exception ex)
+        {
+            await DebugLog.LogEventAsync($"Unsuccessful HTTP Request. An Unexpected Exception occured", DebugLog.Region.Misc, DebugLog.EventType.ERROR);
+            await DebugLog.LogEventAsync($"{ex}");
             return null;
         }
 
-        var location = response.Headers.Location.ToString();
-        //Console.WriteLine(specifiedUploadDomain + location);
-        return specifiedUploadDomain + location;
+
     }
     
     private static void CacheError(object thing)

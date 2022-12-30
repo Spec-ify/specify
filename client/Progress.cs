@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace specify_client;
 
@@ -17,11 +18,11 @@ public class ProgressStatus
 {
     public string Name { get; }
     public ProgressType Status { get; set; }
-    public Action Action { get; }
+    public Func<Task> Action { get; }
     public List<string> Dependencies { get; }
     public bool SkipProgressWait { get; }
 
-    public ProgressStatus(string name, Action a, List<string> deps = null, bool skipProgressWait = false)
+    public ProgressStatus(string name, Func<Task> a, List<string> deps = null, bool skipProgressWait = false)
     {
         Name = name;
         Status = ProgressType.Queued;
@@ -59,7 +60,7 @@ public class ProgressList
     {
         var item = Items.ContainsKey(key) ? Items[key] : throw new Exception($"Progress item {key} doesn't exist!");
             
-        var t = new Thread(() =>
+        var t = new Thread(async () =>
         {
             foreach (var k in item.Dependencies)
             {
@@ -69,9 +70,8 @@ public class ProgressList
                     Thread.Sleep(0);
                 }
             }
-                
             item.Status = ProgressType.Processing;
-            item.Action();
+            await item.Action();
             item.Status = ProgressType.Complete;
         });
         if (key.Equals(Specificializing)) t.SetApartmentState(ApartmentState.STA);
