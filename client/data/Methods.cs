@@ -21,50 +21,127 @@ namespace specify_client.data;
 
 public static partial class Cache
 {
-    public static void MakeMainData()
+    public static async System.Threading.Tasks.Task MakeMainData()
     {
-        Os = Utils.GetWmi("Win32_OperatingSystem").First();
-        Cs = Utils.GetWmi("Win32_ComputerSystem").First();
-    }
-    public static void MakeSystemData()
-    {
-
-        SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
-        UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
-        
-        if (UserVariables["OneDriveCommercial"] is string pathOneDriveCommercial)
-        {
-            var actualOneDriveCommercial = 
-                pathOneDriveCommercial.Split(new string[] { "OneDrive - " }, StringSplitOptions.None)[1];
-            OneDriveCommercialPathLength = pathOneDriveCommercial.Length;
-            OneDriveCommercialNameLength = actualOneDriveCommercial.Length;
-        }
-
-        Services = Utils.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
-        InstalledApps = GetInstalledApps();
-        InstalledHotfixes = Utils.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
-        var ts = new TaskService();
-        var rawTaskList = EnumScheduledTasks(ts.RootFolder);
-        ScheduledTasks = rawTaskList.Select(e => new ScheduledTask(e)).ToList();
-        RunningProcesses = new List<OutputProcess>();
-        ChoiceRegistryValues = RegistryCheck();
         try
         {
-            PowerProfiles = Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
+            DebugLog.Region region = DebugLog.Region.Main;
+            await DebugLog.StartRegion(region);
+            Os = Utils.GetWmi("Win32_OperatingSystem").First();
+            Cs = Utils.GetWmi("Win32_ComputerSystem").First();
+            await DebugLog.LogEventAsync("Main WMI Data retrieved.", region);
+            await DebugLog.EndRegion(region);
         }
-        catch (COMException)
+        catch (Exception ex)
         {
-            Issues.Add("Could not get power profiles");
+            await DebugLog.LogEventAsync("UNEXPECTED FATAL EXCEPTION", DebugLog.Region.Main, DebugLog.EventType.ERROR);
+            await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.Main);
+            Environment.Exit(-1);
         }
+    }
+    public static async System.Threading.Tasks.Task MakeSystemData()
+    {
+        try
+        {
+            List<System.Threading.Tasks.Task> DebugTasks = new();
+            DebugLog.Region region = DebugLog.Region.System;
+            await DebugLog.StartRegion(region);
 
-        MicroCodes = GetMicroCodes();
-        RecentMinidumps = CountMinidumps();
-        StaticCoreCount = GetStaticCoreCount();
-        BrowserExtensions= GetBrowserExtensions();
-        string defaultBrowserProgID = Utils.GetRegistryValue<string>(Registry.CurrentUser, "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID");
-        string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser, 
-            "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
-        DefaultBrowser = (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
+            SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
+            UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
+            DebugTasks.Add(DebugLog.LogEventAsync("Environment Variables retrieved.", region));
+
+            bool ODFound = false;
+            try
+            {
+                if (UserVariables["OneDriveCommercial"] is string pathOneDriveCommercial)
+                {
+                    var actualOneDriveCommercial =
+                        pathOneDriveCommercial.Split(new string[] { "OneDrive - " }, StringSplitOptions.None)[1];
+                    OneDriveCommercialPathLength = pathOneDriveCommercial.Length;
+                    OneDriveCommercialNameLength = actualOneDriveCommercial.Length;
+                    DebugTasks.Add(DebugLog.LogEventAsync("OneDriveCommercial information retrieved.", region));
+                    ODFound = true;
+                }
+
+            }
+            finally
+            {
+                if (!ODFound)
+                {
+                    if (Settings.RedactOneDriveCommercial)
+                    {
+                        Settings.RedactOneDriveCommercial = false;
+                        DebugTasks.Add(DebugLog.LogEventAsync("RedactOneDriveCommercial setting disabled. OneDriveCommercial variable not found.", region, DebugLog.EventType.WARNING));
+                    }
+                    else
+                    {
+                        DebugTasks.Add(DebugLog.LogEventAsync("OneDriveCommercial variable not found.", region));
+                    }
+                }
+            }
+
+            Services = Utils.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
+            InstalledHotfixes = Utils.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
+            try
+            {
+                PowerProfiles = Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
+            }
+            catch (COMException)
+            {
+                Issues.Add("Could not get power profiles");
+            }
+            DebugTasks.Add(DebugLog.LogEventAsync("System WMI Information retrieved.", region));
+
+            InstalledApps = GetInstalledApps();
+            DebugTasks.Add(DebugLog.LogEventAsync("InstalledApps Information retrieved.", region));
+
+            var ts = new TaskService();
+            var rawTaskList = EnumScheduledTasks(ts.RootFolder);
+            ScheduledTasks = rawTaskList.Select(e => new ScheduledTask(e)).ToList();
+            DebugTasks.Add(DebugLog.LogEventAsync("ScheduledTasks Information retrieved.", region));
+
+            ChoiceRegistryValues = RegistryCheck();
+            DebugTasks.Add(DebugLog.LogEventAsync("ChoiceRegistryValues Information retrieved.", region));
+
+            MicroCodes = GetMicroCodes();
+            DebugTasks.Add(DebugLog.LogEventAsync("MicroCodes Information retrieved.", region));
+
+            RecentMinidumps = CountMinidumps();
+            DebugTasks.Add(DebugLog.LogEventAsync("Minidumps counted.", region));
+
+            StaticCoreCount = GetStaticCoreCount();
+            DebugTasks.Add(DebugLog.LogEventAsync("StaticCoreCount retrieved.", region));
+
+            BrowserExtensions = GetBrowserExtensions();
+            DebugTasks.Add(DebugLog.LogEventAsync("Browser Extension Information retrieved.", region));
+
+            string defaultBrowserProgID = Utils.GetRegistryValue<string>(Registry.CurrentUser, "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID");
+            string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser,
+                "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
+            DefaultBrowser = (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
+            DebugTasks.Add(DebugLog.LogEventAsync("Default Browser Infomation retrieved.", region));
+
+            RunningProcesses = GetProcesses();
+            DebugTasks.Add(DebugLog.LogEventAsync("RunningProcess Information retrieved.", region));
+
+            // Check if username contains non-alphanumeric characters
+            UsernameSpecialCharacters = !Regex.IsMatch(Environment.UserName, @"^[a-zA-Z0-9]+$");
+            await System.Threading.Tasks.Task.WhenAll(DebugTasks);
+            await DebugLog.EndRegion(DebugLog.Region.System);
+        }
+        catch (Exception ex)
+        {
+            await DebugLog.LogEventAsync("UNEXPECTED FATAL EXCEPTION", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.System);
+            Environment.Exit(-1);
+        }
+    }
+    private static List<OutputProcess> GetProcesses()
+    {
+        DateTime start = DateTime.Now;
+        DebugLog.LogEvent("GetProcesses() started", DebugLog.Region.System);
+        List<OutputProcess> outputProcesses = new List<OutputProcess>();
         var rawProcesses = Process.GetProcesses();
 
         foreach (var rawProcess in rawProcesses)
@@ -114,8 +191,7 @@ public static partial class Cache
                 Issues.Add($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})");
                 Console.WriteLine(e.GetBaseException());
             }
-
-            RunningProcesses.Add(new OutputProcess
+            outputProcesses.Add(new OutputProcess
             {
                 ProcessName = rawProcess.ProcessName,
                 ExePath = exePath,
@@ -123,10 +199,9 @@ public static partial class Cache
                 WorkingSet = rawProcess.WorkingSet64,
                 CpuPercent = cpuPercent
             });
-            
-            // Check if username contains non-alphanumeric characters
-            UsernameSpecialCharacters = !Regex.IsMatch(Environment.UserName, @"^[a-zA-Z0-9]+$");
         }
+        DebugLog.LogEvent($"GetProcesses() completed. Total runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
+        return outputProcesses;
     }
     private static List<string> GetMicroCodes()
     {
@@ -169,6 +244,7 @@ public static partial class Cache
         var count = 0;
 
         if (!Directory.Exists(dumpPath)) return 0;
+
         var files = Directory.GetFiles(dumpPath);
 
         foreach (var file in files)
@@ -179,58 +255,66 @@ public static partial class Cache
             {
                 count++;
             }
-
         }
-        
         return count;
     }
     private static List<IRegistryValue> RegistryCheck()
     {
-        var tdrLevel = new RegistryValue<int?>
-            (Registry.LocalMachine, @"System\CurrentControlSet\Control\GraphicsDrivers", "TdrLevel");
-        var nbFLimit = new RegistryValue<int?>
-            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit");
-        var throttlingIndex = new RegistryValue<int?>
-            (Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "NetworkThrottlingIndex");
-        var superFetch = new RegistryValue<int?>
-            (Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters", "EnableSuperfetch");
-        var disableAv = new RegistryValue<int?>
-            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiVirus");
-        var disableAs = new RegistryValue<int?>
-            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiSpyware");
-        var puaProtection = new RegistryValue<int?>
-            (Registry.LocalMachine, @"\SOFTWARE\Policies\Microsoft\Windows Defender", "PUAProtection");
-        var drii = new RegistryValue<int?>
-            (Registry.LocalMachine, @"\Software\Policies\Microsoft\MRT", "DontReportInfectionInformation");
-        var disableWer = new RegistryValue<int?>
-            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting", "Disabled");
-        var unsupportedTpmOrCpu = new RegistryValue<int?>
-            (Registry.LocalMachine, @"SYSTEM\Setup\MoSetup", "AllowUpgradesWithUnsupportedTPMOrCPU");
-        var hwSchMode = new RegistryValue<int?>
-            (Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "HwSchMode");
-        var WUServer = new RegistryValue<int?>
-            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "UseWUServer");
-        var noAutoUpdate = new RegistryValue<int?>
-            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate");
-        var fastBoot = new RegistryValue<int?>
-            (Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Power", "HiberbootEnabled");
-        var auditBoot = new RegistryValue<int?>
-            (Registry.LocalMachine, @"SYSTEM\Setup\Status\", "AuditBoot");
-        var previewBuilds = new RegistryValue<int?>
-            (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\PreviewBuilds\", "AllowBuildPreview");
-        var bypassCpuCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassCPUCheck");
-        var bypassStorageCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassStorageCheck");
-        var bypassTpmCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassTPMCheck");
-        var bypassRamCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassRAMCheck");
-        var bypassSecureBootCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassSecureBootCheck");
-        var hwNotificationCache = new RegistryValue<int?>(Registry.CurrentUser, @"Control Panel\UnsupportedHardwareNotificationCache", "SV2");
-
-        return new List<IRegistryValue>()
+        try
         {
-            tdrLevel, nbFLimit, throttlingIndex, superFetch, disableAv, disableAs, puaProtection, drii, disableWer,
-            unsupportedTpmOrCpu, hwSchMode, WUServer, noAutoUpdate, fastBoot, auditBoot, previewBuilds, bypassCpuCheck, 
-            bypassStorageCheck, bypassRamCheck, bypassTpmCheck, bypassSecureBootCheck, hwNotificationCache
-        };
+            var tdrLevel = new RegistryValue<int?>
+                (Registry.LocalMachine, @"System\CurrentControlSet\Control\GraphicsDrivers", "TdrLevel");
+            var nbFLimit = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit");
+            var throttlingIndex = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "NetworkThrottlingIndex");
+            var superFetch = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters", "EnableSuperfetch");
+            var disableAv = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiVirus");
+            var disableAs = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiSpyware");
+            var puaProtection = new RegistryValue<int?>
+                (Registry.LocalMachine, @"\SOFTWARE\Policies\Microsoft\Windows Defender", "PUAProtection");
+            var drii = new RegistryValue<int?>
+                (Registry.LocalMachine, @"\Software\Policies\Microsoft\MRT", "DontReportInfectionInformation");
+            var disableWer = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting", "Disabled");
+            var unsupportedTpmOrCpu = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SYSTEM\Setup\MoSetup", "AllowUpgradesWithUnsupportedTPMOrCPU");
+            var hwSchMode = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "HwSchMode");
+            var WUServer = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "UseWUServer");
+            var noAutoUpdate = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate");
+            var fastBoot = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Power", "HiberbootEnabled");
+            var auditBoot = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SYSTEM\Setup\Status\", "AuditBoot");
+            var previewBuilds = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\PreviewBuilds\", "AllowBuildPreview");
+            var bypassCpuCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassCPUCheck");
+            var bypassStorageCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassStorageCheck");
+            var bypassTpmCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassTPMCheck");
+            var bypassRamCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassRAMCheck");
+            var bypassSecureBootCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassSecureBootCheck");
+            var hwNotificationCache = new RegistryValue<int?>(Registry.CurrentUser, @"Control Panel\UnsupportedHardwareNotificationCache", "SV2");
+
+            return new List<IRegistryValue>()
+            {
+                tdrLevel, nbFLimit, throttlingIndex, superFetch, disableAv, disableAs, puaProtection, drii, disableWer,
+                unsupportedTpmOrCpu, hwSchMode, WUServer, noAutoUpdate, fastBoot, auditBoot, previewBuilds, bypassCpuCheck,
+                bypassStorageCheck, bypassRamCheck, bypassTpmCheck, bypassSecureBootCheck, hwNotificationCache
+            };
+        }
+        catch (Exception ex)
+        {
+            DebugLog.LogEvent("Registry Read Error in RegistryCheck()", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            DebugLog.LogEvent($"{ex}");
+            return new List<IRegistryValue>();
+        }
+
     }
     private static List<Task> EnumScheduledTasks(TaskFolder fld)
     {
@@ -240,87 +324,150 @@ public static partial class Cache
 
         return res;
     }
-    public static void MakeHardwareData()
+    public static async System.Threading.Tasks.Task MakeHardwareData()
     {
-        Cpu = Utils.GetWmi("Win32_Processor",
-            "CurrentClockSpeed, Manufacturer, Name, SocketDesignation").First();
-        Gpu = Utils.GetWmi("Win32_VideoController",
-            "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
-            + "CurrentRefreshRate, CurrentBitsPerPixel");
-        Motherboard = Utils.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").First();
-        AudioDevices = Utils.GetWmi("Win32_SoundDevice", "Name, Manufacturer, Status, DeviceID");
-        MonitorInfo = GetMonitorInfo();
-        Drivers = Utils.GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
-        Devices = Utils.GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
-        BiosInfo = Utils.GetWmi("Win32_bios");
-        Ram = GetSMBiosMemoryInfo();
-        Disks = GetDiskDriveData();
-        Temperatures = GetTemps();
-        Batteries = GetBatteryData();
-    }
-    public static void MakeSecurityData()
-    {
-        AvList = Utils.GetWmi("AntivirusProduct", "displayName", @"root\SecurityCenter2")
-            .Select(x => (string)x["displayName"]).ToList();
-        FwList = Utils.GetWmi("FirewallProduct", "displayName", @"root\SecurityCenter2")
-            .Select(x => (string)x["displayName"]).ToList();
-
-        var enableLua = Utils.GetRegistryValue<int?>(Registry.LocalMachine,
-            @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "EnableLUA");
-        if (enableLua == null) Issues.Add($"Security data: could not get EnableLUA value");
-        else UacEnabled = enableLua == 1;
-
-        if (Environment.GetEnvironmentVariable("firmware_type")!.Equals("UEFI"))
-        {
-            var secBootEnabled = Utils.GetRegistryValue<int?>(
-                Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\SecureBoot\State",
-                "UEFISecureBootEnabled");
-
-            if (secBootEnabled == null) Issues.Add($"Security data: could not get UEFISecureBootEnabled value");
-            else SecureBootEnabled = secBootEnabled == 1;
-        }
-
         try
         {
-            Tpm = Utils.GetWmi("Win32_Tpm", "*", @"Root\CIMV2\Security\MicrosoftTpm").First();
-            Tpm["IsPresent"] = true;
-        }
-        catch (InvalidOperationException)
-        {
-            // No TPM
-            Tpm = new Dictionary<string, object>() { { "IsPresent", false } };
-        }
-        catch (ManagementException)
-        {
-            Tpm = null;
-            Issues.Add("Security Data: could not get TPM. This is probably because specify was not run as administrator.");
-        }
+            DebugLog.Region region = DebugLog.Region.Hardware;
+            await DebugLog.StartRegion(region);
 
-        UacLevel = Utils.GetRegistryValue<int?>(
-            Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
-            "ConsentPromptBehaviorUser");
+            var TemperatureTask = GetTemps();
+
+            Cpu = Utils.GetWmi("Win32_Processor",
+                "CurrentClockSpeed, Manufacturer, Name, SocketDesignation").First();
+            Gpu = Utils.GetWmi("Win32_VideoController",
+                "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
+                + "CurrentRefreshRate, CurrentBitsPerPixel");
+            Motherboard = Utils.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").First();
+            AudioDevices = Utils.GetWmi("Win32_SoundDevice", "Name, Manufacturer, Status, DeviceID");
+            Drivers = Utils.GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
+            Devices = Utils.GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
+            BiosInfo = Utils.GetWmi("Win32_bios");
+            await DebugLog.LogEventAsync("Hardware WMI Information Retrieved.", region);
+
+            MonitorInfo = GetMonitorInfo();
+            await DebugLog.LogEventAsync("Monitor Information Retrieved.", region);
+
+            Ram = GetSMBiosMemoryInfo();
+            await DebugLog.LogEventAsync("SMBios Information Retrieved.", region);
+
+            Disks = GetDiskDriveData();
+            await DebugLog.LogEventAsync("Drive Data Retrieved.", region);
+
+
+            Batteries = GetBatteryData();
+            await DebugLog.LogEventAsync("Battery Data Retrieved.", region);
+
+            Temperatures = await TemperatureTask;
+            await DebugLog.LogEventAsync("Temperature Data Retrieved.", region);
+
+            await DebugLog.EndRegion(DebugLog.Region.Hardware);
+        }
+        catch (Exception ex)
+        {
+            await DebugLog.LogEventAsync("UNEXPECTED FATAL EXCEPTION", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.Hardware);
+            Environment.Exit(-1);
+        }
     }
-    public static async void MakeNetworkData()
+    public static async System.Threading.Tasks.Task MakeSecurityData()
     {
-        NetAdapters = Utils.GetWmi("Win32_NetworkAdapterConfiguration",
-            "Description, DHCPEnabled, DHCPServer, DNSDomain, DNSDomainSuffixSearchOrder, DNSHostName, "
-            + "DNSServerSearchOrder, IPEnabled, IPAddress, IPSubnet, DHCPLeaseObtained, DHCPLeaseExpires, "
-            + "DefaultIPGateway, MACAddress, InterfaceIndex");
-        NetAdapters2 = Utils.GetWmi("MSFT_NetAdapter", 
-            "InterfaceIndex,InterfaceDescription,ConnectorPresent,InterfaceType,NdisPhysicalMedium",
-            @"root\standardcimv2");
-        IPRoutes = Utils.GetWmi("Win32_IP4RouteTable",
-            "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
-        HostsFile = GetHostsFile();
-        HostsFileHash = GetHostsFileHash();
-        NetworkConnections = GetNetworkConnections();
-
-        // Uncomment the block below to run a traceroute to Google's DNS
-        /*var NetStats = await GetNetworkRoutes("8.8.8.8", 1000);
-        for (int i = 0; i < NetStats.Address.Count; i++)
+        try
         {
-            Console.WriteLine($"{i}: {NetStats.Address[i]} --- Lat: {NetStats.AverageLatency[i]} --- PL: {NetStats.PacketLoss[i]}");
-        }*/
+            DebugLog.Region region = DebugLog.Region.Security;
+            await DebugLog.StartRegion(region);
+            AvList = Utils.GetWmi("AntivirusProduct", "displayName", @"root\SecurityCenter2")
+                .Select(x => (string)x["displayName"]).ToList();
+            FwList = Utils.GetWmi("FirewallProduct", "displayName", @"root\SecurityCenter2")
+                .Select(x => (string)x["displayName"]).ToList();
+            await DebugLog.LogEventAsync("Security WMI Information Retrieved.", region);
+
+
+
+            if (Environment.GetEnvironmentVariable("firmware_type")!.Equals("UEFI"))
+            {
+                var secBootEnabled = Utils.GetRegistryValue<int?>(
+                    Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\SecureBoot\State",
+                    "UEFISecureBootEnabled");
+
+                if (secBootEnabled == null) Issues.Add($"Security data: could not get UEFISecureBootEnabled value");
+                else SecureBootEnabled = secBootEnabled == 1;
+            }
+            await DebugLog.LogEventAsync("SecureBoot Information Retrieved.", region);
+
+            try
+            {
+                Tpm = Utils.GetWmi("Win32_Tpm", "*", @"Root\CIMV2\Security\MicrosoftTpm").First();
+                Tpm["IsPresent"] = true;
+            }
+            catch (InvalidOperationException)
+            {
+                // No TPM
+                Tpm = new Dictionary<string, object>() { { "IsPresent", false } };
+            }
+            catch (ManagementException)
+            {
+                Tpm = null;
+                Issues.Add("Security Data: could not get TPM. This is probably because specify was not run as administrator.");
+            }
+            await DebugLog.LogEventAsync("TPM Information Retrieved.", region);
+
+            UacLevel = Utils.GetRegistryValue<int?>(
+                Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
+                "ConsentPromptBehaviorUser");
+            var enableLua = Utils.GetRegistryValue<int?>(Registry.LocalMachine,
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "EnableLUA");
+            if (enableLua == null) Issues.Add($"Security data: could not get EnableLUA value");
+            else UacEnabled = enableLua == 1;
+            await DebugLog.LogEventAsync("UAC Information retrieved.", region);
+
+            await DebugLog.EndRegion(DebugLog.Region.Security);
+        }
+        catch (Exception ex)
+        {
+            await DebugLog.LogEventAsync("UNEXPECTED FATAL EXCEPTION", DebugLog.Region.Security, DebugLog.EventType.ERROR);
+            await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.Security);
+            Environment.Exit(-1);
+        }
+    }
+    public static async System.Threading.Tasks.Task MakeNetworkData()
+    {
+        try
+        {
+            DebugLog.Region region = DebugLog.Region.Networking;
+            await DebugLog.StartRegion(region);
+            NetAdapters = Utils.GetWmi("Win32_NetworkAdapterConfiguration",
+                "Description, DHCPEnabled, DHCPServer, DNSDomain, DNSDomainSuffixSearchOrder, DNSHostName, "
+                + "DNSServerSearchOrder, IPEnabled, IPAddress, IPSubnet, DHCPLeaseObtained, DHCPLeaseExpires, "
+                + "DefaultIPGateway, MACAddress, InterfaceIndex");
+            NetAdapters2 = Utils.GetWmi("MSFT_NetAdapter",
+                "InterfaceIndex,InterfaceDescription,ConnectorPresent,InterfaceType,NdisPhysicalMedium",
+                @"root\standardcimv2");
+            IPRoutes = Utils.GetWmi("Win32_IP4RouteTable",
+                "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
+            await DebugLog.LogEventAsync("Networking WMI Information Retrieved.", region);
+
+            HostsFile = GetHostsFile();
+            HostsFileHash = GetHostsFileHash();
+            await DebugLog.LogEventAsync("Hosts file retrieved.", region);
+
+            NetworkConnections = GetNetworkConnections();
+            await DebugLog.LogEventAsync("NetworkConnections Information retrieved.", region);
+
+            await DebugLog.EndRegion(DebugLog.Region.Networking);
+            // Uncomment the block below to run a traceroute to Google's DNS
+            /*var NetStats = await GetNetworkRoutes("8.8.8.8", 1000);
+            for (int i = 0; i < NetStats.Address.Count; i++)
+            {
+                Console.WriteLine($"{i}: {NetStats.Address[i]} --- Lat: {NetStats.AverageLatency[i]} --- PL: {NetStats.PacketLoss[i]}");
+            }*/
+        }
+        catch (Exception ex)
+        {
+            await DebugLog.LogEventAsync("UNEXPECTED FATAL EXCEPTION", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
+            await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.Networking);
+            Environment.Exit(-1);
+        }
     }
     private static string GetHostsFile()
     {
@@ -470,11 +617,16 @@ public static partial class Cache
         deviceName.header.type = Interop.DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
         int error = Interop.DisplayConfigGetDeviceInfo(ref deviceName);
         if (error != Interop.ERROR_SUCCESS)
+        {
+            DebugLog.LogEvent($"Interop Failure in GetMonitorInfo() {error}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
             Issues.Add($"Interop failure during monitor data collection {error}");
+        }
         return deviceName.monitorFriendlyDeviceName;
     }
     private static List<Monitor> GetMonitorInfo()
     {
+        DateTime start = DateTime.Now;
+        DebugLog.LogEvent("GetMonitorInfo() started", DebugLog.Region.Hardware);
         List<Monitor> monitors = new();
         uint PathCount, ModeCount;
         int error = Interop.GetDisplayConfigBufferSizes(Interop.QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
@@ -487,26 +639,32 @@ public static partial class Cache
         error = Interop.QueryDisplayConfig(Interop.QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
             ref PathCount, DisplayPaths, ref ModeCount, DisplayModes, IntPtr.Zero);
         if (error != Interop.ERROR_SUCCESS)
+        {
+            DebugLog.LogEvent($"Interop Failure in GetMonitorInfo() {error}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
             Issues.Add($"Interop failure during monitor data collection {error}");
+        }
 
         for (int i = 0; i < ModeCount; i++)
         {
             if (DisplayModes[i].infoType == Interop.DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET)
             {
+                // unique display adapter UID, the LUID struct contains a low part and a high part, these are already combined in the registry so we do so here for ease of use - arc
                 Int64 luid = (long)DisplayModes[i].adapterId.LowPart + (long)DisplayModes[i].adapterId.HighPart;
                 RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\DirectX\\");
                 if (key != null)
                 {
+                    // iterate over the DX registry entries and look for entries that match the DX luid, if they match, update the relevant monitor struct
                     foreach (var k in key.GetSubKeyNames())
                     {
+
                         RegistryKey subKey = Registry.LocalMachine.OpenSubKey($"SOFTWARE\\Microsoft\\DirectX\\{k}");
                         if (subKey != null)
                         {
                             try
                             {
                                 Int64? rluid = (Int64?)subKey.GetValue("AdapterLuid");
-                                if (rluid != null)
-                                {
+                                // we also ensure the key isn't empty -arc
+                                // move the null check to wrap this if statement if it excepts when comparing luid and rluid -arc
                                     if (luid == rluid)
                                     {
                                         string adapterName = (string)subKey.GetValue("Description");
@@ -516,13 +674,16 @@ public static partial class Cache
 
                                         monitor.Name = adapterName;
                                         monitor.MonitorModel = MonitorFriendlyName(DisplayModes[i].adapterId, DisplayModes[i].id);
+                                        // this value is given in bytes, so we convert to kilobytes, then convert those kilobytes to megabytes - arc
                                         var memory = dedicatedMemory / 1024 / 1024;
                                         monitor.DedicatedMemory = $"{memory} MB";
 
                                         string mode = "";
-                                        var targetMode = DisplayModes[i].modeInfo.targetMode.targetVideoSignalInfo;
+                                    // https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3dkmdt/ns-d3dkmdt-_d3dkmdt_video_signal_info -arc
+                                    var targetMode = DisplayModes[i].modeInfo.targetMode.targetVideoSignalInfo;
 
                                         // ex: 1920 x 1080 @ 59.551 Hz
+                                        // Active size specifies the active width (cx) and height (cy) of the video signal -arc
                                         mode += $"{targetMode.activeSize.cx} x {targetMode.activeSize.cy} @ " +
                                             $"{targetMode.vSyncFreq.Numerator / (double)targetMode.vSyncFreq.Denominator} Hz";
 
@@ -530,10 +691,11 @@ public static partial class Cache
                                         monitors.Add(monitor);
                                         break;
                                     }
-                                }
                             }
                             catch (Exception e)
                             {
+                                DebugLog.LogEvent("Registry Read Error in GetMonitorInfo()", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                                DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
                                 Issues.Add("Registry read error during monitor data collection.");
                             }
                         }
@@ -541,6 +703,7 @@ public static partial class Cache
                 }
             }
         }
+        DebugLog.LogEvent($"GetMonitorInfo() completed - Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
         return monitors;
     }
     private static List<Monitor> GetMonitorInfoDXDiag()
@@ -637,6 +800,8 @@ public static partial class Cache
     }
     private static List<DiskDrive> GetDiskDriveData()
     {
+        DateTime start = DateTime.Now;
+        DebugLog.LogEvent("GetDiskDriveData() started", DebugLog.Region.Hardware);
         List<DiskDrive> drives = new List<DiskDrive>();
 
         var driveWmiInfo = Utils.GetWmiObj("Win32_DiskDrive");
@@ -764,6 +929,11 @@ public static partial class Cache
         {
             Issues.Add("Error retrieving SMART Utils." + e.Message);
         }
+        catch (Exception e)
+        {
+            DebugLog.LogEvent("Unexpected exception thrown during SMART Data Retrieval.", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
+        }
         var LDtoP = Utils.GetWmiObj("Win32_LogicalDiskToPartition");
         for (var di = 0; di < drives.Count(); di++)
         {
@@ -790,9 +960,10 @@ public static partial class Cache
                             }
                         }
                     }
-                    catch
+                    catch(Exception ex)
                     {
-                        throw new Exception("CATCH POINT ONE");
+                        DebugLog.LogEvent("Unexpected exception thrown during paritition linking", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                        DebugLog.LogEvent($"{ex}", DebugLog.Region.Hardware);
                     }
                 }
             }
@@ -888,7 +1059,7 @@ public static partial class Cache
                     continue;
                 }
                 var matchingPartition = drives[dIndex].Partitions[pIndex];
-                var driveLetter = partition["DriveLetter"];
+                var driveLetter = partition["Label"];
                 if (driveLetter != null)
                 {
                     matchingPartition.PartitionLabel = (string)driveLetter;
@@ -911,8 +1082,35 @@ public static partial class Cache
                 }
                 catch
                 { }
-                if (driveLetter != "")
+                if (driveLetter == "")
                 {
+                    DebugLog.LogEvent("Partition Link could not be established. Detailed Information follows:", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                    DebugLog.LogEvent($"Failing Partion: Size: {partitionSize} - Label: {driveLetter} - File System: {fileSystem}", DebugLog.Region.Hardware);
+                    DebugLog.LogEvent("Drive Info:", DebugLog.Region.Hardware);
+                    
+                    foreach (var drive in drives)
+                    {
+                        string errorPartitionInfo = "";
+                        foreach (var errorPartition in drive.Partitions)
+                        {
+                            var eSize = errorPartition.PartitionCapacity;
+                            var eFS = errorPartition.Filesystem;
+                            errorPartitionInfo += $"Size: {eSize} - ";
+                            errorPartitionInfo += $"FS: {eFS} - ";
+                            errorPartitionInfo += $"Difference: {Math.Abs((long)(partitionSize - eSize))} - ";
+                            if(eFS != null && fileSystem != null)
+                            {
+                                errorPartitionInfo += $"Possible: {eFS.Equals(fileSystem)}\n";
+                            }
+                            else
+                            {
+                                errorPartitionInfo += $"Possible: false\n";
+                            }
+                            //errorPartitionInfo += $"Size: {eSize} - FS: {eFS} - Difference: {Math.Abs((float)partitionSize - eSize)} - Possible: {eFS.Equals(fileSystem)}\n";
+                        }
+
+                        DebugLog.LogEvent($"{drive.DeviceName}\n{errorPartitionInfo}", DebugLog.Region.Hardware);
+                    }
                     Issues.Add($"Partition link could not be established for {partitionSize} byte partition - Drive Label: {driveLetter} -  File System: {fileSystem}");
                 }
             }
@@ -958,6 +1156,7 @@ public static partial class Cache
                 d.DiskFree = free;
             }
         }
+        DebugLog.LogEvent($"GetDiskDriveInfo() completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
         return drives;
     }
     private static SmartAttribute GetAttribute(byte[] data)
@@ -1073,12 +1272,15 @@ public static partial class Cache
     }
     private static List<RamStick> GetSMBiosMemoryInfo()
     {
-        // Made a new GetWmi function because I'm not knowledgeable enough in how this works to translate the Dictionary object into what I need for this.
+        DateTime start = DateTime.Now;
+        DebugLog.LogEvent("GetSMBiosMemoryInfo() started.", DebugLog.Region.Hardware);
+        
         var SMBiosObj = Utils.GetWmiObj("MSSMBios_RawSMBiosTables", "*", "root\\WMI");
 
         // If no data is received, stop before it excepts. Add error message?
         if (SMBiosObj == null)
         {
+            DebugLog.LogEvent("SMBios information not retrieved.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
             Issues.Add("Hardware Data: Could not get SMBios info for RAM.");
             return null;
         }
@@ -1134,7 +1336,6 @@ public static partial class Cache
 
             var stick = new RamStick();
             // These if statements confirm the data received is valid data.
-            // We don't need else statements here because the default is null
             if (0x10 < data.Length && data[0x10] > 0 && data[0x10] <= smbStringsList.Count)
             {
                 stick.DeviceLocation = smbStringsList[data[0x10] - 1].Trim();
@@ -1171,10 +1372,13 @@ public static partial class Cache
             }
             SMBiosMemoryInfo.Add(stick);
         }
+        DebugLog.LogEvent($"GetSMBiosMemoryInfo() completed - Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
         return SMBiosMemoryInfo;
     }
-    private static List<TempMeasurement> GetTemps()
+    private static async System.Threading.Tasks.Task<List<TempMeasurement>> GetTemps()
     {
+        DateTime start = DateTime.Now;
+        await DebugLog.LogEventAsync("GetTemps() Started", DebugLog.Region.Hardware);
         //Any temp sensor reading below 24 will be filtered out
         //These sensors are either not reading in celsius, are in error, or we cannot interpret them properly here
         var Temps = new List<TempMeasurement>();
@@ -1212,11 +1416,15 @@ public static partial class Cache
         {
             Issues.Add("Absolute value overflow occured when fetching temperature data");
         }
+        catch (Exception ex)
+        {
+            await DebugLog.LogEventAsync($"Exception during temperature measurement: " + ex, DebugLog.Region.Hardware);
+        }
         finally
         {
             computer.Close();
         }
-
+        await DebugLog.LogEventAsync($"GetTemps() Completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
         return Temps;
     }
     private static List<Interop.MIB_TCPROW_OWNER_PID> GetAllTCPv4Connections()
@@ -1264,6 +1472,8 @@ public static partial class Cache
     }
     private static List<NetworkConnection> GetNetworkConnections()
     {
+        DateTime start = DateTime.Now;
+        DebugLog.LogEvent("GetNetworkConnections() Started.", DebugLog.Region.Networking);
         List<NetworkConnection> connectionsList = new();
         var connections = GetAllTCPv4Connections();
         foreach (var connection in connections)
@@ -1364,10 +1574,13 @@ public static partial class Cache
 
             connectionsList.Add(conn);
         }
+        DebugLog.LogEvent($"GetNetworkConnections() completed. Total Runtime {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Networking);
         return connectionsList;
     }
     private static List<BatteryData> GetBatteryData()
     {
+        DateTime start = DateTime.Now;
+        DebugLog.LogEvent("GetBatteryData() Started.", DebugLog.Region.Hardware);
         List<BatteryData> BatteryInfo = new List<BatteryData>();
         String path =
             System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly()
@@ -1382,6 +1595,7 @@ public static partial class Cache
                 CreateNoWindow = true,
                 Arguments = "/batteryreport /xml",
                 RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false
             }
         };
@@ -1391,9 +1605,11 @@ public static partial class Cache
         TimeSpan timeout = new TimeSpan().Add(TimeSpan.FromSeconds(60));
 
         while (timer.Elapsed < timeout)
+        {
             if (File.Exists(Path.Combine(path, "battery-report.xml")) &&
                 Process.GetProcessesByName("powercfg").Length == 0)
             {
+
                 XmlDocument doc = new XmlDocument();
                 doc.Load(Path.Combine(path, "battery-report.xml"));
                 List<JToken> BatteryData =
@@ -1421,12 +1637,26 @@ public static partial class Cache
                 File.Delete(Path.Combine(path, "battery-report.xml"));
                 break;
             }
+            var reader = cmd.StandardOutput.ReadToEnd();
+            var errorReader = cmd.StandardError.ReadLine();
+            /*if(reader != null && reader != "")
+            {
+                DebugLog.LogEvent($"Battery Report returned", DebugLog.Region.Hardware);
+                break;
+            }*/
+            if(errorReader != null && errorReader != "")
+            {
+                DebugLog.LogEvent($"PowerCfg reported an error: {errorReader}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                break;
+            }
+        }
 
         if (timer.Elapsed > timeout)
             Issues.Add("Battery report was not generated before the timeout!");
 
         timer.Stop();
         cmd.Close();
+        DebugLog.LogEvent($"GetBatteryInfo() completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
         return BatteryInfo;
     }
     private static List<InstalledApp> GetInstalledApps()
@@ -1509,6 +1739,8 @@ public static partial class Cache
     }
     private static List<Browser> GetBrowserExtensions()
     {
+        DateTime start = DateTime.Now;
+        DebugLog.LogEvent("GetBrowserExtensions() started.", DebugLog.Region.System);
         List<Browser> Browsers = new List<Browser>();
         string UserPath = string.Concat("C:\\Users\\", Username, "\\Appdata\\");
         Dictionary<string, string> BrowserPaths = new Dictionary<string, string>()
@@ -1681,7 +1913,7 @@ public static partial class Cache
                 }
             }
         }
-
+        DebugLog.LogEvent($"GetBrowserExtensions() completed. Total runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
         return Browsers;
     }
     

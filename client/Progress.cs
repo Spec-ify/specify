@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing.Printing;
 using System.Linq;
-using System.Windows.Controls;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace specify_client;
 
@@ -19,11 +18,11 @@ public class ProgressStatus
 {
     public string Name { get; }
     public ProgressType Status { get; set; }
-    public Action Action { get; }
+    public Func<Task> Action { get; }
     public List<string> Dependencies { get; }
     public bool SkipProgressWait { get; }
 
-    public ProgressStatus(string name, Action a, List<string> deps = null, bool skipProgressWait = false)
+    public ProgressStatus(string name, Func<Task> a, List<string> deps = null, bool skipProgressWait = false)
     {
         Name = name;
         Status = ProgressType.Queued;
@@ -44,13 +43,13 @@ public class ProgressList
     public ProgressList()
     {
         Items = new Dictionary<string, ProgressStatus>(){
-            { "MainData", new ProgressStatus("MainDataText", data.Cache.MakeMainData) },
-            { "SystemData", new ProgressStatus("SystemDataText", data.Cache.MakeSystemData) },
-            { "Security", new ProgressStatus("SecurityDataText", data.Cache.MakeSecurityData) },
-            { "Network", new ProgressStatus("NetworkDataText", data.Cache.MakeNetworkData) },
-            { "Hardware", new ProgressStatus("HardwareDataText", data.Cache.MakeHardwareData) },
+            { "MainData", new ProgressStatus("Main Data", data.Cache.MakeMainData) },
+            { "SystemData", new ProgressStatus("System Data", data.Cache.MakeSystemData) },
+            { "Security", new ProgressStatus("Security Info", data.Cache.MakeSecurityData) },
+            { "Network", new ProgressStatus("Network Info", data.Cache.MakeNetworkData) },
+            { "Hardware", new ProgressStatus("Hardware Info", data.Cache.MakeHardwareData) },
             {
-                "Specificializing",
+                Specificializing,
                 new ProgressStatus(Specificializing, Monolith.Specificialize, 
                     new List<string>(){ "MainData", "SystemData", "Security", "Network", "Hardware" })
             }
@@ -60,8 +59,8 @@ public class ProgressList
     public void RunItem(string key)
     {
         var item = Items.ContainsKey(key) ? Items[key] : throw new Exception($"Progress item {key} doesn't exist!");
-
-        var t = new Thread(() =>
+            
+        var t = new Thread(async () =>
         {
             foreach (var k in item.Dependencies)
             {
@@ -71,14 +70,11 @@ public class ProgressList
                     Thread.Sleep(0);
                 }
             }
-                
             item.Status = ProgressType.Processing;
-            item.Action();
+            await item.Action();
             item.Status = ProgressType.Complete;
-
         });
-        //if (key.Equals(Specificializing)) 
-        t.SetApartmentState(ApartmentState.STA);
+        if (key.Equals(Specificializing)) t.SetApartmentState(ApartmentState.STA);
         t.Start();
     }
 
