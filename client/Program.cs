@@ -9,7 +9,7 @@ namespace specify_client;
 
 public class Program
 {
-    public const string SpecifyVersion = "v0.2";
+    public const string SpecifyVersion = "v1.0.0";
     public static Stopwatch Time;
     
     static async Task Main()
