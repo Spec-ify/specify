@@ -40,7 +40,7 @@ public static class DebugLog
     }
     public static async Task StartDebugLog()
     {
-        if(Settings.DisableDebug)
+        if(!Settings.EnableDebug)
         {
             return;
         }
@@ -68,7 +68,7 @@ public static class DebugLog
     }
     public static async Task StopDebugLog()
     {
-        if(Settings.DisableDebug)
+        if(!Settings.EnableDebug)
         {
             return;
         }
@@ -89,7 +89,7 @@ public static class DebugLog
     }
     public static async Task StartRegion(Region region)
     {
-        if(Settings.DisableDebug)
+        if(!Settings.EnableDebug)
         {
             return;
         }
@@ -104,7 +104,7 @@ public static class DebugLog
     }
     public static async Task EndRegion(Region region)
     {
-        if(Settings.DisableDebug)
+        if(!Settings.EnableDebug)
         {
             return;
         }
@@ -118,7 +118,7 @@ public static class DebugLog
     }
     public static async Task LogEventAsync(string message, Region region = Region.Misc, EventType type = EventType.INFORMATION)
     {
-        if(!Started || Settings.DisableDebug)
+        if(!Started || !Settings.EnableDebug)
         {
             return;
         }
@@ -144,7 +144,7 @@ public static class DebugLog
                 await Task.Delay(30);
                 if((DateTime.Now - currentTime).TotalSeconds > timeout)
                 {
-                    Settings.DisableDebug = true;
+                    Settings.EnableDebug = false;
                     return;
                 }
                 continue;
@@ -179,7 +179,7 @@ public static class DebugLog
                 Thread.Sleep(30);
                 if ((DateTime.Now - currentTime).TotalSeconds > timeout)
                 {
-                    Settings.DisableDebug = true;
+                    Settings.EnableDebug = false;
                     return;
                 }
                 continue;

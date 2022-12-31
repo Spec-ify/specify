@@ -56,7 +56,7 @@ public class Program
                 Console.ForegroundColor = initialConsoleFg;
                 Console.BackgroundColor = initialConsoleBg;
                 Console.Write(" ");
-                if (!Settings.DisableDebug)
+                if (Settings.EnableDebug)
                 {
                     Console.ForegroundColor = ConsoleColor.Black;
                     Console.BackgroundColor = ConsoleColor.White;
@@ -79,7 +79,7 @@ public class Program
                 if (key.Key is ConsoleKey.D3 or ConsoleKey.NumPad3)
                     Settings.DontUpload = !Settings.DontUpload;
                 if(key.Key is ConsoleKey.D4 or ConsoleKey.NumPad4)
-                    Settings.DisableDebug = !Settings.DisableDebug;
+                    Settings.EnableDebug = !Settings.EnableDebug;
 
                 Console.SetCursorPosition(0, settingsLine1);
             }
