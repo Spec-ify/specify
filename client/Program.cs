@@ -56,12 +56,12 @@ public class Program
                 Console.ForegroundColor = initialConsoleFg;
                 Console.BackgroundColor = initialConsoleBg;
                 Console.Write(" ");
-                if (Settings.DisableDebug)
+                if (!Settings.DisableDebug)
                 {
                     Console.ForegroundColor = ConsoleColor.Black;
                     Console.BackgroundColor = ConsoleColor.White;
                 }
-                Console.Write("[4] - Disable Debug Logging");
+                Console.Write("[4] - Enable Debug Logging");
                 Console.ForegroundColor = initialConsoleFg;
                 Console.BackgroundColor = initialConsoleBg;
 
