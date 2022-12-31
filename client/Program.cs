@@ -100,10 +100,13 @@ public class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine("A fatal exception has occurred. Please see debug.log for details.");
+            Settings.EnableDebug = true;
+            await DebugLog.StartDebugLog();
             await DebugLog.LogEventAsync("FATAL EXCEPTION", DebugLog.Region.Misc, DebugLog.EventType.ERROR);
             await DebugLog.LogEventAsync(ex.ToString());
-            System.Threading.Thread.Sleep(10000);
+            Console.WriteLine($"A fatal exception has occurred. Please see {DebugLog.LogFilePath} for details.");
+            Console.WriteLine("Press any key to close this window.");
+            Console.ReadKey(true);
         }
     }
     

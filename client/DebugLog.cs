@@ -11,7 +11,7 @@ namespace specify_client;
 
 public static class DebugLog
 {
-    private static string LogFilepath = "specify_debug.log";
+    public const string LogFilePath = "specify_debug.log";
     private static bool Enabled = true;
     private static bool Started = false;
     private static DateTime LogStartTime { get; set; }
@@ -45,13 +45,13 @@ public static class DebugLog
             return;
         }
         LogStartTime = DateTime.Now;
-        if(!File.Exists(LogFilepath))
+        if(!File.Exists(LogFilePath))
         {
-            File.Create(LogFilepath).Close();
+            File.Create(LogFilePath).Close();
         }
         else
         {
-            await Task.Run(() => File.WriteAllText(LogFilepath, ""));
+            await Task.Run(() => File.WriteAllText(LogFilePath, ""));
         }
         for (int i = 0; i < ErrorCount.Length; i++)
         {
@@ -136,7 +136,7 @@ public static class DebugLog
         {
             try
             {
-                await Task.Run(() => File.AppendAllText(LogFilepath, debugString));
+                await Task.Run(() => File.AppendAllText(LogFilePath, debugString));
                 break;
             }
             catch
@@ -171,7 +171,7 @@ public static class DebugLog
         {
             try
             {
-                File.AppendAllText(LogFilepath, debugString);
+                File.AppendAllText(LogFilePath, debugString);
                 break;
             }
             catch
