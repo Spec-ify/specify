@@ -11,7 +11,7 @@ namespace specify_client;
 
 public static class DebugLog
 {
-    private static string LogFilepath = "debug.log";
+    private static string LogFilepath = "specify_debug.log";
     private static bool Enabled = true;
     private static bool Started = false;
     private static DateTime LogStartTime { get; set; }
