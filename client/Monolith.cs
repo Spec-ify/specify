@@ -56,7 +56,7 @@ public class Monolith
     {
         return JsonConvert.SerializeObject(this, Formatting.Indented) + Environment.NewLine;
     }
-    
+
     public static async Task Specificialize()
     {
         await DebugLog.LogEventAsync("Serialization starts");
@@ -64,7 +64,7 @@ public class Monolith
         // const string specifiedUploadEndpoint = "specified/upload.php";
         const string specifiedUploadDomain = "https://spec-ify.com";
         const string specifiedUploadEndpoint = "upload.php";
-        
+
         Program.Time.Stop();
         var m = new Monolith();
         await DebugLog.LogEventAsync("Monolith created");
@@ -85,9 +85,9 @@ public class Monolith
                 var stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
                 stringToRedact = stringToRedact.Replace(@"\", @"\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
                 serialized = serialized.Replace(stringToRedact, "[REDACTED]");
-                
+
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 m.Issues.Add("Commercial OneDrive redaction failed. This usually happens when Commerical OneDrive is not installed.");
                 await DebugLog.LogEventAsync("Commercial OneDrive redaction failed. Serialization restarts." + e, DebugLog.Region.Misc, DebugLog.EventType.ERROR);
@@ -101,10 +101,11 @@ public class Monolith
         if (Settings.DontUpload)
         {
             var filename = "specify_specs.json";
-            
+
             File.WriteAllText(filename, serialized);
             await DebugLog.LogEventAsync($"Report saved to {filename}");
             await DebugLog.StopDebugLog();
+            ProgramDone(1);
             return;
         }
         String url = null;
@@ -115,6 +116,7 @@ public class Monolith
             url = requestTask.Result;
             if (url == null)
             {
+                ProgramDone(2);
                 throw new HttpRequestException("Upload failed. See previous log for details");
             }
         }
@@ -130,6 +132,7 @@ public class Monolith
         {
             Clipboard.SetText(url);
             Process.Start(url);
+            ProgramDone(0);
         });
         t.SetApartmentState(ApartmentState.STA);
         t.Start();
@@ -140,7 +143,7 @@ public class Monolith
         // Program ends here.
         await DebugLog.StopDebugLog();
     }
-    
+
     private static async Task<string> DoRequest(string str)
     {
         // const string specifiedUploadDomain = "http://localhost";
@@ -180,180 +183,213 @@ public class Monolith
 
 
     }
-    
+
     private static void CacheError(object thing)
     {
         throw new Exception("MonolithCache item doesn't exist: " + nameof(thing));
     }
-}
 
-public struct MonolithMeta
-{
-    public long ElapsedTime;
-    public DateTime GenerationDate;
-}
-
-[Serializable]
-public class MonolithBasicInfo
-{
-    public string Edition;
-    public string Version;
-    public string FriendlyVersion;
-    public string InstallDate;
-    public string Uptime;
-    public string Hostname;
-    public string Username;
-    public string Domain;
-    public string BootMode;
-    public string BootState;
-
-    public MonolithBasicInfo()
+    private static void ProgramDone(int noUpload)
     {
-        //win32 operating system class
-        var os = Cache.Os;
-        //win32 computersystem wmi class
-        var cs = Cache.Cs;
+        switch (noUpload)
+        {
 
-        Edition = (string)os["Caption"];
-        Version = (string)os["Version"];
-        FriendlyVersion = Utils.GetRegistryValue<string>(Registry.LocalMachine,
-            @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
-            "DisplayVersion");
-        InstallDate = Utils.CimToIsoDate((string)os["InstallDate"]);
-        Uptime = (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"]))
-            .ToString("g");
-        Hostname = Dns.GetHostName();
-        Username = Cache.Username;
-        Domain = Environment.GetEnvironmentVariable("userdomain");
-        BootMode = Environment.GetEnvironmentVariable("firmware_type");
-        BootState = (string)cs["BootupState"];
+            case 0:
+                App.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    var main = App.Current.MainWindow as Landing;
+                    main.ProgramFinalize();
+                }));
+                break;
+
+            case 1:
+                App.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    var main = App.Current.MainWindow as Landing;
+                    main.ProgramFinalizeNoUpload();
+                }));
+                break;
+
+            case 2:
+                App.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    var main = App.Current.MainWindow as Landing;
+                    main.UploadFailed();
+                }));
+                break;
+        }
+
     }
-}
 
-[Serializable]
-public class MonolithSecurity
-{
-    public List<string> AvList;
-    public List<string> FwList;
-    public bool? UacEnabled;
-    public bool? SecureBootEnabled;
-    public int? UacLevel;
-    public Dictionary<string, object> Tpm;
 
-    public MonolithSecurity()
+    public struct MonolithMeta
     {
-        AvList = Cache.AvList;
-        FwList = Cache.FwList;
-        UacEnabled = Cache.UacEnabled;
-        SecureBootEnabled = Cache.SecureBootEnabled;
-        Tpm = Cache.Tpm;
-        UacLevel = Cache.UacLevel;
+        public long ElapsedTime;
+        public DateTime GenerationDate;
     }
-}
 
-[Serializable]
-public class MonolithHardware
-{
-    public List<RamStick> Ram;
-    public Dictionary<string, object> Cpu;
-    public List<Dictionary<string, object>> Gpu;
-    public Dictionary<string, object> Motherboard;
-    public List<Dictionary<string, object>> AudioDevices;
-    public List<data.Monitor> Monitors;
-    public List<Dictionary<string, object>> Drivers;
-    public List<Dictionary<string, object>> Devices;
-    public List<Dictionary<string, object>> BiosInfo;
-    public List<DiskDrive> Storage;
-    public List<TempMeasurement> Temperatures;
-    public List<BatteryData> Batteries;
-
-    public MonolithHardware()
+    [Serializable]
+    public class MonolithBasicInfo
     {
-        Ram = Cache.Ram;
-        Cpu = Cache.Cpu;
-        Gpu = Cache.Gpu;
-        Motherboard = Cache.Motherboard;
-        AudioDevices = Cache.AudioDevices;
-        Monitors = Cache.MonitorInfo;
-        Drivers = Cache.Drivers;
-        Devices = Cache.Devices;
-        BiosInfo = Cache.BiosInfo;
-        Storage = Cache.Disks;
-        Temperatures = Cache.Temperatures;
-        Batteries = Cache.Batteries;
+        public string Edition;
+        public string Version;
+        public string FriendlyVersion;
+        public string InstallDate;
+        public string Uptime;
+        public string Hostname;
+        public string Username;
+        public string Domain;
+        public string BootMode;
+        public string BootState;
+
+        public MonolithBasicInfo()
+        {
+            //win32 operating system class
+            var os = Cache.Os;
+            //win32 computersystem wmi class
+            var cs = Cache.Cs;
+
+            Edition = (string)os["Caption"];
+            Version = (string)os["Version"];
+            FriendlyVersion = Utils.GetRegistryValue<string>(Registry.LocalMachine,
+                @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
+                "DisplayVersion");
+            InstallDate = Utils.CimToIsoDate((string)os["InstallDate"]);
+            Uptime = (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"]))
+                .ToString("g");
+            Hostname = Dns.GetHostName();
+            Username = Cache.Username;
+            Domain = Environment.GetEnvironmentVariable("userdomain");
+            BootMode = Environment.GetEnvironmentVariable("firmware_type");
+            BootState = (string)cs["BootupState"];
+        }
     }
-}
 
-[Serializable]
-public class MonolithSystem
-{
-    public IDictionary UserVariables;
-    public IDictionary SystemVariables;
-    public List<OutputProcess> RunningProcesses;
-    public List<Dictionary<string, object>> Services;
-    public List<InstalledApp> InstalledApps;
-    public List<Dictionary<string, object>> InstalledHotfixes;
-    public List<ScheduledTask> ScheduledTasks;
-    public List<Dictionary<string, object>> PowerProfiles;
-    public List<string> MicroCodes;
-    public int RecentMinidumps;
-    public bool? StaticCoreCount;
-    public List<IRegistryValue> ChoiceRegistryValues;
-    public bool? UsernameSpecialCharacters;
-    public int? OneDriveCommercialPathLength;
-    public int? OneDriveCommercialNameLength;
-    public List<Browser> BrowserExtensions;
-    public string DefaultBrowser;
-
-    public MonolithSystem()
+    [Serializable]
+    public class MonolithSecurity
     {
-        UserVariables = Cache.UserVariables;
-        SystemVariables = Cache.SystemVariables;
-        RunningProcesses = Cache.RunningProcesses;
-        Services = Cache.Services;
-        InstalledApps = Cache.InstalledApps;
-        InstalledHotfixes = Cache.InstalledHotfixes;
-        ScheduledTasks = Cache.ScheduledTasks;
-        PowerProfiles = Cache.PowerProfiles;
-        MicroCodes = Cache.MicroCodes;
-        RecentMinidumps = Cache.RecentMinidumps;
-        StaticCoreCount = Cache.StaticCoreCount;
-        ChoiceRegistryValues = Cache.ChoiceRegistryValues;
-        UsernameSpecialCharacters = Cache.UsernameSpecialCharacters;
-        OneDriveCommercialPathLength = Cache.OneDriveCommercialPathLength;
-        OneDriveCommercialNameLength = Cache.OneDriveCommercialNameLength;
-        BrowserExtensions = Cache.BrowserExtensions;
-        DefaultBrowser = Cache.DefaultBrowser;
+        public List<string> AvList;
+        public List<string> FwList;
+        public bool? UacEnabled;
+        public bool? SecureBootEnabled;
+        public int? UacLevel;
+        public Dictionary<string, object> Tpm;
+
+        public MonolithSecurity()
+        {
+            AvList = Cache.AvList;
+            FwList = Cache.FwList;
+            UacEnabled = Cache.UacEnabled;
+            SecureBootEnabled = Cache.SecureBootEnabled;
+            Tpm = Cache.Tpm;
+            UacLevel = Cache.UacLevel;
+        }
     }
-}
 
-[Serializable]
-public class MonolithNetwork
-{
-    public List<Dictionary<string, object>> Adapters;
-    public List<Dictionary<string, object>> Adapters2;
-    public List<Dictionary<string, object>> Routes;
-    public List<NetworkConnection> NetworkConnections;
-    public string HostsFile;
-    public string HostsFileHash;
-
-    public MonolithNetwork()
+    [Serializable]
+    public class MonolithHardware
     {
-        Adapters = Cache.NetAdapters;
-        Adapters2 = Cache.NetAdapters2;
-        Routes = Cache.IPRoutes;
-        NetworkConnections = Cache.NetworkConnections;
-        HostsFile = Cache.HostsFile;
-        HostsFileHash = Cache.HostsFileHash;
+        public List<RamStick> Ram;
+        public Dictionary<string, object> Cpu;
+        public List<Dictionary<string, object>> Gpu;
+        public Dictionary<string, object> Motherboard;
+        public List<Dictionary<string, object>> AudioDevices;
+        public List<data.Monitor> Monitors;
+        public List<Dictionary<string, object>> Drivers;
+        public List<Dictionary<string, object>> Devices;
+        public List<Dictionary<string, object>> BiosInfo;
+        public List<DiskDrive> Storage;
+        public List<TempMeasurement> Temperatures;
+        public List<BatteryData> Batteries;
+
+        public MonolithHardware()
+        {
+            Ram = Cache.Ram;
+            Cpu = Cache.Cpu;
+            Gpu = Cache.Gpu;
+            Motherboard = Cache.Motherboard;
+            AudioDevices = Cache.AudioDevices;
+            Monitors = Cache.MonitorInfo;
+            Drivers = Cache.Drivers;
+            Devices = Cache.Devices;
+            BiosInfo = Cache.BiosInfo;
+            Storage = Cache.Disks;
+            Temperatures = Cache.Temperatures;
+            Batteries = Cache.Batteries;
+        }
     }
-}
 
-public static class MonolithCache
-{
-    public static Monolith Monolith { get; set; }
-
-    public static void AssembleCache()
+    [Serializable]
+    public class MonolithSystem
     {
-        Monolith = new Monolith();
+        public IDictionary UserVariables;
+        public IDictionary SystemVariables;
+        public List<OutputProcess> RunningProcesses;
+        public List<Dictionary<string, object>> Services;
+        public List<InstalledApp> InstalledApps;
+        public List<Dictionary<string, object>> InstalledHotfixes;
+        public List<ScheduledTask> ScheduledTasks;
+        public List<Dictionary<string, object>> PowerProfiles;
+        public List<string> MicroCodes;
+        public int RecentMinidumps;
+        public bool? StaticCoreCount;
+        public List<IRegistryValue> ChoiceRegistryValues;
+        public bool? UsernameSpecialCharacters;
+        public int? OneDriveCommercialPathLength;
+        public int? OneDriveCommercialNameLength;
+        public List<Browser> BrowserExtensions;
+        public string DefaultBrowser;
+
+        public MonolithSystem()
+        {
+            UserVariables = Cache.UserVariables;
+            SystemVariables = Cache.SystemVariables;
+            RunningProcesses = Cache.RunningProcesses;
+            Services = Cache.Services;
+            InstalledApps = Cache.InstalledApps;
+            InstalledHotfixes = Cache.InstalledHotfixes;
+            ScheduledTasks = Cache.ScheduledTasks;
+            PowerProfiles = Cache.PowerProfiles;
+            MicroCodes = Cache.MicroCodes;
+            RecentMinidumps = Cache.RecentMinidumps;
+            StaticCoreCount = Cache.StaticCoreCount;
+            ChoiceRegistryValues = Cache.ChoiceRegistryValues;
+            UsernameSpecialCharacters = Cache.UsernameSpecialCharacters;
+            OneDriveCommercialPathLength = Cache.OneDriveCommercialPathLength;
+            OneDriveCommercialNameLength = Cache.OneDriveCommercialNameLength;
+            BrowserExtensions = Cache.BrowserExtensions;
+            DefaultBrowser = Cache.DefaultBrowser;
+        }
+    }
+
+    [Serializable]
+    public class MonolithNetwork
+    {
+        public List<Dictionary<string, object>> Adapters;
+        public List<Dictionary<string, object>> Adapters2;
+        public List<Dictionary<string, object>> Routes;
+        public List<NetworkConnection> NetworkConnections;
+        public string HostsFile;
+        public string HostsFileHash;
+
+        public MonolithNetwork()
+        {
+            Adapters = Cache.NetAdapters;
+            Adapters2 = Cache.NetAdapters2;
+            Routes = Cache.IPRoutes;
+            NetworkConnections = Cache.NetworkConnections;
+            HostsFile = Cache.HostsFile;
+            HostsFileHash = Cache.HostsFileHash;
+        }
+    }
+
+    public static class MonolithCache
+    {
+        public static Monolith Monolith { get; set; }
+
+        public static void AssembleCache()
+        {
+            Monolith = new Monolith();
+        }
     }
 }
