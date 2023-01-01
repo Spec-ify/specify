@@ -55,12 +55,9 @@ namespace specify_client
         {
             if (!Dispatcher.CheckAccess())
             {
-                // We're not in the UI thread, ask the dispatcher to call this same method in the UI thread, then exit
                 Dispatcher.BeginInvoke(new Action(ProgramFinalize));
                 return;
             }
-
-            // We're in the UI thread, update the controls
 
             Frame.Navigate(new ProgramFinalized());
             this.Activate();
@@ -72,12 +69,9 @@ namespace specify_client
         {
             if (!Dispatcher.CheckAccess())
             {
-                // We're not in the UI thread, ask the dispatcher to call this same method in the UI thread, then exit
                 Dispatcher.BeginInvoke(new Action(ProgramFinalizeNoUpload));
                 return;
             }
-
-            // We're in the UI thread, update the controls
 
             Frame.Navigate(new ProgramFinalizeNoUpload());
             
@@ -91,13 +85,27 @@ namespace specify_client
 
             if (!Dispatcher.CheckAccess())
             {
-                // We're not in the UI thread, ask the dispatcher to call this same method in the UI thread, then exit
                 Dispatcher.BeginInvoke(new Action(UploadFailed));
                 return;
             }
 
-            // We're in the UI thread, update the controls
-            Frame.Navigate(new StartButtons());
+            Frame.Navigate(new UploadFail());
+
+            this.Activate();
+            this.WindowState = System.Windows.WindowState.Normal;
+            this.Topmost = false;
+            this.Focus();
+        }
+        public void ProgramFail()
+        {
+
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.BeginInvoke(new Action(ProgramFail));
+                return;
+            }
+
+            Frame.Navigate(new ProgramFailed());
 
             this.Activate();
             this.WindowState = System.Windows.WindowState.Normal;

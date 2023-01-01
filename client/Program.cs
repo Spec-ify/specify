@@ -37,9 +37,8 @@ public class Program
             await DebugLog.StartDebugLog();
             await DebugLog.LogEventAsync("FATAL EXCEPTION", DebugLog.Region.Misc, DebugLog.EventType.ERROR);
             await DebugLog.LogEventAsync(ex.ToString());
-            Console.WriteLine($"A fatal exception has occurred. Please see {DebugLog.LogFilePath} for details.");
-            Console.WriteLine("Press any key to close this window.");
-            Console.ReadKey(true);
+            await DebugLog.StopDebugLog();
+            Monolith.ProgramDone(3);
         }
     }
     

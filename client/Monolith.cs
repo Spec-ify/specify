@@ -188,7 +188,7 @@ public class Monolith
         throw new Exception("MonolithCache item doesn't exist: " + nameof(thing));
     }
 
-    private static void ProgramDone(int noUpload)
+    public static void ProgramDone(int noUpload)
     {
         switch (noUpload)
         {
@@ -214,6 +214,14 @@ public class Monolith
                 {
                     var main = App.Current.MainWindow as Landing;
                     main.UploadFailed();
+                }));
+                break;
+
+            case 3:
+                App.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    var main = App.Current.MainWindow as Landing;
+                    main.ProgramFail();
                 }));
                 break;
         }
