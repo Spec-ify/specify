@@ -136,9 +136,8 @@ public class Monolith
         });
         t.SetApartmentState(ApartmentState.STA);
         t.Start();
-
-        // 300ms pause to ensure the above Thread 't' is completed. The typical ThreadState check is impossible due to ambiguity.
-        await Task.Delay(300);
+        
+        t.Join();
 
         // Program ends here.
         await DebugLog.StopDebugLog();

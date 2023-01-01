@@ -11,7 +11,7 @@ namespace specify_client;
 
 public static class DebugLog
 {
-    private static string LogFilepath = "debug.log";
+    public const string LogFilePath = "specify_debug.log";
     private static bool Enabled = true;
     private static bool Started = false;
     private static DateTime LogStartTime { get; set; }
@@ -40,18 +40,18 @@ public static class DebugLog
     }
     public static async Task StartDebugLog()
     {
-        if(Settings.DisableDebug)
+        if(!Settings.EnableDebug)
         {
             return;
         }
         LogStartTime = DateTime.Now;
-        if(!File.Exists(LogFilepath))
+        if(!File.Exists(LogFilePath))
         {
-            File.Create(LogFilepath).Close();
+            File.Create(LogFilePath).Close();
         }
         else
         {
-            await Task.Run(() => File.WriteAllText(LogFilepath, ""));
+            await Task.Run(() => File.WriteAllText(LogFilePath, ""));
         }
         for (int i = 0; i < ErrorCount.Length; i++)
         {
@@ -68,7 +68,7 @@ public static class DebugLog
     }
     public static async Task StopDebugLog()
     {
-        if(Settings.DisableDebug)
+        if(!Settings.EnableDebug)
         {
             return;
         }
@@ -89,7 +89,7 @@ public static class DebugLog
     }
     public static async Task StartRegion(Region region)
     {
-        if(Settings.DisableDebug)
+        if(!Settings.EnableDebug)
         {
             return;
         }
@@ -104,7 +104,7 @@ public static class DebugLog
     }
     public static async Task EndRegion(Region region)
     {
-        if(Settings.DisableDebug)
+        if(!Settings.EnableDebug)
         {
             return;
         }
@@ -118,7 +118,7 @@ public static class DebugLog
     }
     public static async Task LogEventAsync(string message, Region region = Region.Misc, EventType type = EventType.INFORMATION)
     {
-        if(!Started || Settings.DisableDebug)
+        if(!Started || !Settings.EnableDebug)
         {
             return;
         }
@@ -136,7 +136,7 @@ public static class DebugLog
         {
             try
             {
-                await Task.Run(() => File.AppendAllText(LogFilepath, debugString));
+                await Task.Run(() => File.AppendAllText(LogFilePath, debugString));
                 break;
             }
             catch
@@ -144,7 +144,7 @@ public static class DebugLog
                 await Task.Delay(30);
                 if((DateTime.Now - currentTime).TotalSeconds > timeout)
                 {
-                    Settings.DisableDebug = true;
+                    Settings.EnableDebug = false;
                     return;
                 }
                 continue;
@@ -171,7 +171,7 @@ public static class DebugLog
         {
             try
             {
-                File.AppendAllText(LogFilepath, debugString);
+                File.AppendAllText(LogFilePath, debugString);
                 break;
             }
             catch
@@ -179,7 +179,7 @@ public static class DebugLog
                 Thread.Sleep(30);
                 if ((DateTime.Now - currentTime).TotalSeconds > timeout)
                 {
-                    Settings.DisableDebug = true;
+                    Settings.EnableDebug = false;
                     return;
                 }
                 continue;
