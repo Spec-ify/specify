@@ -101,6 +101,9 @@ public static partial class Cache
             ScheduledTasks = rawTaskList.Select(e => new ScheduledTask(e)).ToList();
             DebugTasks.Add(DebugLog.LogEventAsync("ScheduledTasks Information retrieved.", region));
 
+            StartupTasks = await GetStartupTasks();
+            DebugTasks.Add(DebugLog.LogEventAsync("StartupTasks Information retrieved.", region));
+
             ChoiceRegistryValues = RegistryCheck();
             DebugTasks.Add(DebugLog.LogEventAsync("ChoiceRegistryValues Information retrieved.", region));
 
@@ -323,6 +326,130 @@ public static partial class Cache
             res.AddRange(EnumScheduledTasks(sfld));
 
         return res;
+    }
+    // Returns startup tasks from the following locations:
+    // 1: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+    // 2: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+    // 3: HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run
+    // 4: %AppData%\Microsoft\Windows\Start Menu\Programs\Startup
+    public static async System.Threading.Tasks.Task<List<StartupTask>> GetStartupTasks()
+    {
+        DateTime start = DateTime.Now;
+        await DebugLog.LogEventAsync("GetStartupTasks() Started", DebugLog.Region.System);
+        List<StartupTask> startupTasks = new();
+
+        //
+        // Group 1
+        //
+
+        // The intent of WorkingSource is to label each startup task by where it is on the PC. It's not implemented, and I'm not sure it's necessary.
+        string WorkingSource = @"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+        var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run");
+        foreach (var appName in key.GetValueNames())
+        {
+            var startupTask = await CreateStartupTask(appName, (string)key.GetValue(appName));
+            startupTasks.Add(startupTask);
+        }
+
+        //
+        // Group 2
+        //
+        WorkingSource = @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+        key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run");
+        foreach (var appName in key.GetValueNames())
+        {
+            var startupTask = await CreateStartupTask(appName, (string)key.GetValue(appName));
+            startupTasks.Add(startupTask);
+        }
+
+        //
+        // Group 3
+        //
+        WorkingSource = @"HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run";
+        key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run");
+        foreach (var appName in key.GetValueNames())
+        {
+            var startupTask = await CreateStartupTask(appName, (string)key.GetValue(appName));
+            startupTasks.Add(startupTask);
+        }
+
+        //
+        // Group 4 - This should be expanded to get file information of the shortcuts' target application.
+        //
+        try
+        {
+            var startupFiles = Directory.GetFiles(Environment.ExpandEnvironmentVariables("%AppData%") + @"\Microsoft\Windows\Start Menu\Programs\Startup");
+            foreach (var file in startupFiles)
+            {
+                string appName = Path.GetFileName(file);
+                var startupTask = await CreateStartupTask(appName, file);
+                startupTasks.Add(startupTask);
+            }
+        }
+        catch (Exception ex)
+        {
+            await DebugLog.LogEventAsync($"File Read error in group 4 of GetStartupTasks", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.System);
+        }
+        await DebugLog.LogEventAsync($"GetStartupTasks() Completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
+        return startupTasks;
+    }
+    public static async System.Threading.Tasks.Task<StartupTask> CreateStartupTask(string appName, string? imagePath)
+    {
+        StartupTask startupTask = new();
+        startupTask.AppName = appName;
+        if (string.IsNullOrEmpty(imagePath))
+        {
+            startupTask.ImagePath = "Image Path not found";
+            Issues.Add($"Data not found for Startup app {appName}");
+            await DebugLog.LogEventAsync($"No ImagePath data found for {appName}", DebugLog.Region.System, DebugLog.EventType.WARNING);
+            return startupTask;
+        }
+        else
+        {
+            startupTask.ImagePath = imagePath;
+        }
+        startupTask = await GetFileInformation(startupTask);
+        return startupTask;
+    }
+    public static async System.Threading.Tasks.Task<StartupTask> GetFileInformation(StartupTask startupTask)
+    {
+        // .Trim requires a character array.
+        char[] charArray = new char[1];
+        charArray[0] = '\"';
+        var filePath = startupTask.ImagePath.Trim(charArray);
+
+        // Trim the target path to be a locateable filepath.
+        var substringIndex = filePath.ToLower().IndexOf(".exe\"");
+        if (substringIndex == -1)
+        {
+            // If the target path is not wrapped in quotes, look for a space after the filename instead.
+            substringIndex = filePath.IndexOf(".exe ");
+        }
+
+        // If there is neither a space or quote after .exe, we shouldn't need to substring.
+        if (substringIndex != -1)
+        {
+            substringIndex += 4;
+            filePath = filePath.Substring(0, substringIndex);
+        }
+        if (!File.Exists(filePath))
+        {
+            return await StartupTaskFileError(startupTask, new FileNotFoundException($"{filePath}"));
+        }
+
+        var timestamp = new FileInfo(filePath).LastWriteTime;
+        startupTask.Timestamp = timestamp;
+        var description = FileVersionInfo.GetVersionInfo(filePath).FileDescription;
+        startupTask.AppDescription = description;
+        return startupTask;
+    }    
+    public static async System.Threading.Tasks.Task<StartupTask> StartupTaskFileError(StartupTask startupTask, Exception ex)
+    {
+        Issues.Add($"{startupTask.ImagePath} file not found for startup app {startupTask.AppName}");
+        await DebugLog.LogEventAsync($"{startupTask.ImagePath} file not found for startup app {startupTask.AppName} - {ex}", DebugLog.Region.System, DebugLog.EventType.WARNING);
+        startupTask.ImagePath += " - FILE NOT FOUND";
+        return startupTask;
     }
     public static async System.Threading.Tasks.Task MakeHardwareData()
     {

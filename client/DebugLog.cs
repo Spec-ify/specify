@@ -204,7 +204,6 @@ public static class DebugLog
                 break;
             case EventType.ERROR:
                 debugString +=          "       [ERROR] !!! ";
-                ErrorCount[(int)region]++;
                 break;
             case EventType.REGION_START:
                 debugString +=          "[Region Start] --- ";
@@ -217,10 +216,7 @@ public static class DebugLog
         if(type == EventType.ERROR)
         {
             debugString += " !!! ";
-            if(region != Region.Misc)
-            {
-                ErrorCount[(int)region]++;
-            }
+            ErrorCount[(int)region]++;
         }
         if(type == EventType.REGION_START || type == EventType.REGION_END)
         {
