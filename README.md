@@ -49,9 +49,9 @@ Thanks to all of our team for contributing:
 | Person                                          | Role                  |
 | ----------------------------------------------- | --------------------- |
 | [Drybaby](https://github.com/Drybaby)           | Project Lead          |
+| [zleyyij](https://github.com/zleyyij)           | Client-Side Lead      |
 | [JimmahDean](https://github.com/JimmahDean)     | Senior Engineer       |
 | [XavierNCline](https://github.com/XavierNCline) | Senior Engineer       |
 | [sealsrock12](https://github.com/sealsrock12)   | Architecture Engineer |
 | [K97i](https://github.com/K97i)                 | UX Engineer           |
-| [zleyyij](https://github.com/zleyyij)           | Quality Engineer      |
 | [24online24](https://github.com/24online24)     | Privacy Engineer      |
