@@ -199,7 +199,7 @@ public class MonolithBasicInfo
     public string Version;
     public string FriendlyVersion;
     public string InstallDate;
-    public string Uptime;
+    public long Uptime;
     public string Hostname;
     public string Username;
     public string Domain;
@@ -219,14 +219,26 @@ public class MonolithBasicInfo
             @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
             "DisplayVersion");
         InstallDate = Utils.CimToIsoDate((string)os["InstallDate"]);
-        Uptime = (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"]))
-            .ToString("g");
+
+        Uptime = DateTimeOffset.Now.ToUnixTimeSeconds() - new DateTimeOffset(ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"])).ToUnixTimeSeconds();
+
+        /*Uptime = (DateTime.Now - ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"]))
+            .ToString("g");*/
+
         Hostname = Dns.GetHostName();
         Username = Cache.Username;
         Domain = Environment.GetEnvironmentVariable("userdomain");
         BootMode = Environment.GetEnvironmentVariable("firmware_type");
         BootState = (string)cs["BootupState"];
     }
+}
+[Serializable]
+public class Uptime
+{
+    // Uptime stores two unix timestamps to be translated on the Specified side to a human readable up time.
+
+    public long TimeNow;
+    public long LBUT; // Last Bootup Time
 }
 
 [Serializable]
@@ -293,6 +305,7 @@ public class MonolithSystem
     public List<InstalledApp> InstalledApps;
     public List<Dictionary<string, object>> InstalledHotfixes;
     public List<ScheduledTask> ScheduledTasks;
+    public List<StartupTask> StartupTasks;
     public List<Dictionary<string, object>> PowerProfiles;
     public List<string> MicroCodes;
     public int RecentMinidumps;
@@ -313,6 +326,7 @@ public class MonolithSystem
         InstalledApps = Cache.InstalledApps;
         InstalledHotfixes = Cache.InstalledHotfixes;
         ScheduledTasks = Cache.ScheduledTasks;
+        StartupTasks = Cache.StartupTasks;
         PowerProfiles = Cache.PowerProfiles;
         MicroCodes = Cache.MicroCodes;
         RecentMinidumps = Cache.RecentMinidumps;
