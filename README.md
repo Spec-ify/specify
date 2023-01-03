@@ -42,3 +42,17 @@ As previously mentioned, **Specify** automatically **POST**s the results of it's
 
 Alternatively, whenever **Specify** is unable to complete said **POST** request, the **.json** file is instead written into the same directory as the **Specify** **executable** is ran from.
 This **.json** can then be manually uploaded to **Specified** to generate the view.
+
+## Team
+Thanks to all of our team for contributing:
+
+| Person                                          | Role                  |
+| ----------------------------------------------- | --------------------- |
+| [Drybaby](https://github.com/Drybaby)           | Project Lead          |
+| [zleyyij](https://github.com/zleyyij)           | Client-Side Lead      |
+| [JimmahDean](https://github.com/JimmahDean)     | Senior Engineer       |
+| [XavierNCline](https://github.com/XavierNCline) | Senior Engineer       |
+| [sealsrock12](https://github.com/sealsrock12)   | Architecture Engineer |
+| [K97i](https://github.com/K97i)                 | UX Engineer           |
+| [24online24](https://github.com/24online24)     | Privacy Engineer      |
+| [Tito](https://github.com/tito13kfm)            | Rubber Duck           |
