@@ -18,9 +18,7 @@ using System.Windows.Threading;
 
 namespace specify_client
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
+
     public partial class Landing : Window
     {
         public Landing()

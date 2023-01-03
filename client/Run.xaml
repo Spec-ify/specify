@@ -71,6 +71,10 @@
                            FontFamily="Consolas" Foreground="White"
                            HorizontalAlignment = "Center" 
                            VerticalAlignment = "Center"/>
+            <TextBlock x:Name="StatusText"
+                           FontFamily="Consolas" Foreground="White"
+                           HorizontalAlignment = "Center" 
+                           VerticalAlignment = "Center"/>
         </StackPanel>
 
     </Grid>
