@@ -55,3 +55,4 @@ Thanks to all of our team for contributing:
 | [sealsrock12](https://github.com/sealsrock12)   | Architecture Engineer |
 | [K97i](https://github.com/K97i)                 | UX Engineer           |
 | [24online24](https://github.com/24online24)     | Privacy Engineer      |
+| [Tito](https://github.com/tito13kfm)            | Rubber Duck           |
