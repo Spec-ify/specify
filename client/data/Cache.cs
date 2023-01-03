@@ -21,6 +21,7 @@ public static partial class Cache
     public static List<Dictionary<string, object>> InstalledHotfixes { get; private set; }
     public static List<Dictionary<string, object>> BiosInfo { get; private set; }
     public static List<ScheduledTask> ScheduledTasks { get; private set; }
+    public static List<ScheduledTask> WinScheduledTasks { get; private set; }
     public static List<StartupTask> StartupTasks { get; private set; }
     public static List<string> AvList { get; private set; }
     public static List<string> FwList { get; private set; }

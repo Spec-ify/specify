@@ -98,7 +98,13 @@ public static partial class Cache
 
             var ts = new TaskService();
             var rawTaskList = EnumScheduledTasks(ts.RootFolder);
-            ScheduledTasks = rawTaskList.Select(e => new ScheduledTask(e)).ToList();
+            ScheduledTasks = new List<ScheduledTask>();
+            WinScheduledTasks = new List<ScheduledTask>();
+            foreach (Task task in rawTaskList)
+                if (task.Path.StartsWith("\\Microsoft"))
+                    WinScheduledTasks.Add(new ScheduledTask(task));
+                else
+                    ScheduledTasks.Add(new ScheduledTask(task));
             DebugTasks.Add(DebugLog.LogEventAsync("ScheduledTasks Information retrieved.", region));
 
             StartupTasks = await GetStartupTasks();

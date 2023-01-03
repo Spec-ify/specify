@@ -305,6 +305,7 @@ public class MonolithSystem
     public List<InstalledApp> InstalledApps;
     public List<Dictionary<string, object>> InstalledHotfixes;
     public List<ScheduledTask> ScheduledTasks;
+    public List<ScheduledTask> WinScheduledTasks;
     public List<StartupTask> StartupTasks;
     public List<Dictionary<string, object>> PowerProfiles;
     public List<string> MicroCodes;
@@ -326,6 +327,7 @@ public class MonolithSystem
         InstalledApps = Cache.InstalledApps;
         InstalledHotfixes = Cache.InstalledHotfixes;
         ScheduledTasks = Cache.ScheduledTasks;
+        WinScheduledTasks = Cache.WinScheduledTasks;
         StartupTasks = Cache.StartupTasks;
         PowerProfiles = Cache.PowerProfiles;
         MicroCodes = Cache.MicroCodes;
