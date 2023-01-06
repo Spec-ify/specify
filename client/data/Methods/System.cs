@@ -120,7 +120,7 @@ public static partial class Cache
         {
             await DebugLog.LogEventAsync("UNEXPECTED FATAL EXCEPTION", DebugLog.Region.System, DebugLog.EventType.ERROR);
             await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.System);
-            Environment.Exit(-1);
+            Monolith.ProgramDone(3);
         }
     }
 
