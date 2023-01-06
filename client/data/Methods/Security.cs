@@ -14,8 +14,7 @@ public static partial class Cache
         {
             DebugLog.Region region = DebugLog.Region.Security;
             await DebugLog.StartRegion(region);
-            AvList = Utils.GetWmi("AntivirusProduct", "displayName", @"root\SecurityCenter2")
-                .Select(x => (string)x["displayName"]).ToList();
+            AvList = AVList();
             FwList = Utils.GetWmi("FirewallProduct", "displayName", @"root\SecurityCenter2")
                 .Select(x => (string)x["displayName"]).ToList();
             await DebugLog.LogEventAsync("Security WMI Information Retrieved.", region);
@@ -67,5 +66,32 @@ public static partial class Cache
             await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.Security);
             Environment.Exit(-1);
         }
+    }
+    public static List<string> AVList()
+    {
+
+        var antiviruses = new List<string>();
+
+        antiviruses = Utils.GetWmi("AntivirusProduct", "displayName", @"root\SecurityCenter2")
+                            .Select(x => (string)x["displayName"]).ToList();
+
+        int? PassiveMode = Utils.GetRegistryValue<int?>(
+                Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender",
+                "PassiveMode");
+
+        int? DisableAV = Utils.GetRegistryValue<int?>(
+                Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender",
+                "DisableAntiVirus");
+
+        int? DisableASW = Utils.GetRegistryValue<int?>(
+                Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender",
+                "DisableAntiSpyware");
+
+        if (PassiveMode != null || DisableAV != 0 || DisableASW != 0)
+        {
+            antiviruses.RemoveAll(x => ((string)x) == "Windows Defender");
+        }
+
+        return antiviruses;
     }
 }
