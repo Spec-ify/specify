@@ -319,9 +319,12 @@ public class MonolithSystem
     public int? OneDriveCommercialNameLength;
     public List<Browser> BrowserExtensions;
     public string DefaultBrowser;
+    public IDictionary PageFile;
+    
 
     public MonolithSystem()
     {
+        
         UserVariables = Cache.UserVariables;
         SystemVariables = Cache.SystemVariables;
         RunningProcesses = Cache.RunningProcesses;
@@ -341,6 +344,7 @@ public class MonolithSystem
         OneDriveCommercialNameLength = Cache.OneDriveCommercialNameLength;
         BrowserExtensions = Cache.BrowserExtensions;
         DefaultBrowser = Cache.DefaultBrowser;
+        PageFile = Cache.PageFile;
     }
 }
 
