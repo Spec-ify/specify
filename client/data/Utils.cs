@@ -7,6 +7,7 @@ using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using System.Linq;
+using System.Security.Cryptography.Xml;
 
 namespace specify_client.data;
 
@@ -85,7 +86,17 @@ public class Utils
         var key = regKey.OpenSubKey(path);
         if (key == null) return def;
         var value = key.GetValue(name);
-        return (T)value;
+        try
+        {
+            return (T)value;
+        }
+        catch (InvalidCastException ex)
+        {
+            var msg = $"Registry item {regKey.Name}\\{path}\\{name} cast to {nameof(T)} failed";
+            DebugLog.LogEvent(msg, DebugLog.Region.System, DebugLog.EventType.ERROR);
+            Cache.Issues.Add(msg);
+            return def;
+        }
     }
     public static Browser.Extension ParseChromiumExtension(string path)
     {
