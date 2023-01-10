@@ -166,9 +166,16 @@ public class ScheduledTask
         TriggerTypes = t.Definition.Triggers.Select(e => e.TriggerType).ToList();
     }
 }
-
+public class StartupTask
+{
+    public string AppName;
+    public string AppDescription;
+    public string ImagePath;
+    public DateTime Timestamp;
+}
 public class Monitor
 {
+    public string Source;
     public string Name;
     public string ChipType;
     public string DedicatedMemory;
@@ -198,4 +205,9 @@ public class ChromiumManifest
     public string description;
     public string version;
     public string default_locale;
+}
+
+public class PageFile
+{
+
 }

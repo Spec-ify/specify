@@ -21,6 +21,8 @@ public static partial class Cache
     public static List<Dictionary<string, object>> InstalledHotfixes { get; private set; }
     public static List<Dictionary<string, object>> BiosInfo { get; private set; }
     public static List<ScheduledTask> ScheduledTasks { get; private set; }
+    public static List<ScheduledTask> WinScheduledTasks { get; private set; }
+    public static List<StartupTask> StartupTasks { get; private set; }
     public static List<string> AvList { get; private set; }
     public static List<string> FwList { get; private set; }
     public static string HostsFile { get; private set; }
@@ -58,6 +60,7 @@ public static partial class Cache
     public static bool? UsernameSpecialCharacters { get; private set; }
     public static int? OneDriveCommercialPathLength { get; private set; }
     public static int? OneDriveCommercialNameLength { get; private set; }
+
     private static readonly List<string> SystemProcesses = new List<string>()
     {
         "Memory Compression",
@@ -66,4 +69,6 @@ public static partial class Cache
         "Idle",
         "Secure System"
     };
+
+    public static Dictionary<string, object> PageFile {get; private set; }
 }

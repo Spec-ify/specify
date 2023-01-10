@@ -69,9 +69,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="data\Cache.cs" />
-    <Compile Include="data\Methods.cs" />
+    <Compile Include="data\Methods\BasicInfo.cs" />
+    <Compile Include="data\Methods\Hardware.cs" />
+    <Compile Include="data\Methods\Network.cs" />
+    <Compile Include="data\Methods\Security.cs" />
+    <Compile Include="data\Methods\System.cs" />
     <Compile Include="data\Utils.cs" />
     <Compile Include="data\Structs.cs" />
+    <Compile Include="DebugLog.cs" />
     <Compile Include="Interop.cs" />
     <Compile Include="Monolith.cs" />
     <Compile Include="Program.cs" />
