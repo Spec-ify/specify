@@ -60,6 +60,8 @@ public static partial class Cache
 
             Services = Utils.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
             InstalledHotfixes = Utils.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
+            // As far as I can tell, Size is the size of the file on the filesystem and Usage is the amount actually used
+            PageFile = Utils.GetWmi("Win32_PageFileUsage", "AllocatedBaseSize, Caption, CurrentUsage, PeakUsage").First();
             try
             {
                 PowerProfiles = Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
@@ -703,4 +705,6 @@ public static partial class Cache
         DebugLog.LogEvent($"GetBrowserExtensions() completed. Total runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
         return Browsers;
     }
+
+
 }

@@ -260,7 +260,9 @@ public class MonolithBasicInfo
         Version = (string)os["Version"];
         FriendlyVersion = Utils.GetRegistryValue<string>(Registry.LocalMachine,
             @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
-            "DisplayVersion");
+            "DisplayVersion") ?? Utils.GetRegistryValue<string>(Registry.LocalMachine,
+            @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
+            "ReleaseId");
         InstallDate = Utils.CimToIsoDate((string)os["InstallDate"]);
         Uptime = DateTimeOffset.Now.ToUnixTimeSeconds() - new DateTimeOffset(ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"])).ToUnixTimeSeconds();
         Hostname = Dns.GetHostName();
@@ -347,9 +349,12 @@ public class MonolithSystem
     public int? OneDriveCommercialNameLength;
     public List<Browser> BrowserExtensions;
     public string DefaultBrowser;
+    public IDictionary PageFile;
+    
 
     public MonolithSystem()
     {
+        
         UserVariables = Cache.UserVariables;
         SystemVariables = Cache.SystemVariables;
         RunningProcesses = Cache.RunningProcesses;
@@ -369,6 +374,7 @@ public class MonolithSystem
         OneDriveCommercialNameLength = Cache.OneDriveCommercialNameLength;
         BrowserExtensions = Cache.BrowserExtensions;
         DefaultBrowser = Cache.DefaultBrowser;
+        PageFile = Cache.PageFile;
     }
 }
 

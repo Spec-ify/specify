@@ -206,3 +206,8 @@ public class ChromiumManifest
     public string version;
     public string default_locale;
 }
+
+public class PageFile
+{
+
+}
