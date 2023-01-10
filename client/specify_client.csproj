@@ -121,6 +121,10 @@
     <Compile Include="UploadFail.xaml.cs">
       <DependentUpon>UploadFail.xaml</DependentUpon>
     </Compile>
+    <Page Include="Images\Images.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Landing.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

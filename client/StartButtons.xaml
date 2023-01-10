@@ -6,39 +6,39 @@
         xmlns:local="clr-namespace:specify_client"
         mc:Ignorable="d"
         Title="Specify" 
-        Width="800"
-        Height="400"
-        MaxWidth="800"
-        MaxHeight="400"
+        d:DesignHeight="400" d:DesignWidth="800"
         Background="#232731">
 
     <!-- Define the Grids -->
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="100*"/>
-            <RowDefinition Height="25*"/>
-            <RowDefinition Height="25*"/>
             <RowDefinition Height="50*"/>
+            <RowDefinition Height="75*"/>
+            <RowDefinition Height="25*"/>
+            <RowDefinition Height="30*"/>
+            <RowDefinition Height="45*"/>
             <RowDefinition Height="20*"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.RowSpan="5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-        </Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
         <Frame x:Name="Buttons" 
-               Grid.RowSpan="5"
+               Grid.RowSpan="10"
+               Grid.ColumnSpan="10"
                NavigationUIVisibility="Hidden"/>
 
-        <StackPanel Grid.Row="1" Grid.RowSpan="3" Height="35" Margin="0,139,0,0" VerticalAlignment="Top">
+        <StackPanel Grid.Row="2" Grid.RowSpan="3" 
+                    Grid.Column="0" Grid.ColumnSpan="5"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch">
+            
             <StackPanel Orientation="Horizontal"
                         HorizontalAlignment = "Center" 
                         VerticalAlignment = "Center">
@@ -54,14 +54,16 @@
                            FontFamily="Consolas" Foreground="White"
                            HorizontalAlignment = "Center" 
                            VerticalAlignment = "Bottom"/>
+            
+            
         </StackPanel>
 
         <!-- Start Button -->
 
-        <StackPanel Grid.Row="3" Grid.RowSpan="1">
-
-            <StackPanel Orientation="Horizontal">
-            </StackPanel>
+        <StackPanel Grid.Row="3" Grid.RowSpan="1"
+                    Grid.Column="0" Grid.ColumnSpan="5"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch">
 
             <Button x:Name = "StartButton" 
                               Content = "Start App"
@@ -106,10 +108,13 @@
 
         <!-- Toggle Buttons -->
 
-        <StackPanel Grid.Row="4" Grid.RowSpan="1" Margin="0,0,469,0">
+        <StackPanel Grid.Row="4" Grid.RowSpan="1"
+                    Grid.Column="1">
 
             <StackPanel Orientation="Horizontal"
-                        HorizontalAlignment="Right" Height="50">
+                        Grid.Column="0" Grid.ColumnSpan="1"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Stretch">
                         
                 <ToggleButton x:Name = "Username" 
                               FontSize="12"
@@ -126,7 +131,7 @@
                             
                             <Setter Property="TextElement.FontFamily"
                             Value="Bahnschrift SemiBold SemiCondensed"/>
-                            
+
                             <Setter Property="Cursor"
                                 Value="Hand"/>
 
@@ -158,10 +163,11 @@
 
         </StackPanel>
 
-        <StackPanel Grid.Row="4" Grid.RowSpan="1" Margin="349,0,350,0">
+        <StackPanel Grid.Row="4" Grid.RowSpan="1"
+                    Grid.Column="2">
 
             <StackPanel Orientation="Horizontal"
-                HorizontalAlignment="Left" Height="50">
+                HorizontalAlignment="Center">
                 <ToggleButton x:Name = "UploadToggle" 
                     Content = "Don't Upload"
                     Checked = "UploadOn" 
@@ -204,10 +210,12 @@
             </StackPanel>
 
         </StackPanel>
-        <StackPanel Grid.Row="4" Grid.RowSpan="1" Margin="466,0,166,0">
+        
+        <StackPanel Grid.Row="4" Grid.RowSpan="1"
+                    Grid.Column="3">
 
             <StackPanel Orientation="Horizontal"
-                HorizontalAlignment="Left" Height="50">
+                HorizontalAlignment="Center">
                 <ToggleButton x:Name = "OneDriveToggle" 
                     Checked = "OneDriveOn" 
                     Unchecked = "OneDriveOff"
@@ -254,16 +262,6 @@
 
         </StackPanel>
 
-        <StackPanel Grid.Row="4" Grid.RowSpan="3" Margin="0,50,0,0">
-            <StackPanel Orientation="Vertical"
-                        HorizontalAlignment = "Left" 
-                        VerticalAlignment = "Bottom">
-
-                <TextBlock TextWrapping="Wrap" 
-                           Text="Made by the Specify Team!" FontFamily="Consolas" Height="30" Margin="5,30,0,0" Foreground="White"/>
-
-            </StackPanel>
-        </StackPanel>
 
     </Grid>
 

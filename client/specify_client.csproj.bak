@@ -11,10 +11,10 @@
     <AssemblyName>specify_client</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-	<ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-	<Deterministic>true</Deterministic>
+    <Deterministic>true</Deterministic>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <StartupObject>specify_client.App</StartupObject>
     <ApplicationIcon>specify-client-favicon.ico</ApplicationIcon>
@@ -70,50 +70,61 @@
     <Reference Include="System.Security" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-	<Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-	<Reference Include="Microsoft.CSharp" />
-	<Reference Include="System.Xaml">
-		<RequiredTargetFramework>4.0</RequiredTargetFramework>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Xaml">
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
-  <ApplicationDefinition Include="App.xaml">
+    <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="data\Cache.cs" />
-    <Compile Include="data\Methods.cs" />
+    <Compile Include="data\Methods\BasicInfo.cs" />
+    <Compile Include="data\Methods\Hardware.cs" />
+    <Compile Include="data\Methods\Network.cs" />
+    <Compile Include="data\Methods\Security.cs" />
+    <Compile Include="data\Methods\System.cs" />
     <Compile Include="data\Utils.cs" />
     <Compile Include="data\Structs.cs" />
     <Compile Include="DebugLog.cs" />
     <Compile Include="Interop.cs" />
     <Compile Include="Monolith.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="ProgramFailed.xaml.cs">
+      <DependentUpon>ProgramFailed.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Progress.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings.cs" />
-	<Compile Include="Landing.xaml.cs">
+    <Compile Include="Landing.xaml.cs">
       <DependentUpon>Landing.xaml</DependentUpon>
     </Compile>
-	<Compile Include="ProgramFinalized.xaml.cs">
+    <Compile Include="ProgramFinalized.xaml.cs">
       <DependentUpon>ProgramFinalized.xaml</DependentUpon>
     </Compile>
     <Compile Include="ProgramFinalizeNoUpload.xaml.cs">
       <DependentUpon>ProgramFinalizeNoUpload.xaml</DependentUpon>
     </Compile>
-	<Compile Include="Run.xaml.cs">
+    <Compile Include="Run.xaml.cs">
       <DependentUpon>Run.xaml</DependentUpon>
     </Compile>
-	<Compile Include="StartButtons.xaml.cs">
+    <Compile Include="StartButtons.xaml.cs">
       <DependentUpon>StartButtons.xaml</DependentUpon>
     </Compile>
     <Compile Include="UploadFail.xaml.cs">
       <DependentUpon>UploadFail.xaml</DependentUpon>
     </Compile>
+    <Page Include="Images\Images.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Landing.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -122,6 +133,10 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="ProgramFailed.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="ProgramFinalized.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -133,6 +148,10 @@
     <Page Include="Run.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="specifycl-logo-white.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="StartButtons.xaml">
       <SubType>Designer</SubType>
@@ -146,7 +165,7 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
-	<Compile Include="Properties\AssemblyInfo.cs">
+    <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Properties\Resources.Designer.cs">
@@ -163,7 +182,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-	<None Include="Properties\app.manifest" />
+    <None Include="Properties\app.manifest" />
     <Resource Include="Fonts\AldotheApache.ttf" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -192,6 +211,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Images\sync-alt-inv.png" />
     <Content Include="app.manifest" />
     <Content Include="specify-client-favicon.ico" />
   </ItemGroup>
