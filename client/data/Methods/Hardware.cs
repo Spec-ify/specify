@@ -27,7 +27,7 @@ public static partial class Cache
             var TemperatureTask = GetTemps();
 
             Cpu = Utils.GetWmi("Win32_Processor",
-                "CurrentClockSpeed, Manufacturer, Name, SocketDesignation").First();
+                "CurrentClockSpeed, Manufacturer, Name, SocketDesignation, NumberOfEnabledCore, ThreadCount").First();
             Gpu = Utils.GetWmi("Win32_VideoController",
                 "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
                 + "CurrentRefreshRate, CurrentBitsPerPixel");
