@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Diagnostics;
-using Newtonsoft.Json;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace specify_client;
@@ -11,7 +11,7 @@ public class Program
 {
     public const string SpecifyVersion = "v1.0.0";
     public static Stopwatch Time;
-    
+
     public static async Task Main()
     {
         try
@@ -41,8 +41,8 @@ public class Program
             Monolith.ProgramDone(3);
         }
     }
-    
-        
+
+
     public static void PrettyPrintObject(object o)
     {
         var jsonString = JsonConvert.SerializeObject(o, Formatting.Indented);

@@ -50,7 +50,7 @@ public class ProgressList
             { "Hardware", new ProgressStatus("Hardware Info", data.Cache.MakeHardwareData) },
             {
                 Specificializing,
-                new ProgressStatus(Specificializing, Monolith.Specificialize, 
+                new ProgressStatus(Specificializing, Monolith.Specificialize,
                     new List<string>(){ "MainData", "SystemData", "Security", "Network", "Hardware" })
             }
         };
@@ -59,7 +59,7 @@ public class ProgressList
     public void RunItem(string key)
     {
         var item = Items.ContainsKey(key) ? Items[key] : throw new Exception($"Progress item {key} doesn't exist!");
-            
+
         var t = new Thread(async () =>
         {
             foreach (var k in item.Dependencies)
@@ -101,7 +101,7 @@ public class ProgressList
             do
             {
                 allComplete = true;
-                    
+
                 for (var i = 0; i < Items.Count; i++)
                 {
                     var item = Items.ElementAt(i).Value;
@@ -111,18 +111,18 @@ public class ProgressList
                     }
 
                     if (item.Status == oldStatus[i]) continue;
-                    
+
                     Console.SetCursorPosition(0, cPos[i]);
                     ClearCurrentConsoleLine();
                     Console.Write(item.Name.PadRight(maxKeyLength) + " "); PrintColorType(item.Status);
                     Console.WriteLine();
                     oldStatus[i] = item.Status;
                 }
-                    
+
                 Console.SetCursorPosition(0, cPos.Last() + 1);
                 Thread.Sleep(100);
             } while (!allComplete);
-                
+
             Console.SetCursorPosition(0, cPos.Last() + 1);
         }).Start();
     }
@@ -137,11 +137,11 @@ public class ProgressList
             ConsoleColor.Green,
             ConsoleColor.Red
         };
-        Console.ForegroundColor = colorList[(int) status];
+        Console.ForegroundColor = colorList[(int)status];
         Console.Write(status);
         Console.ForegroundColor = originalColor;
     }
-        
+
     /**
      * From https://stackoverflow.com/a/8946847 and a comment
      */
@@ -149,7 +149,7 @@ public class ProgressList
     {
         var currentLineCursor = Console.CursorTop;
         Console.SetCursorPosition(0, Console.CursorTop);
-        Console.Write(new string(' ', Console.BufferWidth)); 
+        Console.Write(new string(' ', Console.BufferWidth));
         Console.SetCursorPosition(0, currentLineCursor);
     }
 }

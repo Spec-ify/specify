@@ -1,18 +1,6 @@
-﻿using HidSharp.Reports.Encodings;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace specify_client
 {
@@ -60,6 +48,16 @@ namespace specify_client
         {
             var main = App.Current.MainWindow as Landing;
             main.RunApp();
+        }
+        private void DebugLogToggleOn(object sender, RoutedEventArgs e)
+        {
+            Settings.EnableDebug = true;
+            DebugLogToggle.Background = new SolidColorBrush(Colors.Green);
+        }
+        private void DebugLogToggleOff(object sender, RoutedEventArgs e)
+        {
+            Settings.EnableDebug = false;
+            DebugLogToggle.Background = new SolidColorBrush(Colors.White);
         }
     }
 }

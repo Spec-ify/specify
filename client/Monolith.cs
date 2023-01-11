@@ -1,18 +1,18 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using Newtonsoft.Json;
+using specify_client.data;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Management;
 using System.Net;
-using Microsoft.Win32;
-using Newtonsoft.Json;
-using specify_client.data;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Threading;
 
 namespace specify_client;
 
@@ -136,7 +136,7 @@ public class Monolith
         });
         t.SetApartmentState(ApartmentState.STA);
         t.Start();
-        
+
         t.Join();
 
         // Program ends here.
@@ -235,19 +235,19 @@ public class Monolith
         public DateTime GenerationDate;
     }
 
-[Serializable]
-public class MonolithBasicInfo
-{
-    public string Edition;
-    public string Version;
-    public string FriendlyVersion;
-    public string InstallDate;
-    public long Uptime;
-    public string Hostname;
-    public string Username;
-    public string Domain;
-    public string BootMode;
-    public string BootState;
+    [Serializable]
+    public class MonolithBasicInfo
+    {
+        public string Edition;
+        public string Version;
+        public string FriendlyVersion;
+        public string InstallDate;
+        public long Uptime;
+        public string Hostname;
+        public string Username;
+        public string Domain;
+        public string BootMode;
+        public string BootState;
 
         public MonolithBasicInfo()
         {
@@ -256,22 +256,22 @@ public class MonolithBasicInfo
             //win32 computersystem wmi class
             var cs = Cache.Cs;
 
-        Edition = (string)os["Caption"];
-        Version = (string)os["Version"];
-        FriendlyVersion = Utils.GetRegistryValue<string>(Registry.LocalMachine,
-            @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
-            "DisplayVersion") ?? Utils.GetRegistryValue<string>(Registry.LocalMachine,
-            @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
-            "ReleaseId");
-        InstallDate = Utils.CimToIsoDate((string)os["InstallDate"]);
-        Uptime = DateTimeOffset.Now.ToUnixTimeSeconds() - new DateTimeOffset(ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"])).ToUnixTimeSeconds();
-        Hostname = Dns.GetHostName();
-        Username = Cache.Username;
-        Domain = Environment.GetEnvironmentVariable("userdomain");
-        BootMode = Environment.GetEnvironmentVariable("firmware_type");
-        BootState = (string)cs["BootupState"];
+            Edition = (string)os["Caption"];
+            Version = (string)os["Version"];
+            FriendlyVersion = Utils.GetRegistryValue<string>(Registry.LocalMachine,
+                @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
+                "DisplayVersion") ?? Utils.GetRegistryValue<string>(Registry.LocalMachine,
+                @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
+                "ReleaseId");
+            InstallDate = Utils.CimToIsoDate((string)os["InstallDate"]);
+            Uptime = DateTimeOffset.Now.ToUnixTimeSeconds() - new DateTimeOffset(ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"])).ToUnixTimeSeconds();
+            Hostname = Dns.GetHostName();
+            Username = Cache.Username;
+            Domain = Environment.GetEnvironmentVariable("userdomain");
+            BootMode = Environment.GetEnvironmentVariable("firmware_type");
+            BootState = (string)cs["BootupState"];
+        }
     }
-}
 
     [Serializable]
     public class MonolithSecurity
@@ -327,56 +327,56 @@ public class MonolithBasicInfo
         }
     }
 
-[Serializable]
-public class MonolithSystem
-{
-    public IDictionary UserVariables;
-    public IDictionary SystemVariables;
-    public List<OutputProcess> RunningProcesses;
-    public List<Dictionary<string, object>> Services;
-    public List<InstalledApp> InstalledApps;
-    public List<Dictionary<string, object>> InstalledHotfixes;
-    public List<ScheduledTask> ScheduledTasks;
-    public List<ScheduledTask> WinScheduledTasks;
-    public List<StartupTask> StartupTasks;
-    public List<Dictionary<string, object>> PowerProfiles;
-    public List<string> MicroCodes;
-    public int RecentMinidumps;
-    public bool? StaticCoreCount;
-    public List<IRegistryValue> ChoiceRegistryValues;
-    public bool? UsernameSpecialCharacters;
-    public int? OneDriveCommercialPathLength;
-    public int? OneDriveCommercialNameLength;
-    public List<Browser> BrowserExtensions;
-    public string DefaultBrowser;
-    public IDictionary PageFile;
-    
-
-    public MonolithSystem()
+    [Serializable]
+    public class MonolithSystem
     {
-        
-        UserVariables = Cache.UserVariables;
-        SystemVariables = Cache.SystemVariables;
-        RunningProcesses = Cache.RunningProcesses;
-        Services = Cache.Services;
-        InstalledApps = Cache.InstalledApps;
-        InstalledHotfixes = Cache.InstalledHotfixes;
-        ScheduledTasks = Cache.ScheduledTasks;
-        WinScheduledTasks = Cache.WinScheduledTasks;
-        StartupTasks = Cache.StartupTasks;
-        PowerProfiles = Cache.PowerProfiles;
-        MicroCodes = Cache.MicroCodes;
-        RecentMinidumps = Cache.RecentMinidumps;
-        StaticCoreCount = Cache.StaticCoreCount;
-        ChoiceRegistryValues = Cache.ChoiceRegistryValues;
-        UsernameSpecialCharacters = Cache.UsernameSpecialCharacters;
-        OneDriveCommercialPathLength = Cache.OneDriveCommercialPathLength;
-        OneDriveCommercialNameLength = Cache.OneDriveCommercialNameLength;
-        BrowserExtensions = Cache.BrowserExtensions;
-        DefaultBrowser = Cache.DefaultBrowser;
-        PageFile = Cache.PageFile;
+        public IDictionary UserVariables;
+        public IDictionary SystemVariables;
+        public List<OutputProcess> RunningProcesses;
+        public List<Dictionary<string, object>> Services;
+        public List<InstalledApp> InstalledApps;
+        public List<Dictionary<string, object>> InstalledHotfixes;
+        public List<ScheduledTask> ScheduledTasks;
+        public List<ScheduledTask> WinScheduledTasks;
+        public List<StartupTask> StartupTasks;
+        public List<Dictionary<string, object>> PowerProfiles;
+        public List<string> MicroCodes;
+        public int RecentMinidumps;
+        public bool? StaticCoreCount;
+        public List<IRegistryValue> ChoiceRegistryValues;
+        public bool? UsernameSpecialCharacters;
+        public int? OneDriveCommercialPathLength;
+        public int? OneDriveCommercialNameLength;
+        public List<Browser> BrowserExtensions;
+        public string DefaultBrowser;
+        public IDictionary PageFile;
+
+
+        public MonolithSystem()
+        {
+
+            UserVariables = Cache.UserVariables;
+            SystemVariables = Cache.SystemVariables;
+            RunningProcesses = Cache.RunningProcesses;
+            Services = Cache.Services;
+            InstalledApps = Cache.InstalledApps;
+            InstalledHotfixes = Cache.InstalledHotfixes;
+            ScheduledTasks = Cache.ScheduledTasks;
+            WinScheduledTasks = Cache.WinScheduledTasks;
+            StartupTasks = Cache.StartupTasks;
+            PowerProfiles = Cache.PowerProfiles;
+            MicroCodes = Cache.MicroCodes;
+            RecentMinidumps = Cache.RecentMinidumps;
+            StaticCoreCount = Cache.StaticCoreCount;
+            ChoiceRegistryValues = Cache.ChoiceRegistryValues;
+            UsernameSpecialCharacters = Cache.UsernameSpecialCharacters;
+            OneDriveCommercialPathLength = Cache.OneDriveCommercialPathLength;
+            OneDriveCommercialNameLength = Cache.OneDriveCommercialNameLength;
+            BrowserExtensions = Cache.BrowserExtensions;
+            DefaultBrowser = Cache.DefaultBrowser;
+            PageFile = Cache.PageFile;
+        }
     }
-}
 
     [Serializable]
     public class MonolithNetwork

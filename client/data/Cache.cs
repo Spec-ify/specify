@@ -70,5 +70,5 @@ public static partial class Cache
         "Secure System"
     };
 
-    public static Dictionary<string, object> PageFile {get; private set; }
+    public static Dictionary<string, object> PageFile { get; private set; }
 }

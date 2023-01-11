@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using LibreHardwareMonitor.Hardware;
+﻿using LibreHardwareMonitor.Hardware;
 using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace specify_client.data;
 
@@ -76,7 +76,7 @@ public class Partition
     public ulong PartitionFree;
     public string PartitionLabel;
     public string Filesystem;
-    [NonSerialized()]public string Caption; // Only used to link partitions, do not serialize.
+    [NonSerialized()] public string Caption; // Only used to link partitions, do not serialize.
 }
 
 public class SmartAttribute
@@ -134,7 +134,7 @@ public class RegistryValue<T> : IRegistryValue
     public string Path;
     public string Name;
     public T Value;
-    
+
     public RegistryValue(RegistryKey regKey, string path, string name)
     {
         HKey = regKey.Name;
@@ -153,7 +153,7 @@ public class ScheduledTask
 
     public bool IsActive;
     public string Author;
-    [JsonProperty (ItemConverterType = typeof(StringEnumConverter))]
+    [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
     public List<TaskTriggerType> TriggerTypes;
 
     public ScheduledTask(Task t)

@@ -34,6 +34,8 @@
                Grid.ColumnSpan="10"
                NavigationUIVisibility="Hidden"/>
 
+        <!-- Info Text -->
+        
         <StackPanel Grid.Row="2" Grid.RowSpan="3" 
                     Grid.Column="0" Grid.ColumnSpan="5"
                     HorizontalAlignment="Stretch"
@@ -106,163 +108,237 @@
 
         </StackPanel>
 
+        
+
         <!-- Toggle Buttons -->
 
-        <StackPanel Grid.Row="4" Grid.RowSpan="1"
+        <Grid Grid.Row="4" Grid.ColumnSpan="5">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="4*"/>
+                <ColumnDefinition Width="4*"/>
+                <ColumnDefinition Width="4*"/>
+                <ColumnDefinition Width="4*"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Redact OneDrive -->
+            
+            <StackPanel Grid.Row="4" Grid.RowSpan="1"
                     Grid.Column="1">
 
-            <StackPanel Orientation="Horizontal"
+                <StackPanel Orientation="Horizontal"
+                HorizontalAlignment="Center">
+                    <ToggleButton x:Name = "OneDriveToggle" 
+                    Checked = "OneDriveOn" 
+                    Unchecked = "OneDriveOff"
+                    FontSize="12"
+                    FontWeight="Medium">
+
+                        <TextBlock Text="Redact Commercial OneDrive"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"/>
+
+                        <ToggleButton.Style>
+                            <Style TargetType="{x:Type ToggleButton}">
+                                <Setter Property="TextElement.FontFamily"
+                            Value="Bahnschrift SemiBold Condensed"/>
+
+                                <Setter Property="Cursor"
+                                Value="Hand"/>
+
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver"
+                                    Value="True">
+                                        <Setter Property="Background"
+                                        Value="#3b4252"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ToggleButton.Style>
+
+                        <ToggleButton.Template>
+                            <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                <Border Width="100"
+                                Height="35"
+                                CornerRadius="16"
+                                Background="{TemplateBinding Background}">
+                                    <ContentPresenter VerticalAlignment="Center"
+                                    HorizontalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </ToggleButton.Template>
+
+                    </ToggleButton>
+
+                </StackPanel>
+
+            </StackPanel>
+
+            <!-- Redact Username -->
+
+            <StackPanel Grid.Row="4" Grid.RowSpan="1"
+                    Grid.Column="2">
+
+                <StackPanel Orientation="Horizontal"
                         Grid.Column="0" Grid.ColumnSpan="1"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Stretch">
-                        
-                <ToggleButton x:Name = "Username" 
+
+                    <ToggleButton x:Name = "Username" 
                               FontSize="12"
                               FontWeight="Medium"
                               Checked = "UsernameOn" 
                               Unchecked = "UsernameOff">
 
-                    <TextBlock Text="Remove Username"
+                        <TextBlock Text="Remove Username"
                                TextWrapping="Wrap"
                                TextAlignment="Center" Padding="20,0,20,0"/>
 
-                    <ToggleButton.Style>
-                        <Style TargetType="{x:Type ToggleButton}">
-                            
-                            <Setter Property="TextElement.FontFamily"
+                        <ToggleButton.Style>
+                            <Style TargetType="{x:Type ToggleButton}">
+
+                                <Setter Property="TextElement.FontFamily"
                             Value="Bahnschrift SemiBold SemiCondensed"/>
 
-                            <Setter Property="Cursor"
+                                <Setter Property="Cursor"
                                 Value="Hand"/>
 
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver"
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver"
                                      Value="True">
-                                    <Setter Property="Background"
+                                        <Setter Property="Background"
                                         Value="#3b4252"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ToggleButton.Style>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ToggleButton.Style>
 
-                    <ToggleButton.Template>
-                        <ControlTemplate TargetType="{x:Type ToggleButton}">
-                            <Border Width="100"
+                        <ToggleButton.Template>
+                            <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                <Border Width="100"
                                 Height="35"
                                 CornerRadius="16"
                                 Background="{TemplateBinding Background}">
-                                <ContentPresenter VerticalAlignment="Center"
+                                    <ContentPresenter VerticalAlignment="Center"
                                               HorizontalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </ToggleButton.Template>
+                                </Border>
+                            </ControlTemplate>
+                        </ToggleButton.Template>
 
-                </ToggleButton>
+                    </ToggleButton>
+
+                </StackPanel>
 
             </StackPanel>
 
-        </StackPanel>
+            <!-- Upload Toggle -->
+            
+            <StackPanel Grid.Row="4" Grid.RowSpan="1"
+                    Grid.Column="3">
 
-        <StackPanel Grid.Row="4" Grid.RowSpan="1"
-                    Grid.Column="2">
-
-            <StackPanel Orientation="Horizontal"
+                <StackPanel Orientation="Horizontal"
                 HorizontalAlignment="Center">
-                <ToggleButton x:Name = "UploadToggle" 
+                    <ToggleButton x:Name = "UploadToggle" 
                     Content = "Don't Upload"
                     Checked = "UploadOn" 
                     Unchecked = "UploadOff"
                     FontSize="14"
                     FontWeight="Medium">
 
-                    <ToggleButton.Style>
-                        <Style TargetType="{x:Type ToggleButton}">
-                            <Setter Property="TextElement.FontFamily"
+                        <ToggleButton.Style>
+                            <Style TargetType="{x:Type ToggleButton}">
+                                <Setter Property="TextElement.FontFamily"
                             Value="Bahnschrift SemiBold SemiCondensed"/>
-                            
-                            <Setter Property="Cursor"
+
+                                <Setter Property="Cursor"
                                 Value="Hand"/>
 
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver"
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver"
                                     Value="True">
-                                    <Setter Property="Background"
+                                        <Setter Property="Background"
                                         Value="#3b4252"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ToggleButton.Style>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ToggleButton.Style>
 
-                    <ToggleButton.Template>
-                        <ControlTemplate TargetType="{x:Type ToggleButton}">
-                            <Border Width="100"
+                        <ToggleButton.Template>
+                            <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                <Border Width="100"
                                 Height="35"
                                 CornerRadius="16"
                                 Background="{TemplateBinding Background}">
-                                <ContentPresenter VerticalAlignment="Center"
+                                    <ContentPresenter VerticalAlignment="Center"
                                     HorizontalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </ToggleButton.Template>
+                                </Border>
+                            </ControlTemplate>
+                        </ToggleButton.Template>
 
-                </ToggleButton>
+                    </ToggleButton>
+
+                </StackPanel>
 
             </StackPanel>
 
-        </StackPanel>
-        
-        <StackPanel Grid.Row="4" Grid.RowSpan="1"
-                    Grid.Column="3">
+            <!-- Debug Log -->
+            
+            <StackPanel Grid.Row="4" Grid.RowSpan="1"
+                    Grid.Column="4">
 
-            <StackPanel Orientation="Horizontal"
+                <StackPanel Orientation="Horizontal"
                 HorizontalAlignment="Center">
-                <ToggleButton x:Name = "OneDriveToggle" 
-                    Checked = "OneDriveOn" 
-                    Unchecked = "OneDriveOff"
-                    FontSize="12"
+                    
+                    <ToggleButton x:Name = "DebugLogToggle" 
+                    Checked = "DebugLogToggleOn" 
+                    Unchecked = "DebugLogToggleOff"
+                    FontSize="14"
                     FontWeight="Medium">
 
-                    <TextBlock Text="Redact Commercial OneDrive"
+                        <TextBlock Text="Debug Logging"
                                TextWrapping="Wrap"
                                TextAlignment="Center"/>
 
-                    <ToggleButton.Style>
-                        <Style TargetType="{x:Type ToggleButton}">
-                            <Setter Property="TextElement.FontFamily"
+                        <ToggleButton.Style>
+                            <Style TargetType="{x:Type ToggleButton}">
+                                <Setter Property="TextElement.FontFamily"
                             Value="Bahnschrift SemiBold Condensed"/>
-                            
-                            <Setter Property="Cursor"
+
+                                <Setter Property="Cursor"
                                 Value="Hand"/>
 
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver"
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver"
                                     Value="True">
-                                    <Setter Property="Background"
+                                        <Setter Property="Background"
                                         Value="#3b4252"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ToggleButton.Style>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ToggleButton.Style>
 
-                    <ToggleButton.Template>
-                        <ControlTemplate TargetType="{x:Type ToggleButton}">
-                            <Border Width="100"
+                        <ToggleButton.Template>
+                            <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                <Border Width="100"
                                 Height="35"
                                 CornerRadius="16"
                                 Background="{TemplateBinding Background}">
-                                <ContentPresenter VerticalAlignment="Center"
+                                    <ContentPresenter VerticalAlignment="Center"
                                     HorizontalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </ToggleButton.Template>
+                                </Border>
+                            </ControlTemplate>
+                        </ToggleButton.Template>
 
-                </ToggleButton>
+                    </ToggleButton>
+
+                </StackPanel>
 
             </StackPanel>
 
-        </StackPanel>
-
-
+        </Grid>
+        
     </Grid>
 
 </Page>

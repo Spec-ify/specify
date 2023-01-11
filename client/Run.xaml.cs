@@ -1,15 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Management;
-using System.Threading;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Threading;
-using System.Xml.Linq;
-using System.Diagnostics;
-using System.Security.AccessControl;
+﻿using System.Windows.Controls;
 
 namespace specify_client
 {

@@ -1,13 +1,12 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Management;
 using System.Text.RegularExpressions;
-using Microsoft.Win32;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using System.Linq;
-using System.Security.Cryptography.Xml;
 
 namespace specify_client.data;
 
@@ -119,8 +118,8 @@ public class Utils
                     ? (string)localeData[manifest.description.Substring(6, manifest.description.Length - 8)]["message"] : manifest.description,
                     version = manifest.version
                 };
-            } 
-            catch(NullReferenceException) 
+            }
+            catch (NullReferenceException)
             {
                 /*
                  * This handles a rare issues with the format between the manifest and locale
