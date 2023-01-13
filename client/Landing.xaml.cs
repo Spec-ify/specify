@@ -47,8 +47,8 @@ namespace specify_client
             }
 
             Frame.Navigate(new ProgramFinalized());
+
             this.Activate();
-            this.WindowState = System.Windows.WindowState.Normal;
             this.Topmost = false;
             this.Focus();
         }
@@ -63,7 +63,6 @@ namespace specify_client
             Frame.Navigate(new ProgramFinalizeNoUpload());
 
             this.Activate();
-            this.WindowState = WindowState.Normal;
             this.Topmost = false;
             this.Focus();
         }
@@ -79,7 +78,6 @@ namespace specify_client
             Frame.Navigate(new UploadFail());
 
             this.Activate();
-            this.WindowState = System.Windows.WindowState.Normal;
             this.Topmost = false;
             this.Focus();
         }
@@ -95,7 +93,6 @@ namespace specify_client
             Frame.Navigate(new ProgramFailed());
 
             this.Activate();
-            this.WindowState = System.Windows.WindowState.Normal;
             this.Topmost = false;
             this.Focus();
         }
