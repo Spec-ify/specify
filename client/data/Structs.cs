@@ -181,6 +181,7 @@ public class Monitor
     public string DedicatedMemory;
     public string MonitorModel;
     public string CurrentMode;
+    public string ConnectionType;
 }
 public class Browser
 {
