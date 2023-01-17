@@ -9,6 +9,10 @@
        Background="#232731"
        d:DesignHeight="400" d:DesignWidth="800">
 
+    <Page.Resources>
+        <FontFamily x:Key="AldoFont" >Fonts/AldotheApache.ttf#Aldo The Apache</FontFamily>
+    </Page.Resources>
+    
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="50*"/>
@@ -32,7 +36,7 @@
                     VerticalAlignment="Stretch">
             <TextBlock TextWrapping="Wrap" 
                            Text="Upload Failed" 
-                           FontFamily="Aldo the Apache" Foreground="White"
+                           FontFamily="{DynamicResource AldoFont}" Foreground="White"
                            HorizontalAlignment = "Center" 
                            VerticalAlignment = "Center" FontSize="48"/>
         </StackPanel>
@@ -64,7 +68,7 @@
                 <ToggleButton.Style>
                     <Style TargetType="{x:Type ToggleButton}">
                         <Setter Property="TextElement.FontFamily"
-                            Value="Fonts/AldoTheApache.ttf #Aldo The Apache"/>
+                            Value="{DynamicResource AldoFont}"/>
                         <Setter Property="Cursor"
                                 Value="Hand"/>
 
