@@ -185,7 +185,8 @@ public static partial class Cache
                 ProcessName = rawProcess.ProcessName,
                 ExePath = exePath,
                 Id = rawProcess.Id,
-                WorkingSet = rawProcess.WorkingSet64,
+                // convert from bytes to megabytes
+                WorkingSet = rawProcess.WorkingSet64 / 1000000,
                 CpuPercent = cpuPercent
             });
         }
