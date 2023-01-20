@@ -27,7 +27,7 @@ public static partial class Cache
             var TemperatureTask = GetTemps();
 
             Cpu = Utils.GetWmi("Win32_Processor",
-                "CurrentClockSpeed, Manufacturer, Name, SocketDesignation").First();
+                "CurrentClockSpeed, Manufacturer, Name, SocketDesignation, NumberOfEnabledCore, ThreadCount").First();
             Gpu = Utils.GetWmi("Win32_VideoController",
                 "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
                 + "CurrentRefreshRate, CurrentBitsPerPixel");
@@ -75,7 +75,7 @@ public static partial class Cache
         // If no data is received, stop before it excepts. Add error message?
         if (SMBiosObj == null)
         {
-            DebugLog.LogEvent("SMBios information not retrieved.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+            DebugLog.LogEvent($"SMBios information not retrieved.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
             Issues.Add("Hardware Data: Could not get SMBios info for RAM.");
             return null;
         }
@@ -172,7 +172,22 @@ public static partial class Cache
     }
 
     //MONITORS
-    private static string MonitorFriendlyName(Interop.LUID adapterId, uint targetId)
+    /*private static string MonitorFriendlyName(Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME deviceName)
+    {
+        /*Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME deviceName = new Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME();
+        deviceName.header.size = (uint)Marshal.SizeOf(typeof(Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME));
+        deviceName.header.adapterId = adapterId;
+        deviceName.header.id = targetId;
+        deviceName.header.type = Interop.DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+        int error = Interop.DisplayConfigGetDeviceInfo(ref deviceName);
+        if (error != Interop.ERROR_SUCCESS)
+        {
+            DebugLog.LogEvent($"Interop Failure in MonitorFriendlyName() {error}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            Issues.Add($"Interop failure during monitor data collection {error}");
+        }*/
+        /*return deviceName.monitorFriendlyDeviceName;
+    }*/
+    private static Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME GetDisplayDevice(Interop.LUID adapterId, uint targetId)
     {
         Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME deviceName = new Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME();
         deviceName.header.size = (uint)Marshal.SizeOf(typeof(Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME));
@@ -182,10 +197,10 @@ public static partial class Cache
         int error = Interop.DisplayConfigGetDeviceInfo(ref deviceName);
         if (error != Interop.ERROR_SUCCESS)
         {
-            DebugLog.LogEvent($"Interop Failure in GetMonitorInfo() {error}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            DebugLog.LogEvent($"Interop Failure in MonitorFriendlyName() {error}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
             Issues.Add($"Interop failure during monitor data collection {error}");
         }
-        return deviceName.monitorFriendlyDeviceName;
+        return deviceName;
     }
     private static List<Monitor> GetMonitorInfo()
     {
@@ -196,8 +211,10 @@ public static partial class Cache
         int error = Interop.GetDisplayConfigBufferSizes(Interop.QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
             out PathCount, out ModeCount);
         if (error != Interop.ERROR_SUCCESS)
-            throw new Win32Exception(error);
-
+        {
+            DebugLog.LogEvent($"Interop Failure in MonitorFriendlyName() {error}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            Issues.Add($"Interop failure during monitor data collection {error}");
+        }
         Interop.DISPLAYCONFIG_PATH_INFO[] DisplayPaths = new Interop.DISPLAYCONFIG_PATH_INFO[PathCount];
         Interop.DISPLAYCONFIG_MODE_INFO[] DisplayModes = new Interop.DISPLAYCONFIG_MODE_INFO[ModeCount];
         error = Interop.QueryDisplayConfig(Interop.QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
@@ -237,7 +254,13 @@ public static partial class Cache
                                     Monitor monitor = new();
 
                                     monitor.Name = adapterName;
-                                    monitor.MonitorModel = MonitorFriendlyName(DisplayModes[i].adapterId, DisplayModes[i].id);
+                                    var monitorInfo = GetDisplayDevice(DisplayModes[i].adapterId, DisplayModes[i].id);
+                                    monitor.MonitorModel = monitorInfo.monitorFriendlyDeviceName;
+
+                                    var cableType = monitorInfo.outputTechnology.ToString();
+                                    // snip "DISPLAYCONFIG_OUTPUT_TECHNOLOGY_" from the resulting string leaving just "HDMI" or "DISPLAYPORT_EXTERNAL", etc.
+                                    monitor.ConnectionType = cableType.Substring(32);
+
                                     // this value is given in bytes, so we convert to kilobytes, then convert those kilobytes to megabytes - arc
                                     var memory = dedicatedMemory / 1024 / 1024;
                                     monitor.DedicatedMemory = $"{memory} MB";
@@ -249,7 +272,7 @@ public static partial class Cache
                                     // ex: 1920 x 1080 @ 59.551 Hz
                                     // Active size specifies the active width (cx) and height (cy) of the video signal -arc
                                     mode += $"{targetMode.activeSize.cx} x {targetMode.activeSize.cy} @ " +
-                                        $"{targetMode.vSyncFreq.Numerator / (double)targetMode.vSyncFreq.Denominator} Hz";
+                                        $"{Math.Round(targetMode.vSyncFreq.Numerator / (double)targetMode.vSyncFreq.Denominator, 3)} Hz";
 
                                     monitor.CurrentMode = mode;
                                     monitors.Add(monitor);
