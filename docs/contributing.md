@@ -8,23 +8,23 @@
 
 The program is split into multiple files. Refer to [file-structure.md](/docs/file-structure.md), or the `tree of contents` below that links to its respective section.
 
-- client Folder
-    - data Folder
-        - Methods Folder
-            - BasicInfo.cs
-            - Hardware.cs
-            - Network.cs
-            - Security.cs
-            - System.cs
-        - Cache.cs
-        - Structs.cs
-        - Utils.cs
-    - Program.cs
-    - Settings.cs
-    - Progress.cs
-    - Monolith.cs
-    - DebugLog.cs
-    - Interop.cs
+- [client Folder](file-structure#client-folder)
+    - [data Folder](file-structure#data-folder)
+        - [Methods Folder](file-structure#methods-folder)
+            - [BasicInfo.cs](file-structure#basicinfocs)
+            - [Hardware.cs](file-structure#hardwarecs)
+            - [Network.cs](file-structure#networkcs)
+            - [Security.cs](file-structure#securitycs)
+            - [System.cs](file-structure#systemcs)
+        - [Cache.cs](file-structure#cachecs)
+        - [Structs.cs](file-structure#structscs)
+        - [Utils.cs](file-structure#utilscs)
+    - [Program.cs](file-structure#programcs)
+    - [Settings.cs](file-structure#settingscs)
+    - [Progress.cs](file-structure#progresscs)
+    - [Monolith.cs](file-structure#monolithcs)
+    - [DebugLog.cs](file-structure#debuglogcs)
+    - [Interop.cs](file-structure#interopcs)
 
 ### Pull Requests
 **Pull requests** should be in the format: 
