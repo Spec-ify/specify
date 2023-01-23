@@ -1,14 +1,30 @@
 # Contributing to Specify
 
-**Want to contribute to the Specify system? Read this file first.**
+**Want to contribute to Specify? Read this file first.**
 
 ## Things to note
 
 ### Code Structure
 
-The code is split into multiple files. However there are two main things you should note: **The Program files, and the Data files.**
+The program is split into multiple files.
 
-**The Program files,** which are located in the client folder, are the files that handle the [front-end](github.com/Spec-ify/specify/blob/main/client/Program.cs), [settings](github.com/Spec-ify/specify/blob/main/client/Settings.cs), [json exporting and uploading](github.com/Spec-ify/specify/blob/main/client/Monolith.cs), while **the Data files** , in the Data folder, are the ones that actually perform the specs collection.
+- client Folder
+    - data Folder
+        - Methods Folder
+            - BasicInfo.cs
+            - Hardware.cs
+            - Network.cs
+            - Security.cs
+            - System.cs
+        - Cache.cs
+        - Structs.cs
+        - Utils.cs
+        - Monolith.cs
+    - Program.cs
+    - Settings.cs
+    - Progress.cs
+    - DebugLog.cs
+    - Interop.cs
 
 ### Pull Requests
 **Pull requests** should be in the format: 
