@@ -185,7 +185,8 @@ public static partial class Cache
                 ProcessName = rawProcess.ProcessName,
                 ExePath = exePath,
                 Id = rawProcess.Id,
-                WorkingSet = rawProcess.WorkingSet64,
+                // convert from bytes to megabytes
+                WorkingSet = rawProcess.WorkingSet64 / 1000000,
                 CpuPercent = cpuPercent
             });
         }
@@ -555,24 +556,32 @@ public static partial class Cache
 
                     foreach (string dir in Directory.GetDirectories(string.Concat(UserPath, BrowserPath.Value)))
                     {
-                        var addonsFile = string.Concat(dir, "\\addons.json");
-                        if (!File.Exists(addonsFile)) continue;
-                        List<JToken> extensions = JObject.Parse(File.ReadAllText(addonsFile))["addons"].Children().ToList();
-                        Browser.BrowserProfile profile = new Browser.BrowserProfile()
+                        try
                         {
-                            name = new DirectoryInfo(dir).Name.Substring(8),
-                            Extensions = new List<Browser.Extension>()
-                        };
-
-                        foreach (JToken extension in extensions)
-                            profile.Extensions.Add(new Browser.Extension()
+                            var addonsFile = string.Concat(dir, "\\addons.json");
+                            if (!File.Exists(addonsFile)) continue;
+                            List<JToken> extensions = JObject.Parse(File.ReadAllText(addonsFile))["addons"].Children().ToList();
+                            Browser.BrowserProfile profile = new Browser.BrowserProfile()
                             {
-                                name = (string)extension["name"],
-                                description = (string)extension["description"],
-                                version = (string)extension["version"]
-                            });
+                                name = new DirectoryInfo(dir).Name.Substring(8),
+                                Extensions = new List<Browser.Extension>()
+                            };
 
-                        browser.Profiles.Add(profile);
+                            foreach (JToken extension in extensions)
+                                profile.Extensions.Add(new Browser.Extension()
+                                {
+                                    name = (string)extension["name"],
+                                    description = (string)extension["description"],
+                                    version = (string)extension["version"]
+                                });
+
+                            browser.Profiles.Add(profile);
+                        }
+                        catch (Exception e)
+                        {
+                            DebugLog.LogEvent($"Exception occurred in GetBrowserExtensions() during browser enumeration.", DebugLog.Region.System, DebugLog.EventType.ERROR);
+                            DebugLog.LogEvent($"{e}");
+                        }
                     }
 
                     Browsers.Add(browser);

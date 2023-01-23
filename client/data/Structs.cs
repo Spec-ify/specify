@@ -40,6 +40,7 @@ public class OutputProcess
     public string ProcessName;
     public string ExePath;
     public int Id;
+    // Although typically measured in bytes, this is in MB
     public long WorkingSet;
     public double CpuPercent;
 }
@@ -181,6 +182,7 @@ public class Monitor
     public string DedicatedMemory;
     public string MonitorModel;
     public string CurrentMode;
+    public string ConnectionType;
 }
 public class Browser
 {
