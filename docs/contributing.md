@@ -6,7 +6,7 @@
 
 ### Code Structure
 
-The program is split into multiple files.
+The program is split into multiple files. Refer to [file-structure.md](/docs/file-structure.md), or the `tree of contents` below that links to its respective section.
 
 - client Folder
     - data Folder
@@ -19,10 +19,10 @@ The program is split into multiple files.
         - Cache.cs
         - Structs.cs
         - Utils.cs
-        - Monolith.cs
     - Program.cs
     - Settings.cs
     - Progress.cs
+    - Monolith.cs
     - DebugLog.cs
     - Interop.cs
 
@@ -32,10 +32,10 @@ The program is split into multiple files.
 `(category/ies of change): summary of change`
 
 **For example:**
-- (feature): add bad registry values from gesp ([#8](github.com/Spec-ify/specify/pull/8)) 
-- (bugfix): filter appname nulls in installed apps ([#11](github.com/Spec-ify/specify/pull/11))
+- `(feature): add bad registry values from gesp` (#8)
+- `(bugfix): filter appname nulls in installed apps` (#11)
 
 ### Looking for something to do?
-- Check the issues tab for [Specify](https://github.com/Spec-ify/specify/issues) and [Specified](https://github.com/Spec-ify/specified/issues/) for open issues to close.
-- Suggest features to add to Specify and Specified [here](https://docs.google.com/forms/d/e/1FAIpQLScJBKtoi_ZV_PvK37nGaiYThpwc5TKVVfFFZtMLlgCUg8k7fg/viewform).
+- Check the issues tab for [Specify](github.com/Spec-ify/specify/issues) and [Specified](github.com/Spec-ify/specified/issues/) for open issues to close.
+- Suggest features to add to Specify and Specified [here](docs.google.com/forms/d/e/1FAIpQLScJBKtoi_ZV_PvK37nGaiYThpwc5TKVVfFFZtMLlgCUg8k7fg/viewform).
 - Hang out with us in the [r/techsupport Discord!](rtech.support/discord)
