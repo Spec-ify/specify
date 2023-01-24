@@ -135,7 +135,7 @@ public static partial class Cache
 
         foreach (var rawProcess in rawProcesses)
         {
-            var cpuPercent = -1.0; // TODO: make this actually work properly
+            var cpuPercent = 1.0; // TODO: make this actually work properly
             var exePath = "";
             /*try
             {
@@ -180,14 +180,28 @@ public static partial class Cache
                 Issues.Add($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})");
                 Console.WriteLine(e.GetBaseException());
             }
-            outputProcesses.Add(new OutputProcess
+            bool processExists = false;
+            foreach(var outputProcess in outputProcesses)
             {
-                ProcessName = rawProcess.ProcessName,
-                ExePath = exePath,
-                Id = rawProcess.Id,
-                WorkingSet = rawProcess.WorkingSet64,
-                CpuPercent = cpuPercent
-            });
+                if(outputProcess.ExePath.ToLower().Equals(exePath.ToLower()) && exePath != "SYSTEM")
+                {
+                    outputProcess.WorkingSet += rawProcess.WorkingSet64;
+                    outputProcess.CpuPercent += cpuPercent;
+                    processExists = true;
+                    break;
+                }
+            }
+            if (!processExists)
+            {
+                outputProcesses.Add(new OutputProcess
+                {
+                    ProcessName = rawProcess.ProcessName,
+                    ExePath = exePath,
+                    Id = rawProcess.Id,
+                    WorkingSet = rawProcess.WorkingSet64,
+                    CpuPercent = cpuPercent
+                });
+            }
         }
         DebugLog.LogEvent($"GetProcesses() completed. Total runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
         return outputProcesses;
