@@ -1,4 +1,4 @@
-﻿<Page x:Class="specify_client.ProgramFinalizeNoUpload"
+﻿<Page x:Class="specify_client.ProgramFinalized"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -10,48 +10,47 @@
        d:DesignHeight="400" d:DesignWidth="800">
 
     <Page.Resources>
-        <FontFamily x:Key="AldoFont" >Fonts/AldotheApache.ttf#Aldo The Apache</FontFamily>
+        <FontFamily x:Key="AldoFont" >/Frontend/Fonts/AldotheApache.ttf#Aldo The Apache</FontFamily>
     </Page.Resources>
-    
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="50"/>
+            <RowDefinition Height="50*"/>
             <RowDefinition Height="70*"/>
             <RowDefinition Height="35*"/>
             <RowDefinition Height="75*"/>
             <RowDefinition Height="25*"/>
-
-
         </Grid.RowDefinitions>
 
-        <Grid Grid.RowSpan="5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="160"/>
-                <ColumnDefinition Width="160"/>
-                <ColumnDefinition Width="160"/>
-                <ColumnDefinition Width="160"/>
-                <ColumnDefinition Width="160"/>
-            </Grid.ColumnDefinitions>
-        </Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="2" Grid.RowSpan="1">
+        <StackPanel Grid.Row="2" Grid.RowSpan="1"
+                    Grid.Column="1" Grid.ColumnSpan="3"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Stretch">
+            
             <TextBlock TextWrapping="Wrap" 
                            Text="Specify is done." 
-                           FontFamily="Aldo the Apache" Foreground="White"
-                           HorizontalAlignment = "Center" 
-                           VerticalAlignment = "Center" FontSize="48"/>
+                           FontFamily="{DynamicResource AldoFont}" Foreground="White"
+                           FontSize="48"/>
+            
         </StackPanel>
-        <StackPanel Grid.Row="3" Grid.RowSpan="1">
+        
+        <StackPanel Grid.Row="3" Grid.RowSpan="1"
+                    Grid.Column="0" Grid.ColumnSpan="5"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Stretch">
+            
             <TextBlock TextWrapping="Wrap" 
-                           Text="The result which is specify-specs.json is outputted into the same folder as the program." 
-                           FontFamily="Consolas" Foreground="White"
-                           HorizontalAlignment = "Center" 
-                           VerticalAlignment = "Center"/>
-            <TextBlock TextWrapping="Wrap" 
-                           Text="Please upload it manually to spec-ify.com or send over the file." 
-                           FontFamily="Consolas" Foreground="White"
-                           HorizontalAlignment = "Center" 
-                           VerticalAlignment = "Center"/>
+                           Text="Specify has uploaded the result to spec-ify.com, the link should be in your clipboard." 
+                           FontFamily="Consolas" Foreground="White"/>
+            
             <TextBlock TextWrapping="Wrap" 
                            HorizontalAlignment = "Center" 
                            VerticalAlignment = "Center"/>

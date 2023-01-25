@@ -10,7 +10,9 @@
         Background="#232731">
 
     <Page.Resources>
-        <FontFamily x:Key="AldoFont" >Fonts/AldotheApache.ttf#Aldo The Apache</FontFamily>
+        <ResourceDictionary>
+            <FontFamily x:Key="AldoFont" >Fonts/AldotheApache.ttf#Aldo The Apache</FontFamily>
+        </ResourceDictionary>
     </Page.Resources>
     
     <!-- Define the Grids -->

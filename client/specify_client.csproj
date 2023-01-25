@@ -97,7 +97,7 @@
     <Compile Include="Interop.cs" />
     <Compile Include="Monolith.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Frontend\ProgramFailed.xaml.cs">
+    <Compile Include="Frontend\EndScreen\ProgramFailed.xaml.cs">
       <DependentUpon>ProgramFailed.xaml</DependentUpon>
     </Compile>
     <Compile Include="Progress.cs" />
@@ -106,10 +106,10 @@
     <Compile Include="Frontend\Landing.xaml.cs">
       <DependentUpon>Landing.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Frontend\ProgramFinalized.xaml.cs">
+    <Compile Include="Frontend\EndScreen\ProgramFinalized.xaml.cs">
       <DependentUpon>ProgramFinalized.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Frontend\ProgramFinalizeNoUpload.xaml.cs">
+    <Compile Include="Frontend\EndScreen\ProgramFinalizeNoUpload.xaml.cs">
       <DependentUpon>ProgramFinalizeNoUpload.xaml</DependentUpon>
     </Compile>
     <Compile Include="Frontend\Run.xaml.cs">
@@ -118,7 +118,7 @@
     <Compile Include="Frontend\StartButtons.xaml.cs">
       <DependentUpon>StartButtons.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Frontend\UploadFail.xaml.cs">
+    <Compile Include="Frontend\EndScreen\UploadFail.xaml.cs">
       <DependentUpon>UploadFail.xaml</DependentUpon>
     </Compile>
     <Page Include="Frontend\Images\Images.xaml">
@@ -133,15 +133,15 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Frontend\ProgramFailed.xaml">
+    <Page Include="Frontend\EndScreen\ProgramFailed.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Frontend\ProgramFinalized.xaml">
+    <Page Include="Frontend\EndScreen\ProgramFinalized.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Frontend\ProgramFinalizeNoUpload.xaml">
+    <Page Include="Frontend\EndScreen\ProgramFinalizeNoUpload.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -153,7 +153,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Frontend\UploadFail.xaml">
+    <Page Include="Frontend\EndScreen\UploadFail.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

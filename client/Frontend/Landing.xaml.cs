@@ -7,7 +7,6 @@ using System.Windows.Threading;
 
 namespace specify_client
 {
-
     public partial class Landing : Window
     {
         public Landing()
@@ -28,16 +27,16 @@ namespace specify_client
         {
             Frame.Navigate(new StartButtons());
         }
+
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-
-            // Code from https://stackoverflow.com/a/10238715 
+            // Code from https://stackoverflow.com/a/10238715
             // and originally from http://softwareindexing.blogspot.com/2008/12/wpf-hyperlink-open-browser.html, thanks eandersson and Max! - K97i
 
             Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
             e.Handled = true;
-
         }
+
         public void ProgramFinalize()
         {
             if (!Dispatcher.CheckAccess())
@@ -52,6 +51,7 @@ namespace specify_client
             this.Topmost = false;
             this.Focus();
         }
+
         public void ProgramFinalizeNoUpload()
         {
             if (!Dispatcher.CheckAccess())
@@ -66,9 +66,9 @@ namespace specify_client
             this.Topmost = false;
             this.Focus();
         }
+
         public void UploadFailed()
         {
-
             if (!Dispatcher.CheckAccess())
             {
                 Dispatcher.BeginInvoke(new Action(UploadFailed));
@@ -81,9 +81,9 @@ namespace specify_client
             this.Topmost = false;
             this.Focus();
         }
+
         public void ProgramFail()
         {
-
             if (!Dispatcher.CheckAccess())
             {
                 Dispatcher.BeginInvoke(new Action(ProgramFail));
@@ -96,6 +96,5 @@ namespace specify_client
             this.Topmost = false;
             this.Focus();
         }
-
     }
 }

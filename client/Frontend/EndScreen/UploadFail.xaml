@@ -10,7 +10,7 @@
        d:DesignHeight="400" d:DesignWidth="800">
 
     <Page.Resources>
-        <FontFamily x:Key="AldoFont" >Fonts/AldotheApache.ttf#Aldo The Apache</FontFamily>
+        <FontFamily x:Key="AldoFont" >/Frontend/Fonts/AldotheApache.ttf#Aldo The Apache</FontFamily>
     </Page.Resources>
     
     <Grid>
