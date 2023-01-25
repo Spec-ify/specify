@@ -196,6 +196,11 @@ public static partial class Cache
         
         foreach (var process in midProcesses)
         {
+            if (process.ExePath.Equals("SYSTEM"))
+            {
+                outputProcesses.Add(process);
+                continue;
+            }
             // check if the process is already in outputProcess
             if (outputProcesses.Exists(e => e.ExePath.Equals(process.ExePath))) continue;
             
