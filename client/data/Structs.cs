@@ -38,6 +38,7 @@ public class Minidump
 public class OutputProcess
 {
     public string ProcessName;
+    public int Count;
     public string ExePath;
     public int Id;
     public long WorkingSet;
