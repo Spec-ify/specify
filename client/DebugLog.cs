@@ -12,6 +12,7 @@ namespace specify_client;
 public static class DebugLog
 {
     public const string LogFilePath = "specify_debug.log";
+    public static string LogText;
     private static bool Enabled = true;
     private static bool Started = false;
     private static DateTime LogStartTime { get; set; }
@@ -40,10 +41,11 @@ public static class DebugLog
     }
     public static async Task StartDebugLog()
     {
-        if(!Settings.EnableDebug)
+        /*if(!Settings.EnableDebug)
         {
             return;
-        }
+        }*/
+        LogText = "";
         LogStartTime = DateTime.Now;
         if(!File.Exists(LogFilePath))
         {
@@ -68,10 +70,10 @@ public static class DebugLog
     }
     public static async Task StopDebugLog()
     {
-        if(!Settings.EnableDebug)
+        /*if(!Settings.EnableDebug)
         {
             return;
-        }
+        }*/
         for(int i = 0; i < RegionCompleted.Length;i++)
         {
             if(!RegionCompleted[i])
@@ -89,10 +91,10 @@ public static class DebugLog
     }
     public static async Task StartRegion(Region region)
     {
-        if(!Settings.EnableDebug)
+        /*if(!Settings.EnableDebug)
         {
             return;
-        }
+        }*/
         if (RegionStarted[(int)region])
         {
             await LogEventAsync($"{region} Region already started.", region, EventType.ERROR);
@@ -104,10 +106,10 @@ public static class DebugLog
     }
     public static async Task EndRegion(Region region)
     {
-        if(!Settings.EnableDebug)
+        /*if(!Settings.EnableDebug)
         {
             return;
-        }
+        }*/
         if (RegionCompleted[(int)region])
         {
             await LogEventAsync($"Region already completed.", region, EventType.ERROR);
@@ -118,7 +120,7 @@ public static class DebugLog
     }
     public static async Task LogEventAsync(string message, Region region = Region.Misc, EventType type = EventType.INFORMATION)
     {
-        if(!Started || !Settings.EnableDebug)
+        if(!Started)
         {
             return;
         }
@@ -134,26 +136,34 @@ public static class DebugLog
         var currentTime = DateTime.Now;
         while (true)
         {
-            try
+            if (Settings.EnableDebug)
             {
-                await Task.Run(() => File.AppendAllText(LogFilePath, debugString));
+                try
+                {
+                    await Task.Run(() => File.AppendAllText(LogFilePath, debugString));
+                    break;
+                }
+                catch
+                {
+                    await Task.Delay(30);
+                    if ((DateTime.Now - currentTime).TotalSeconds > timeout)
+                    {
+                        Settings.EnableDebug = false;
+                        break;
+                    }
+                    continue;
+                }
+            }
+            else
+            {
                 break;
             }
-            catch
-            {
-                await Task.Delay(30);
-                if((DateTime.Now - currentTime).TotalSeconds > timeout)
-                {
-                    Settings.EnableDebug = false;
-                    return;
-                }
-                continue;
-            }
         }
+        LogText += debugString;
     }
     public static void LogEvent(string message, Region region = Region.Misc, EventType type = EventType.INFORMATION)
     {
-        if (!Started || !Enabled)
+        if (!Started)
         {
             return;
         }
@@ -169,22 +179,31 @@ public static class DebugLog
         var currentTime = DateTime.Now;
         while (true)
         {
-            try
+            
+            if (Settings.EnableDebug)
             {
-                File.AppendAllText(LogFilePath, debugString);
+                try
+                {
+                    File.AppendAllText(LogFilePath, debugString);
+                    break;
+                }
+                catch
+                {
+                    Thread.Sleep(30);
+                    if ((DateTime.Now - currentTime).TotalSeconds > timeout)
+                    {
+                        Settings.EnableDebug = false;
+                        break;
+                    }
+                    continue;
+                }
+            }
+            else
+            {
                 break;
             }
-            catch
-            {
-                Thread.Sleep(30);
-                if ((DateTime.Now - currentTime).TotalSeconds > timeout)
-                {
-                    Settings.EnableDebug = false;
-                    return;
-                }
-                continue;
-            }
         }
+        LogText += debugString;
 
     }
     private static string CreateDebugString(string message, Region region, EventType type)
@@ -241,6 +260,25 @@ public static class DebugLog
         {
             await LogEventAsync($"{property.Name}: {property.GetValue(null)}");
         }
+    }
+    public static async Task LogFatalError(string message, Region region)
+    {
+        await LogEventAsync("UNEXPECTED FATAL EXCEPTION", region, EventType.ERROR);
+        await LogEventAsync(message, region, EventType.ERROR);
+        while (true)
+        {
+            try
+            {
+                File.WriteAllText(LogFilePath, LogText);
+                break;
+            }
+            catch
+            {
+                Thread.Sleep(30);
+                continue;
+            }
+        }
+        System.Environment.Exit(-1);
     }
 }
 

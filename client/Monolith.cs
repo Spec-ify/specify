@@ -36,6 +36,7 @@ public class Monolith
     public MonolithNetwork Network;
     /** For issues with gathering the data itself. No diagnoses based on the info will be made in this program. */
     public List<string> Issues;
+    public string DebugLogText;
 
     public Monolith()
     {
@@ -64,11 +65,14 @@ public class Monolith
         // const string specifiedUploadEndpoint = "specified/upload.php";
         const string specifiedUploadDomain = "https://spec-ify.com";
         const string specifiedUploadEndpoint = "upload.php";
+
         
+
         Program.Time.Stop();
         var m = new Monolith();
         await DebugLog.LogEventAsync("Monolith created");
         m.Meta.GenerationDate = DateTime.Now;
+        m.DebugLogText = DebugLog.LogText;
         var serialized = m.Serialize();
         await DebugLog.LogEventAsync("Monolith serialized");
 
