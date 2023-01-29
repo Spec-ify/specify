@@ -18,6 +18,7 @@ namespace specify_client
 
             this.Focus();
         }
+
         private void CloseProgram(object sender, RoutedEventArgs e)
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>

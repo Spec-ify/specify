@@ -8,36 +8,33 @@
        Title="Specify - Running..."
        d:DesignHeight="400" d:DesignWidth="800">
 
-
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Images/images.xaml"/>
+                <ResourceDictionary Source="Images/images.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Page.Resources>
 
-
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="50*"/>
-            <RowDefinition Height="75*"/>
-            <RowDefinition Height="40*"/>
-            <RowDefinition Height="75*"/>
-
+            <RowDefinition Height="50*" />
+            <RowDefinition Height="75*" />
+            <RowDefinition Height="40*" />
+            <RowDefinition Height="75*" />
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Row="2" Grid.RowSpan="1"
                     Grid.Column="2" Grid.ColumnSpan="1"
-                    HorizontalAlignment = "Center" 
+                    HorizontalAlignment = "Center"
                     VerticalAlignment = "Center">
 
             <!--Source="/Images/sync-alt-inv.png"-->
@@ -61,31 +58,28 @@
                     </EventTrigger>
                 </Image.Triggers>
             </Image>
-
         </StackPanel>
-        
+
         <StackPanel Grid.Row="3" Grid.RowSpan="1"
                     Grid.Column="0" Grid.ColumnSpan="5">
-            
-            <TextBlock TextWrapping="Wrap" 
-                           Text="The longest this app is forced to work is 60 seconds." 
+
+            <TextBlock TextWrapping="Wrap"
+                           Text="The longest this app is forced to work is 60 seconds."
                            FontFamily="Consolas" Foreground="White"
-                           HorizontalAlignment = "Center" 
-                           VerticalAlignment = "Center"/>
-            
-            <TextBlock TextWrapping="Wrap" 
-                           Text="If this app takes longer than forever, let us know in the GitHub link in the corner!" 
+                           HorizontalAlignment = "Center"
+                           VerticalAlignment = "Center" />
+
+            <TextBlock TextWrapping="Wrap"
+                           Text="If this app takes longer than forever, let us know in the GitHub link in the corner!"
                            FontFamily="Consolas" Foreground="White"
-                           HorizontalAlignment = "Center" 
-                           VerticalAlignment = "Center"/>
-            
+                           HorizontalAlignment = "Center"
+                           VerticalAlignment = "Center" />
+
             <TextBlock x:Name="StatusText"
                            Text=""
                            FontFamily="Consolas" Foreground="White"
-                           HorizontalAlignment = "Center" 
-                           VerticalAlignment = "Center"/>
-            
+                           HorizontalAlignment = "Center"
+                           VerticalAlignment = "Center" />
         </StackPanel>
-
     </Grid>
 </Page>

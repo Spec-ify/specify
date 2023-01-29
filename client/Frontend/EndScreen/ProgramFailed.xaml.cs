@@ -13,6 +13,7 @@ namespace specify_client
         {
             InitializeComponent();
         }
+
         private void CloseProgram(object sender, RoutedEventArgs e)
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>

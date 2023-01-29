@@ -4,6 +4,5 @@
              xmlns:local="clr-namespace:specify_client"
              StartupUri="Frontend\Landing.xaml">
     <Application.Resources>
-         
     </Application.Resources>
 </Application>

@@ -65,7 +65,7 @@
         </StackPanel>
 
         <StackPanel Grid.Row="5" Grid.RowSpan="1"
-                    Grid.Column="0" Grid.ColumnSpan="5"
+                    Grid.Column="0" Grid.ColumnSpan="2"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Bottom">
 

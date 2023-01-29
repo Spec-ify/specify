@@ -1,10 +1,10 @@
 ﻿<Page x:Class="specify_client.ProgramFailed"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:local="clr-namespace:specify_client"
-      mc:Ignorable="d" 
+      mc:Ignorable="d"
       Background="#232731"
       Title="ProgramFailed"
       d:DesignHeight="400" d:DesignWidth="800">
@@ -15,51 +15,50 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="70*"/>
-            <RowDefinition Height="35*"/>
-            <RowDefinition Height="75*"/>
-            <RowDefinition Height="25*"/>
+            <RowDefinition Height="50" />
+            <RowDefinition Height="70*" />
+            <RowDefinition Height="35*" />
+            <RowDefinition Height="75*" />
+            <RowDefinition Height="25*" />
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Row="2" Grid.RowSpan="1"
                     Grid.Column="1" Grid.ColumnSpan="3"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Stretch">
-            
-            <TextBlock TextWrapping="Wrap" 
-                           Text="Program Crashed" 
+
+            <TextBlock TextWrapping="Wrap"
+                           Text="Program Crashed"
                            FontFamily="{DynamicResource AldoFont}" Foreground="White"
-                           HorizontalAlignment = "Center" 
-                           VerticalAlignment = "Center" FontSize="48"/>
-            
+                           HorizontalAlignment = "Center"
+                           VerticalAlignment = "Center" FontSize="48" />
         </StackPanel>
-        
+
         <StackPanel Grid.Row="3" Grid.RowSpan="1"
                     Grid.Column="0" Grid.ColumnSpan="5"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Stretch">
-            
-            <TextBlock TextWrapping="Wrap" 
-                           Text="The program somehow crashed. Outputted crash log specify-debug.log in the same folder as the program." 
-                           FontFamily="Consolas" Foreground="White"/>
 
-            <TextBlock TextWrapping="Wrap" 
-                           Text="Please make an issue in our GitHub in the corner, or send over the file to us. Thanks!" 
+            <TextBlock TextWrapping="Wrap"
+                           Text="The program somehow crashed. Outputted crash log specify-debug.log in the same folder as the program."
+                           FontFamily="Consolas" Foreground="White" />
+
+            <TextBlock TextWrapping="Wrap"
+                           Text="Please make an issue in our GitHub in the corner, or send over the file to us. Thanks!"
                            FontFamily="Consolas" Foreground="White"
-                           HorizontalAlignment = "Center"/>
+                           HorizontalAlignment = "Center" />
 
-            <TextBlock/>
+            <TextBlock />
 
-            <ToggleButton x:Name = "Username" 
+            <ToggleButton x:Name = "Username"
                               Content = "Close Program"
                               FontSize="12"
                               FontWeight="Medium"
@@ -68,15 +67,15 @@
                 <ToggleButton.Style>
                     <Style TargetType="{x:Type ToggleButton}">
                         <Setter Property="TextElement.FontFamily"
-                            Value="{DynamicResource AldoFont}"/>
+                            Value="{DynamicResource AldoFont}" />
                         <Setter Property="Cursor"
-                                Value="Hand"/>
+                                Value="Hand" />
 
                         <Style.Triggers>
                             <Trigger Property="IsMouseOver"
                                      Value="True">
                                 <Setter Property="Background"
-                                        Value="#3b4252"/>
+                                        Value="#3b4252" />
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -89,14 +88,11 @@
                                 CornerRadius="16"
                                 Background="{TemplateBinding Background}">
                             <ContentPresenter VerticalAlignment="Center"
-                                              HorizontalAlignment="Center"/>
+                                              HorizontalAlignment="Center" />
                         </Border>
                     </ControlTemplate>
                 </ToggleButton.Template>
-
             </ToggleButton>
-
         </StackPanel>
-
     </Grid>
 </Page>

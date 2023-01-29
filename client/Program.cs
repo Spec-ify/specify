@@ -42,7 +42,6 @@ public class Program
         }
     }
 
-
     public static void PrettyPrintObject(object o)
     {
         var jsonString = JsonConvert.SerializeObject(o, Formatting.Indented);

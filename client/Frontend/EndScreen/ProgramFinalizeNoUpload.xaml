@@ -12,51 +12,49 @@
     <Page.Resources>
         <FontFamily x:Key="AldoFont" >/Frontend/Fonts/AldotheApache.ttf#Aldo The Apache</FontFamily>
     </Page.Resources>
-    
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="70*"/>
-            <RowDefinition Height="35*"/>
-            <RowDefinition Height="75*"/>
-            <RowDefinition Height="25*"/>
-
-
+            <RowDefinition Height="50" />
+            <RowDefinition Height="70*" />
+            <RowDefinition Height="35*" />
+            <RowDefinition Height="75*" />
+            <RowDefinition Height="25*" />
         </Grid.RowDefinitions>
 
         <Grid Grid.RowSpan="5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="160"/>
-                <ColumnDefinition Width="160"/>
-                <ColumnDefinition Width="160"/>
-                <ColumnDefinition Width="160"/>
-                <ColumnDefinition Width="160"/>
+                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="160" />
             </Grid.ColumnDefinitions>
         </Grid>
 
         <StackPanel Grid.Row="2" Grid.RowSpan="1">
-            <TextBlock TextWrapping="Wrap" 
-                           Text="Specify is done." 
+            <TextBlock TextWrapping="Wrap"
+                           Text="Specify is done."
                            FontFamily="Aldo the Apache" Foreground="White"
-                           HorizontalAlignment = "Center" 
-                           VerticalAlignment = "Center" FontSize="48"/>
+                           HorizontalAlignment = "Center"
+                           VerticalAlignment = "Center" FontSize="48" />
         </StackPanel>
         <StackPanel Grid.Row="3" Grid.RowSpan="1">
-            <TextBlock TextWrapping="Wrap" 
-                           Text="The result which is specify-specs.json is outputted into the same folder as the program." 
+            <TextBlock TextWrapping="Wrap"
+                           Text="The result which is specify-specs.json is outputted into the same folder as the program."
                            FontFamily="Consolas" Foreground="White"
-                           HorizontalAlignment = "Center" 
-                           VerticalAlignment = "Center"/>
-            <TextBlock TextWrapping="Wrap" 
-                           Text="Please upload it manually to spec-ify.com or send over the file." 
+                           HorizontalAlignment = "Center"
+                           VerticalAlignment = "Center" />
+            <TextBlock TextWrapping="Wrap"
+                           Text="Please upload it manually to spec-ify.com or send over the file."
                            FontFamily="Consolas" Foreground="White"
-                           HorizontalAlignment = "Center" 
-                           VerticalAlignment = "Center"/>
-            <TextBlock TextWrapping="Wrap" 
-                           HorizontalAlignment = "Center" 
-                           VerticalAlignment = "Center"/>
-            
-            <ToggleButton x:Name = "Username" 
+                           HorizontalAlignment = "Center"
+                           VerticalAlignment = "Center" />
+            <TextBlock TextWrapping="Wrap"
+                           HorizontalAlignment = "Center"
+                           VerticalAlignment = "Center" />
+
+            <ToggleButton x:Name = "Username"
                               Content = "Close Program"
                               FontSize="12"
                               FontWeight="Medium"
@@ -65,15 +63,15 @@
                 <ToggleButton.Style>
                     <Style TargetType="{x:Type ToggleButton}">
                         <Setter Property="TextElement.FontFamily"
-                            Value="{DynamicResource AldoFont}"/>
+                            Value="{DynamicResource AldoFont}" />
                         <Setter Property="Cursor"
-                                Value="Hand"/>
+                                Value="Hand" />
 
                         <Style.Triggers>
                             <Trigger Property="IsMouseOver"
                                      Value="True">
                                 <Setter Property="Background"
-                                        Value="#3b4252"/>
+                                        Value="#3b4252" />
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -86,14 +84,11 @@
                                 CornerRadius="16"
                                 Background="{TemplateBinding Background}">
                             <ContentPresenter VerticalAlignment="Center"
-                                              HorizontalAlignment="Center"/>
+                                              HorizontalAlignment="Center" />
                         </Border>
                     </ControlTemplate>
                 </ToggleButton.Template>
-
             </ToggleButton>
-
         </StackPanel>
-
     </Grid>
 </Page>

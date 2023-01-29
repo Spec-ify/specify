@@ -3,20 +3,20 @@
 namespace specify_client
 {
     /*
-     
+
     Hey future programmers!
-    
+
     This is the code-behind of the program when its actually run. We'd actually like to add text where
     it displays its current task in Progress.cs. However, I wasted over 20 hours trying to figure out how.
 
-    I know the GUI stuff is completely trash and unoptimized, mostly because no one wanted to deal with 
-    XAML which is fair, so I had to deal with it. But if you'd like to try to convert all of this into 
+    I know the GUI stuff is completely trash and unoptimized, mostly because no one wanted to deal with
+    XAML which is fair, so I had to deal with it. But if you'd like to try to convert all of this into
     MVVM or structure the entire UI better, go ahead!
-    
+
     Still here? Alright, here's how I tried to do it:
 
-    Progress.cs contains all of the names of the task under item.Name, so I put that into a string, and 
-    sent it off to here in Run.xaml.cs in a method called StatusUpdate(string status). We can't willy nilly 
+    Progress.cs contains all of the names of the task under item.Name, so I put that into a string, and
+    sent it off to here in Run.xaml.cs in a method called StatusUpdate(string status). We can't willy nilly
     change the TextBlock (x:Name = "StatusText") because the entirety of the program past Progress.cs is
     in another thread, so you have to force feed the UI thread with StatusText.Text = status.
 
@@ -31,6 +31,7 @@ namespace specify_client
 
                                                                                         - K97i
     */
+
     public partial class Run : Page
     {
         public Run()
