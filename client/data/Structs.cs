@@ -38,9 +38,9 @@ public class Minidump
 public class OutputProcess
 {
     public string ProcessName;
+    public int Count;
     public string ExePath;
     public int Id;
-    // Although typically measured in bytes, this is in MB
     public long WorkingSet;
     public double CpuPercent;
 }
