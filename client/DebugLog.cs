@@ -1,14 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.IO;
 using System.Reflection;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace specify_client;
 
 public static class DebugLog
 {
     public const string LogFilePath = "specify_debug.log";
+    public static string LogText;
     private static bool Enabled = true;
     private static bool Started = false;
     private static DateTime LogStartTime { get; set; }
@@ -37,12 +41,13 @@ public static class DebugLog
     }
     public static async Task StartDebugLog()
     {
-        if (!Settings.EnableDebug)
+        /*if(!Settings.EnableDebug)
         {
             return;
-        }
+        }*/
+        LogText = "";
         LogStartTime = DateTime.Now;
-        if (!File.Exists(LogFilePath))
+        if(!File.Exists(LogFilePath))
         {
             File.Create(LogFilePath).Close();
         }
@@ -65,18 +70,18 @@ public static class DebugLog
     }
     public static async Task StopDebugLog()
     {
-        if (!Settings.EnableDebug)
+        /*if(!Settings.EnableDebug)
         {
             return;
-        }
-        for (int i = 0; i < RegionCompleted.Length; i++)
+        }*/
+        for(int i = 0; i < RegionCompleted.Length;i++)
         {
-            if (!RegionCompleted[i])
+            if(!RegionCompleted[i])
             {
                 await LogEventAsync($"Logging completed with unfinished region: {(Region)i}", (Region)i, EventType.ERROR);
             }
         }
-        for (int i = 0; i < ErrorCount.Length; i++)
+        for(int i = 0; i < ErrorCount.Length; i++)
         {
             await LogEventAsync($"{(Region)i} Data Errors: {ErrorCount[i]}");
         }
@@ -86,10 +91,10 @@ public static class DebugLog
     }
     public static async Task StartRegion(Region region)
     {
-        if (!Settings.EnableDebug)
+        /*if(!Settings.EnableDebug)
         {
             return;
-        }
+        }*/
         if (RegionStarted[(int)region])
         {
             await LogEventAsync($"{region} Region already started.", region, EventType.ERROR);
@@ -101,21 +106,21 @@ public static class DebugLog
     }
     public static async Task EndRegion(Region region)
     {
-        if (!Settings.EnableDebug)
+        /*if(!Settings.EnableDebug)
         {
             return;
-        }
+        }*/
         if (RegionCompleted[(int)region])
         {
             await LogEventAsync($"Region already completed.", region, EventType.ERROR);
             return;
         }
         await LogEventAsync($"{region} Region End - Total Time: {(DateTime.Now - RegionStartTime[(int)region]).TotalMilliseconds}ms", region, EventType.REGION_END);
-        RegionCompleted[(int)region] = true;
+        RegionCompleted[(int)region] = true;        
     }
     public static async Task LogEventAsync(string message, Region region = Region.Misc, EventType type = EventType.INFORMATION)
     {
-        if (!Started || !Settings.EnableDebug)
+        if(!Started)
         {
             return;
         }
@@ -131,26 +136,34 @@ public static class DebugLog
         var currentTime = DateTime.Now;
         while (true)
         {
-            try
+            if (Settings.EnableDebug)
             {
-                await Task.Run(() => File.AppendAllText(LogFilePath, debugString));
+                try
+                {
+                    await Task.Run(() => File.AppendAllText(LogFilePath, debugString));
+                    break;
+                }
+                catch
+                {
+                    await Task.Delay(30);
+                    if ((DateTime.Now - currentTime).TotalSeconds > timeout)
+                    {
+                        Settings.EnableDebug = false;
+                        break;
+                    }
+                    continue;
+                }
+            }
+            else
+            {
                 break;
             }
-            catch
-            {
-                await Task.Delay(30);
-                if ((DateTime.Now - currentTime).TotalSeconds > timeout)
-                {
-                    Settings.EnableDebug = false;
-                    return;
-                }
-                continue;
-            }
         }
+        LogText += debugString;
     }
     public static void LogEvent(string message, Region region = Region.Misc, EventType type = EventType.INFORMATION)
     {
-        if (!Started || !Enabled)
+        if (!Started)
         {
             return;
         }
@@ -166,22 +179,31 @@ public static class DebugLog
         var currentTime = DateTime.Now;
         while (true)
         {
-            try
+            
+            if (Settings.EnableDebug)
             {
-                File.AppendAllText(LogFilePath, debugString);
+                try
+                {
+                    File.AppendAllText(LogFilePath, debugString);
+                    break;
+                }
+                catch
+                {
+                    Thread.Sleep(30);
+                    if ((DateTime.Now - currentTime).TotalSeconds > timeout)
+                    {
+                        Settings.EnableDebug = false;
+                        break;
+                    }
+                    continue;
+                }
+            }
+            else
+            {
                 break;
             }
-            catch
-            {
-                Thread.Sleep(30);
-                if ((DateTime.Now - currentTime).TotalSeconds > timeout)
-                {
-                    Settings.EnableDebug = false;
-                    return;
-                }
-                continue;
-            }
         }
+        LogText += debugString;
 
     }
     private static string CreateDebugString(string message, Region region, EventType type)
@@ -191,31 +213,31 @@ public static class DebugLog
         {
             debugString += " ";
         }
-        switch (type)
+        switch(type)
         {
             case EventType.INFORMATION:
-                debugString += " [Information] ";
+                debugString +=          " [Information] ";
                 break;
             case EventType.WARNING:
-                debugString += "     [Warning] ";
+                debugString +=          "     [Warning] ";
                 break;
             case EventType.ERROR:
-                debugString += "       [ERROR] !!! ";
+                debugString +=          "       [ERROR] !!! ";
                 break;
             case EventType.REGION_START:
-                debugString += "[Region Start] --- ";
+                debugString +=          "[Region Start] --- ";
                 break;
             case EventType.REGION_END:
-                debugString += "  [Region End] --- ";
+                debugString +=          "  [Region End] --- ";
                 break;
         }
         debugString += message;
-        if (type == EventType.ERROR)
+        if(type == EventType.ERROR)
         {
             debugString += " !!! ";
             ErrorCount[(int)region]++;
         }
-        if (type == EventType.REGION_START || type == EventType.REGION_END)
+        if(type == EventType.REGION_START || type == EventType.REGION_END)
         {
             debugString += " --- ";
         }
@@ -234,10 +256,29 @@ public static class DebugLog
     private static async Task LogSettings()
     {
         var properties = typeof(Settings).GetProperties();
-        foreach (PropertyInfo property in properties)
+        foreach(PropertyInfo property in properties)
         {
             await LogEventAsync($"{property.Name}: {property.GetValue(null)}");
         }
+    }
+    public static async Task LogFatalError(string message, Region region)
+    {
+        await LogEventAsync("UNEXPECTED FATAL EXCEPTION", region, EventType.ERROR);
+        await LogEventAsync(message, region, EventType.ERROR);
+        while (true)
+        {
+            try
+            {
+                File.WriteAllText(LogFilePath, LogText);
+                break;
+            }
+            catch
+            {
+                Thread.Sleep(30);
+                continue;
+            }
+        }
+        System.Environment.Exit(-1);
     }
 }
 
