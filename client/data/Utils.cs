@@ -89,7 +89,7 @@ public class Utils
         {
             return (T)value;
         }
-        catch (InvalidCastException ex)
+        catch (InvalidCastException)
         {
             var msg = $"Registry item {regKey.Name}\\{path}\\{name} cast to {nameof(T)} failed";
             DebugLog.LogEvent(msg, DebugLog.Region.System, DebugLog.EventType.ERROR);

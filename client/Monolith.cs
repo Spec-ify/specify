@@ -61,12 +61,6 @@ public class Monolith
     public static async Task Specificialize()
     {
         await DebugLog.LogEventAsync("Serialization starts");
-        // const string specifiedUploadDomain = "http://localhost";
-        // const string specifiedUploadEndpoint = "specified/upload.php";
-        const string specifiedUploadDomain = "https://spec-ify.com";
-        const string specifiedUploadEndpoint = "upload.php";
-
-        
 
         Program.Time.Stop();
         var m = new Monolith();

@@ -5,96 +5,95 @@ using System.Windows.Controls;
 using System.Windows.Navigation;
 using System.Windows.Threading;
 
-namespace specify_client
+namespace specify_client;
+
+public partial class Landing : Window
 {
-    public partial class Landing : Window
+    public Landing()
     {
-        public Landing()
+        InitializeComponent();
+
+        DisplayButtons();
+
+        Application.Current.MainWindow = this;
+    }
+
+    public void RunApp()
+    {
+        Frame.Navigate(new Run());
+    }
+
+    private void DisplayButtons()
+    {
+        Frame.Navigate(new StartButtons());
+    }
+
+    private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+    {
+        // Code from https://stackoverflow.com/a/10238715
+        // and originally from http://softwareindexing.blogspot.com/2008/12/wpf-hyperlink-open-browser.html, thanks eandersson and Max! - K97i
+
+        Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
+        e.Handled = true;
+    }
+
+    public void ProgramFinalize()
+    {
+        if (!Dispatcher.CheckAccess())
         {
-            InitializeComponent();
-
-            DisplayButtons();
-
-            Application.Current.MainWindow = this;
+            Dispatcher.BeginInvoke(new Action(ProgramFinalize));
+            return;
         }
 
-        public void RunApp()
+        Frame.Navigate(new ProgramFinalized());
+
+        this.Activate();
+        this.Topmost = false;
+        this.Focus();
+    }
+
+    public void ProgramFinalizeNoUpload()
+    {
+        if (!Dispatcher.CheckAccess())
         {
-            Frame.Navigate(new Run());
+            Dispatcher.BeginInvoke(new Action(ProgramFinalizeNoUpload));
+            return;
         }
 
-        private void DisplayButtons()
+        Frame.Navigate(new ProgramFinalizeNoUpload());
+
+        this.Activate();
+        this.Topmost = false;
+        this.Focus();
+    }
+
+    public void UploadFailed()
+    {
+        if (!Dispatcher.CheckAccess())
         {
-            Frame.Navigate(new StartButtons());
+            Dispatcher.BeginInvoke(new Action(UploadFailed));
+            return;
         }
 
-        private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
-        {
-            // Code from https://stackoverflow.com/a/10238715
-            // and originally from http://softwareindexing.blogspot.com/2008/12/wpf-hyperlink-open-browser.html, thanks eandersson and Max! - K97i
+        Frame.Navigate(new UploadFail());
 
-            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
-            e.Handled = true;
+        this.Activate();
+        this.Topmost = false;
+        this.Focus();
+    }
+
+    public void ProgramFail()
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.BeginInvoke(new Action(ProgramFail));
+            return;
         }
 
-        public void ProgramFinalize()
-        {
-            if (!Dispatcher.CheckAccess())
-            {
-                Dispatcher.BeginInvoke(new Action(ProgramFinalize));
-                return;
-            }
+        Frame.Navigate(new ProgramFailed());
 
-            Frame.Navigate(new ProgramFinalized());
-
-            this.Activate();
-            this.Topmost = false;
-            this.Focus();
-        }
-
-        public void ProgramFinalizeNoUpload()
-        {
-            if (!Dispatcher.CheckAccess())
-            {
-                Dispatcher.BeginInvoke(new Action(ProgramFinalizeNoUpload));
-                return;
-            }
-
-            Frame.Navigate(new ProgramFinalizeNoUpload());
-
-            this.Activate();
-            this.Topmost = false;
-            this.Focus();
-        }
-
-        public void UploadFailed()
-        {
-            if (!Dispatcher.CheckAccess())
-            {
-                Dispatcher.BeginInvoke(new Action(UploadFailed));
-                return;
-            }
-
-            Frame.Navigate(new UploadFail());
-
-            this.Activate();
-            this.Topmost = false;
-            this.Focus();
-        }
-
-        public void ProgramFail()
-        {
-            if (!Dispatcher.CheckAccess())
-            {
-                Dispatcher.BeginInvoke(new Action(ProgramFail));
-                return;
-            }
-
-            Frame.Navigate(new ProgramFailed());
-
-            this.Activate();
-            this.Topmost = false;
-            this.Focus();
-        }
+        this.Activate();
+        this.Topmost = false;
+        this.Focus();
     }
 }

@@ -296,7 +296,7 @@ public static partial class Cache
         return InstalledApps;
     }
 
-    public static async System.Threading.Tasks.Task<StartupTask> CreateStartupTask(string appName, string? imagePath)
+    public static async System.Threading.Tasks.Task<StartupTask> CreateStartupTask(string appName, string imagePath)
     {
         StartupTask startupTask = new();
         startupTask.AppName = appName;
