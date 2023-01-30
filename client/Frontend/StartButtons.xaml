@@ -72,7 +72,7 @@
                     VerticalAlignment="Stretch">
 
             <Button x:Name = "StartButton"
-                              Content = "Start App"
+                              Content = "Start"
                               FontSize="16"
                               FontWeight="Medium"
                               Click="StartAction"
