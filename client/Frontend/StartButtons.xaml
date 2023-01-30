@@ -136,7 +136,7 @@
                     FontSize="12"
                     FontWeight="Medium">
 
-                        <TextBlock Text="Redact Commercial OneDrive"
+                        <TextBlock Text="Remove Commercial OneDrive Name"
                                TextWrapping="Wrap"
                                TextAlignment="Center" />
 
