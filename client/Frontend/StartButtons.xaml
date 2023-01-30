@@ -58,7 +58,7 @@
             </StackPanel>
 
             <TextBlock TextWrapping="Wrap"
-                           Text="It does not collect any private information other than your username, which you can redact."
+                           Text="It does not collect any private information."
                            FontFamily="Consolas" Foreground="White"
                            HorizontalAlignment = "Center"
                            VerticalAlignment = "Bottom" />
@@ -136,7 +136,7 @@
                     FontSize="12"
                     FontWeight="Medium">
 
-                        <TextBlock Text="Redact Commercial OneDrive"
+                        <TextBlock Text="Remove Commercial OneDrive Name"
                                TextWrapping="Wrap"
                                TextAlignment="Center" />
 
