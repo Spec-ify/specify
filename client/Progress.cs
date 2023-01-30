@@ -74,6 +74,7 @@ public class ProgressList
             await item.Action();
             item.Status = ProgressType.Complete;
         });
+        t.IsBackground = true;
         if (key.Equals(Specificializing)) t.SetApartmentState(ApartmentState.STA);
         t.Start();
     }

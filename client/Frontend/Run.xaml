@@ -64,16 +64,32 @@
                     Grid.Column="0" Grid.ColumnSpan="5">
 
             <TextBlock TextWrapping="Wrap"
-                           Text="The longest this app is forced to work is 60 seconds."
+                           Text="The longest this should take is 60 seconds."
                            FontFamily="Consolas" Foreground="White"
                            HorizontalAlignment = "Center"
                            VerticalAlignment = "Center" />
 
             <TextBlock TextWrapping="Wrap"
-                           Text="If this app takes longer than forever, let us know in the GitHub link in the corner!"
-                           FontFamily="Consolas" Foreground="White"
-                           HorizontalAlignment = "Center"
-                           VerticalAlignment = "Center" />
+                       FontFamily="Consolas" Foreground="White"
+                       HorizontalAlignment = "Center"
+                       VerticalAlignment = "Center">
+                If this app takes longer than forever, let us know on&#32;
+                <Hyperlink NavigateUri="https://github.com/Spec-ify/specify/issues"
+                           RequestNavigate="Hyperlink_RequestNavigate">
+
+                    <Hyperlink.Style>
+
+                        <Style TargetType="Hyperlink"
+                               BasedOn="{StaticResource {x:Type Hyperlink}}">
+
+                            <Setter Property="Foreground"
+                                    Value="White" />
+                        </Style>
+                    </Hyperlink.Style>
+
+                    GitHub
+                </Hyperlink>!
+            </TextBlock>
 
             <TextBlock x:Name="StatusText"
                            Text=""

@@ -58,7 +58,7 @@
             </StackPanel>
 
             <TextBlock TextWrapping="Wrap"
-                           Text="It does not collect any private information other than your username, which you can redact."
+                           Text="It does not collect any private information."
                            FontFamily="Consolas" Foreground="White"
                            HorizontalAlignment = "Center"
                            VerticalAlignment = "Bottom" />
@@ -72,7 +72,7 @@
                     VerticalAlignment="Stretch">
 
             <Button x:Name = "StartButton"
-                              Content = "Start App"
+                              Content = "Start"
                               FontSize="16"
                               FontWeight="Medium"
                               Click="StartAction"
