@@ -132,13 +132,11 @@ public static partial class Cache
         DateTime start = DateTime.Now;
         DebugLog.LogEvent("GetProcesses() started", DebugLog.Region.System);
         var outputProcesses = new List<OutputProcess>();
-        var midProcesses = new List<OutputProcess>();
         var rawProcesses = Process.GetProcesses();
 
         foreach (var rawProcess in rawProcesses)
         {
             var cpuPercent = -1.0; // TODO: make this actually work properly
-            var count = 1;
             var exePath = "";
             /*try
             {
@@ -184,34 +182,16 @@ public static partial class Cache
                 Console.WriteLine(e.GetBaseException());
             }
 
-            midProcesses.Add(new OutputProcess
+            outputProcesses.Add(new OutputProcess
             {
                 ProcessName = rawProcess.ProcessName,
-                Count = 1,
                 ExePath = exePath,
                 Id = rawProcess.Id,
                 WorkingSet = rawProcess.WorkingSet64,
                 CpuPercent = cpuPercent
             });
         }
-        
-        foreach (var process in midProcesses)
-        {
-            if (process.ExePath.Equals("SYSTEM"))
-            {
-                outputProcesses.Add(process);
-                continue;
-            }
-            // check if the process is already in outputProcess
-            if (outputProcesses.Exists(e => e.ExePath.Equals(process.ExePath))) continue;
-            
-            var others = midProcesses.Where(e => e.ExePath.Equals(process.ExePath)).ToList();
-            process.Count = others.Count();
-            process.WorkingSet = others.Select(e => e.WorkingSet).Sum();
-            process.CpuPercent = others.Select(e => e.CpuPercent).Sum();
-            outputProcesses.Add(process);
-        }
-        
+
         DebugLog.LogEvent($"GetProcesses() completed. Total runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
         return outputProcesses;
     }
