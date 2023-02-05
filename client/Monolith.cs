@@ -72,12 +72,6 @@ public class Monolith
         var serialized = m.Serialize();
         await DebugLog.LogEventAsync("Monolith serialized");
 
-        if (Settings.RedactUsername)
-        {
-            serialized = serialized.Replace(Cache.Username, "[REDACTED]");
-            await DebugLog.LogEventAsync("Username Redacted from report");
-        }
-
         if (Settings.RedactOneDriveCommercial)
         {
             try
@@ -95,6 +89,12 @@ public class Monolith
                 return;
             }
             await DebugLog.LogEventAsync("Commercial OneDrive label redacted from report");
+        }
+
+        if (Settings.RedactUsername)
+        {
+            serialized = serialized.Replace(Cache.Username, "[REDACTED]");
+            await DebugLog.LogEventAsync("Username Redacted from report");
         }
 
         if (Settings.DontUpload)
