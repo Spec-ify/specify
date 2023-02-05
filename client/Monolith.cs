@@ -137,6 +137,8 @@ public class Monolith
 
         t.Join();
 
+        ProgramDone(0);
+
         // Program ends here.
         await DebugLog.StopDebugLog();
     }
