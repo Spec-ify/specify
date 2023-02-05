@@ -19,11 +19,13 @@ namespace specify_client;
 /**
  * The big structure of all the things
  */
+
 [Serializable]
 public class Monolith
 {
     // it will say these are never used, but they are serialized
     public string Version;
+
     public MonolithMeta Meta;
     public MonolithBasicInfo BasicInfo;
 
@@ -83,7 +85,6 @@ public class Monolith
                 var stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
                 stringToRedact = stringToRedact.Replace(@"\", @"\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
                 serialized = serialized.Replace(stringToRedact, "[REDACTED]");
-
             }
             catch (Exception e)
             {
@@ -130,7 +131,6 @@ public class Monolith
         {
             Clipboard.SetText(url);
             Process.Start(url);
-            ProgramDone(0);
         });
         t.SetApartmentState(ApartmentState.STA);
         t.Start();
@@ -177,8 +177,6 @@ public class Monolith
             await DebugLog.LogEventAsync($"{ex}");
             return null;
         }
-
-
     }
 
     private static void CacheError(object thing)
@@ -190,7 +188,6 @@ public class Monolith
     {
         switch (noUpload)
         {
-
             case 0:
                 App.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
@@ -223,9 +220,7 @@ public class Monolith
                 }));
                 break;
         }
-
     }
-
 
     public struct MonolithMeta
     {
@@ -349,10 +344,8 @@ public class Monolith
         public string DefaultBrowser;
         public IDictionary PageFile;
 
-
         public MonolithSystem()
         {
-
             UserVariables = Cache.UserVariables;
             SystemVariables = Cache.SystemVariables;
             RunningProcesses = Cache.RunningProcesses;
