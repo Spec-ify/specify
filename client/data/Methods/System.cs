@@ -206,66 +206,87 @@ public static partial class Cache
         RegistryKey key;
 
         // Current User
-        key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
-        foreach (String keyName in key.GetSubKeyNames())
+        try
         {
-            RegistryKey subkey = key.OpenSubKey(keyName);
-            appName = subkey.GetValue("DisplayName") as string;
-            appVersion = subkey.GetValue("DisplayVersion") as string;
-            appDate = subkey.GetValue("InstallDate") as string;
-
-            if (appName != null)
+            key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
+            foreach (String keyName in key.GetSubKeyNames())
             {
-                InstalledApps.Add(
-                    new InstalledApp()
-                    {
-                        Name = appName,
-                        Version = appVersion,
-                        InstallDate = appDate
-                    });
+                RegistryKey subkey = key.OpenSubKey(keyName);
+                appName = subkey.GetValue("DisplayName") as string;
+                appVersion = subkey.GetValue("DisplayVersion") as string;
+                appDate = subkey.GetValue("InstallDate") as string;
+
+                if (appName != null)
+                {
+                    InstalledApps.Add(
+                        new InstalledApp()
+                        {
+                            Name = appName,
+                            Version = appVersion,
+                            InstallDate = appDate
+                        });
+                }
             }
+        }
+        catch (NullReferenceException)
+        {
+            DebugLog.LogEvent(@"Registry Read Error @ HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", DebugLog.Region.System, DebugLog.EventType.WARNING);
         }
 
         // Local Machine 32
-        key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
-        foreach (String keyName in key.GetSubKeyNames())
+        try
         {
-            RegistryKey subkey = key.OpenSubKey(keyName);
-            appName = subkey.GetValue("DisplayName") as string;
-            appVersion = subkey.GetValue("DisplayVersion") as string;
-            appDate = subkey.GetValue("InstallDate") as string;
-
-            if (appName != null)
+            key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
+            foreach (String keyName in key.GetSubKeyNames())
             {
-                InstalledApps.Add(
-                    new InstalledApp()
-                    {
-                        Name = appName,
-                        Version = appVersion,
-                        InstallDate = appDate
-                    });
+                RegistryKey subkey = key.OpenSubKey(keyName);
+                appName = subkey.GetValue("DisplayName") as string;
+                appVersion = subkey.GetValue("DisplayVersion") as string;
+                appDate = subkey.GetValue("InstallDate") as string;
+
+                if (appName != null)
+                {
+                    InstalledApps.Add(
+                        new InstalledApp()
+                        {
+                            Name = appName,
+                            Version = appVersion,
+                            InstallDate = appDate
+                        });
+                }
             }
+        }
+        catch (NullReferenceException)
+        {
+            DebugLog.LogEvent(@"Registry Read Error @ HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ninstall", DebugLog.Region.System, DebugLog.EventType.WARNING);
         }
 
         // Local Machine 64
-        key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall");
-        foreach (String keyName in key.GetSubKeyNames())
+        try
         {
-            RegistryKey subkey = key.OpenSubKey(keyName);
-            appName = subkey.GetValue("DisplayName") as string;
-            appVersion = subkey.GetValue("DisplayVersion") as string;
-            appDate = subkey.GetValue("InstallDate") as string;
-
-            if (appName != null)
+            key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall");
+            foreach (String keyName in key.GetSubKeyNames())
             {
-                InstalledApps.Add(
-                    new InstalledApp()
-                    {
-                        Name = appName,
-                        Version = appVersion,
-                        InstallDate = appDate
-                    });
+                RegistryKey subkey = key.OpenSubKey(keyName);
+                appName = subkey.GetValue("DisplayName") as string;
+                appVersion = subkey.GetValue("DisplayVersion") as string;
+                appDate = subkey.GetValue("InstallDate") as string;
+
+                if (appName != null)
+                {
+                    InstalledApps.Add(
+                        new InstalledApp()
+                        {
+                            Name = appName,
+                            Version = appVersion,
+                            InstallDate = appDate
+                        });
+                }
             }
+        }
+        catch (NullReferenceException)
+        {
+            DebugLog.LogEvent(@"Registry Read Error @ KKLM\SOFTWARE\Wow6432NodeMicrosoft\Windows\CurrentVersion\Uninstall", DebugLog.Region.System, DebugLog.EventType.WARNING);
         }
 
         return InstalledApps;
