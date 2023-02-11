@@ -31,43 +31,59 @@ public static class Interop
     {
         public uint state;
         public uint localAddr;
+
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public byte[] localPort;
+
         public uint remoteAddr;
+
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public byte[] remotePort;
+
         public uint owningPid;
     }
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct MIB_TCPTABLE_OWNER_PID
     {
         public uint dwNumEntries;
+
         [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.Struct, SizeConst = 1)]
         public MIB_TCPROW_OWNER_PID[] table;
     }
+
     [StructLayout(LayoutKind.Sequential)]
     public struct MIB_TCP6ROW_OWNER_PID
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public byte[] localAddr;
+
         public uint localScopeId;
+
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public byte[] localPort;
+
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public byte[] remoteAddr;
+
         public uint remoteScopeId;
+
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public byte[] remotePort;
+
         public uint state;
         public uint owningPid;
     }
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct MIB_TCP6TABLE_OWNER_PID
     {
         public uint dwNumEntries;
+
         [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.Struct, SizeConst = 1)]
         public MIB_TCP6ROW_OWNER_PID[] table;
     }
+
     internal enum TCP_TABLE_CLASS
     {
         TCP_TABLE_BASIC_LISTENER,
@@ -262,6 +278,7 @@ public static class Interop
     {
         [FieldOffset(0)]
         public DISPLAYCONFIG_TARGET_MODE targetMode;
+
         [FieldOffset(0)]
         public DISPLAYCONFIG_SOURCE_MODE sourceMode;
     }
@@ -299,8 +316,10 @@ public static class Interop
         public ushort edidManufactureId;
         public ushort edidProductCodeId;
         public uint connectorInstance;
+
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
         public string monitorFriendlyDeviceName;
+
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
         public string monitorDevicePath;
     }

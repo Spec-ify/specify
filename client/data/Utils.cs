@@ -15,6 +15,7 @@ namespace specify_client.data;
  * Collection of utility functions for data gathering
  * </summary>
  */
+
 public class Utils
 {
     /**
@@ -23,6 +24,7 @@ public class Utils
      * </summary>
      * <seealso cref="GetWmiObj"/>
      */
+
     public static List<Dictionary<string, object>> GetWmi(string cls, string selected = "*", string ns = @"root\cimv2")
     {
         var collection = GetWmiObj(cls, selected, ns);
@@ -52,6 +54,7 @@ public class Utils
      * </remarks>
      * <seealso cref="GetWmi"/>
      */
+
     public static ManagementObjectCollection GetWmiObj(string cls, string selected = "*", string ns = @"root\cimv2")
     {
         var scope = new ManagementScope(ns);
@@ -70,6 +73,7 @@ public class Utils
      * </a></p>
      * </summary>
      */
+
     public static string CimToIsoDate(string cim)
     {
         return DateTimeToIsoDate(ManagementDateTimeConverter.ToDateTime(cim));
@@ -97,6 +101,7 @@ public class Utils
             return def;
         }
     }
+
     public static Browser.Extension ParseChromiumExtension(string path)
     {
         try

@@ -40,7 +40,6 @@ public static partial class Cache
                     DebugTasks.Add(DebugLog.LogEventAsync("OneDriveCommercial information retrieved.", region));
                     ODFound = true;
                 }
-
             }
             finally
             {
@@ -217,7 +216,6 @@ public static partial class Cache
 
             if (appName != null)
             {
-
                 InstalledApps.Add(
                     new InstalledApp()
                     {
@@ -239,7 +237,6 @@ public static partial class Cache
 
             if (appName != null)
             {
-
                 InstalledApps.Add(
                     new InstalledApp()
                     {
@@ -261,7 +258,6 @@ public static partial class Cache
 
             if (appName != null)
             {
-
                 InstalledApps.Add(
                     new InstalledApp()
                     {
@@ -270,7 +266,6 @@ public static partial class Cache
                         InstallDate = appDate
                     });
             }
-
         }
 
         return InstalledApps;
@@ -303,6 +298,7 @@ public static partial class Cache
 
         return res;
     }
+
     // Returns startup tasks from the following locations:
     // 1: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
     // 2: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
@@ -424,6 +420,7 @@ public static partial class Cache
 
         return res;
     }
+
     private static bool? GetStaticCoreCount()
     {
         string output = string.Empty;
@@ -448,6 +445,7 @@ public static partial class Cache
             return output.Contains("numproc");
         }
     }
+
     private static int CountMinidumps()
     {
         const string dumpPath = @"C:\Windows\Minidump";
@@ -468,6 +466,7 @@ public static partial class Cache
         }
         return count;
     }
+
     private static List<IRegistryValue> RegistryCheck()
     {
         try
@@ -524,9 +523,7 @@ public static partial class Cache
             DebugLog.LogEvent($"{ex}");
             return new List<IRegistryValue>();
         }
-
     }
-
 
     private static List<Browser> GetBrowserExtensions()
     {
@@ -716,6 +713,4 @@ public static partial class Cache
         DebugLog.LogEvent($"GetBrowserExtensions() completed. Total runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
         return Browsers;
     }
-
-
 }

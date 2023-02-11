@@ -35,6 +35,7 @@ public class ProgressStatus
 /**
  * Things for progress, will be called by the GUI
  */
+
 public class ProgressList
 {
     public Dictionary<string, ProgressStatus> Items { get; set; }
@@ -146,6 +147,7 @@ public class ProgressList
     /**
      * From https://stackoverflow.com/a/8946847 and a comment
      */
+
     public static void ClearCurrentConsoleLine()
     {
         var currentLineCursor = Console.CursorTop;
