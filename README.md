@@ -33,6 +33,9 @@ This snapshot lives as a .json file in the webserver's file architecture so **Sp
 This JSON file has an expiration date of 24 hours, after which it is deleted automatically.
 This does mean that your snapshot, should you want to revisit it, will potentially have to be re-ran.
 
+If prompted, **Specify** will upload your recent **Minidumps** to our server, for others to analyze.
+These are also automatically deleted after 24 hours.
+
 No information is otherwise kept in storage, and no **cookies** are set by **Specified** of any form.
 
 
