@@ -481,7 +481,7 @@ public static partial class Cache
         {
             FileStream dumpStream = new FileStream(@".\dumps.zip", FileMode.Open);
 
-            form.Add(new StreamContent(dumpStream), "file", "file");
+            form.Add(new StreamContent(dumpStream), "file", "file.zip");
 
             try
             {
