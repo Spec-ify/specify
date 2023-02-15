@@ -19,16 +19,14 @@ jobs:
           msbuild-architecture: x64
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
-      - name: Go to client folder
-        run: cd client
       - run: pwd
       - run: ls
       - name: Install dependencies
-        run: msbuild specify_client.csproj -t:restore
+        run: msbuild client\specify_client.csproj -t:restore
       - name: Build
-        run: msbuild specify_client.csproj -property:Configuration=Release
+        run: msbuild client\specify_client.csproj -property:Configuration=Release
       - name: Upload build
         uses: actions/upload-artifact@v3.1.2
         with:
           name: specify_client_commit
-          path: bin\Release\specify_client.exe
+          path: client\bin\Release\specify_client.exe
