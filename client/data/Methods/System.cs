@@ -439,7 +439,7 @@ public static partial class Cache
     {
         DateTime start = DateTime.Now;
         KeyValuePair<bool, string> result = new KeyValuePair<bool, string>(false, null);
-        const string specifiedDumpDestination = "https://dumpupload.spec-ify.com/";
+        const string specifiedDumpDestination = "https://dumpload.spec-ify.com/";
         const string dumpDir = @"C:\Windows\Minidump";
 
         if (!Directory.Exists(dumpDir))
