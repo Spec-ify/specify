@@ -454,7 +454,7 @@ public static partial class Cache
         if (dumps.Length == 0)
             return result;
 
-        if (MessageBox.Show("Would you like to upload your memory dumps with your specs report?", "Memory dumps detected", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
+        if (MessageBox.Show("Would you like to upload your BSOD minidumps with your specs report?", "Minidumps detected", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
             return result;
 
         Directory.CreateDirectory(@".\dumps");
