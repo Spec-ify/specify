@@ -40,7 +40,6 @@ public static partial class Cache
                     DebugTasks.Add(DebugLog.LogEventAsync("OneDriveCommercial information retrieved.", region));
                     ODFound = true;
                 }
-
             }
             finally
             {
@@ -207,70 +206,87 @@ public static partial class Cache
         RegistryKey key;
 
         // Current User
-        key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
-        foreach (String keyName in key.GetSubKeyNames())
+        try
         {
-            RegistryKey subkey = key.OpenSubKey(keyName);
-            appName = subkey.GetValue("DisplayName") as string;
-            appVersion = subkey.GetValue("DisplayVersion") as string;
-            appDate = subkey.GetValue("InstallDate") as string;
-
-            if (appName != null)
+            key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
+            foreach (String keyName in key.GetSubKeyNames())
             {
+                RegistryKey subkey = key.OpenSubKey(keyName);
+                appName = subkey.GetValue("DisplayName") as string;
+                appVersion = subkey.GetValue("DisplayVersion") as string;
+                appDate = subkey.GetValue("InstallDate") as string;
 
-                InstalledApps.Add(
-                    new InstalledApp()
-                    {
-                        Name = appName,
-                        Version = appVersion,
-                        InstallDate = appDate
-                    });
+                if (appName != null)
+                {
+                    InstalledApps.Add(
+                        new InstalledApp()
+                        {
+                            Name = appName,
+                            Version = appVersion,
+                            InstallDate = appDate
+                        });
+                }
             }
+        }
+        catch (NullReferenceException)
+        {
+            DebugLog.LogEvent(@"Registry Read Error @ HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", DebugLog.Region.System, DebugLog.EventType.WARNING);
         }
 
         // Local Machine 32
-        key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
-        foreach (String keyName in key.GetSubKeyNames())
+        try
         {
-            RegistryKey subkey = key.OpenSubKey(keyName);
-            appName = subkey.GetValue("DisplayName") as string;
-            appVersion = subkey.GetValue("DisplayVersion") as string;
-            appDate = subkey.GetValue("InstallDate") as string;
-
-            if (appName != null)
+            key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
+            foreach (String keyName in key.GetSubKeyNames())
             {
+                RegistryKey subkey = key.OpenSubKey(keyName);
+                appName = subkey.GetValue("DisplayName") as string;
+                appVersion = subkey.GetValue("DisplayVersion") as string;
+                appDate = subkey.GetValue("InstallDate") as string;
 
-                InstalledApps.Add(
-                    new InstalledApp()
-                    {
-                        Name = appName,
-                        Version = appVersion,
-                        InstallDate = appDate
-                    });
+                if (appName != null)
+                {
+                    InstalledApps.Add(
+                        new InstalledApp()
+                        {
+                            Name = appName,
+                            Version = appVersion,
+                            InstallDate = appDate
+                        });
+                }
             }
+        }
+        catch (NullReferenceException)
+        {
+            DebugLog.LogEvent(@"Registry Read Error @ HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ninstall", DebugLog.Region.System, DebugLog.EventType.WARNING);
         }
 
         // Local Machine 64
-        key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall");
-        foreach (String keyName in key.GetSubKeyNames())
+        try
         {
-            RegistryKey subkey = key.OpenSubKey(keyName);
-            appName = subkey.GetValue("DisplayName") as string;
-            appVersion = subkey.GetValue("DisplayVersion") as string;
-            appDate = subkey.GetValue("InstallDate") as string;
-
-            if (appName != null)
+            key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall");
+            foreach (String keyName in key.GetSubKeyNames())
             {
+                RegistryKey subkey = key.OpenSubKey(keyName);
+                appName = subkey.GetValue("DisplayName") as string;
+                appVersion = subkey.GetValue("DisplayVersion") as string;
+                appDate = subkey.GetValue("InstallDate") as string;
 
-                InstalledApps.Add(
-                    new InstalledApp()
-                    {
-                        Name = appName,
-                        Version = appVersion,
-                        InstallDate = appDate
-                    });
+                if (appName != null)
+                {
+                    InstalledApps.Add(
+                        new InstalledApp()
+                        {
+                            Name = appName,
+                            Version = appVersion,
+                            InstallDate = appDate
+                        });
+                }
             }
-
+        }
+        catch (NullReferenceException)
+        {
+            DebugLog.LogEvent(@"Registry Read Error @ KKLM\SOFTWARE\Wow6432NodeMicrosoft\Windows\CurrentVersion\Uninstall", DebugLog.Region.System, DebugLog.EventType.WARNING);
         }
 
         return InstalledApps;
@@ -303,6 +319,7 @@ public static partial class Cache
 
         return res;
     }
+
     // Returns startup tasks from the following locations:
     // 1: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
     // 2: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
@@ -424,6 +441,7 @@ public static partial class Cache
 
         return res;
     }
+
     private static bool? GetStaticCoreCount()
     {
         string output = string.Empty;
@@ -448,6 +466,7 @@ public static partial class Cache
             return output.Contains("numproc");
         }
     }
+
     private static int CountMinidumps()
     {
         const string dumpPath = @"C:\Windows\Minidump";
@@ -468,6 +487,7 @@ public static partial class Cache
         }
         return count;
     }
+
     private static List<IRegistryValue> RegistryCheck()
     {
         try
@@ -524,9 +544,7 @@ public static partial class Cache
             DebugLog.LogEvent($"{ex}");
             return new List<IRegistryValue>();
         }
-
     }
-
 
     private static List<Browser> GetBrowserExtensions()
     {
@@ -607,24 +625,27 @@ public static partial class Cache
                         name = "Default",
                         Extensions = new List<Browser.Extension>()
                     };
-
-                    //Default profile logic needs to exist seperately due to OperaGX's AppData file structure.
-                    foreach (string edir in Directory.GetDirectories(string.Concat(UserPath, BrowserPath.Value, "Extensions")))
+                    //make sre the dirs actually exist
+                    if (Directory.Exists(string.Concat(UserPath, BrowserPath.Value, "Extensions")))
                     {
-                        if (!defaultExtensions.Contains(new DirectoryInfo(edir).Name))
+                        //Default profile logic needs to exist seperately due to OperaGX's AppData file structure.
+                        foreach (string edir in Directory.GetDirectories(string.Concat(UserPath, BrowserPath.Value, "Extensions")))
                         {
-                            if (new DirectoryInfo(edir).Name.Equals("Temp"))
-                                continue;
+                            if (!defaultExtensions.Contains(new DirectoryInfo(edir).Name))
+                            {
+                                if (new DirectoryInfo(edir).Name.Equals("Temp"))
+                                    continue;
 
-                            try
-                            {
-                                profile.Extensions.Add(Utils.ParseChromiumExtension(edir));
-                            }
-                            catch (Exception e)
-                            {
-                                if (e is FileNotFoundException || e is JsonException)
-                                    Issues.Add(string.Concat("Malformed or missing manifest or locale data for extension at ", edir));
-                                //DirectoryNotFoundException can occur with certain browsers when a profile exists but no extensions are installed
+                                try
+                                {
+                                    profile.Extensions.Add(Utils.ParseChromiumExtension(edir));
+                                }
+                                catch (Exception e)
+                                {
+                                    if (e is FileNotFoundException || e is JsonException)
+                                        Issues.Add(string.Concat("Malformed or missing manifest or locale data for extension at ", edir));
+                                    //DirectoryNotFoundException can occur with certain browsers when a profile exists but no extensions are installed
+                                }
                             }
                         }
                     }
@@ -716,6 +737,4 @@ public static partial class Cache
         DebugLog.LogEvent($"GetBrowserExtensions() completed. Total runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
         return Browsers;
     }
-
-
 }

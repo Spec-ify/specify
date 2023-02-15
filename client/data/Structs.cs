@@ -15,6 +15,7 @@ public class NetworkRoute
     public List<int> AverageLatency = new List<int>();
     public List<double> PacketLoss = new List<double>();
 }
+
 public class InstalledApp
 {
     public string Name;
@@ -27,14 +28,17 @@ public class MicroCode
     public string Name;
     public bool Exists;
 }
+
 public class StaticCore
 {
     public bool On;
 }
+
 public class Minidump
 {
     public int Count;
 }
+
 public class OutputProcess
 {
     public string ProcessName;
@@ -58,6 +62,7 @@ public class RamStick
     /** MiB */
     public int? Capacity;
 }
+
 public class DiskDrive
 {
     public string DeviceName;
@@ -112,22 +117,29 @@ public class BatteryData
     public string Full_Charge_Capacity;
     public string Remaining_Life_Percentage;
 }
+
 public class SensorUpdateVisitor : IVisitor
 {
     public void VisitComputer(IComputer computer)
     {
         computer.Traverse(this);
     }
+
     public void VisitHardware(IHardware hardware)
     {
         hardware.Update();
         foreach (var subHardware in hardware.SubHardware) subHardware.Accept(this);
     }
-    public void VisitSensor(ISensor sensor) { }
-    public void VisitParameter(IParameter parameter) { }
+
+    public void VisitSensor(ISensor sensor)
+    { }
+
+    public void VisitParameter(IParameter parameter)
+    { }
 }
 
-public interface IRegistryValue { }
+public interface IRegistryValue
+{ }
 
 public class RegistryValue<T> : IRegistryValue
 {
@@ -149,11 +161,13 @@ public class ScheduledTask
 {
     public string Path;
     public string Name;
+
     [JsonConverter(typeof(StringEnumConverter))]
     public TaskState State;
 
     public bool IsActive;
     public string Author;
+
     [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
     public List<TaskTriggerType> TriggerTypes;
 
@@ -167,6 +181,7 @@ public class ScheduledTask
         TriggerTypes = t.Definition.Triggers.Select(e => e.TriggerType).ToList();
     }
 }
+
 public class StartupTask
 {
     public string AppName;
@@ -174,6 +189,7 @@ public class StartupTask
     public string ImagePath;
     public DateTime Timestamp;
 }
+
 public class Monitor
 {
     public string Source;
@@ -184,15 +200,18 @@ public class Monitor
     public string CurrentMode;
     public string ConnectionType;
 }
+
 public class Browser
 {
     public string Name;
     public List<BrowserProfile> Profiles;
+
     public class BrowserProfile
     {
         public string name;
         public List<Extension> Extensions;
     }
+
     public class Extension
     {
         public string name;
@@ -200,6 +219,7 @@ public class Browser
         public string description;
     }
 }
+
 //This is an easy way to serialize data from multiple extension manifest formats without making the Browser object a nightmare
 public class ChromiumManifest
 {
@@ -211,5 +231,4 @@ public class ChromiumManifest
 
 public class PageFile
 {
-
 }

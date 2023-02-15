@@ -11,7 +11,6 @@ namespace specify_client.data;
 
 public static partial class Cache
 {
-
     public static async System.Threading.Tasks.Task MakeNetworkData()
     {
         try
@@ -81,6 +80,7 @@ public static partial class Cache
             }
         }
     }
+
     private static List<NetworkConnection> GetNetworkConnections()
     {
         DateTime start = DateTime.Now;
@@ -156,7 +156,6 @@ public static partial class Cache
                 }
                 byte[] annoyingArrayAssignment = new byte[1] { la[i] };
                 localAddr += BitConverter.ToString(annoyingArrayAssignment);
-
             }
             for (int i = 0; i < ra.Length; i++)
             {
@@ -174,7 +173,6 @@ public static partial class Cache
                 }
                 byte[] annoyingArrayAssignment = new byte[1] { ra[i] };
                 remoteAddr += BitConverter.ToString(annoyingArrayAssignment);
-
             }
 
             conn.LocalIPAddress = localAddr;
@@ -193,13 +191,14 @@ public static partial class Cache
     {
         return GetTCPConnections<Interop.MIB_TCPROW_OWNER_PID, Interop.MIB_TCPTABLE_OWNER_PID>(AF_INET);
     }
+
     private static List<Interop.MIB_TCP6ROW_OWNER_PID> GetAllTCPv6Connections()
     {
         return GetTCPConnections<Interop.MIB_TCP6ROW_OWNER_PID, Interop.MIB_TCP6TABLE_OWNER_PID>(AF_INET6);
     }
+
     private static List<IPR> GetTCPConnections<IPR, IPT>(int ipVersion)
     {
-
         IPR[] tableRows;
         int buffSize = 0;
         var dwNumEntriesField = typeof(IPT).GetField("dwNumEntries");
@@ -288,9 +287,11 @@ public static partial class Cache
                 case -1:
                     failedPings++;
                     break;
+
                 case -2:
                     errors++;
                     break;
+
                 default:
                     latencySum += task.Result;
                     break;
@@ -330,6 +331,7 @@ public static partial class Cache
         var hash = sha256.ComputeHash(stream);
         return BitConverter.ToString(hash).Replace("-", "");
     }
+
     private static async System.Threading.Tasks.Task<NetworkRoute> GetNetworkRoutes(string ipAddress, int pingCount = 100, int timeout = 10000, int bufferSize = 100)
     {
         var addressList = GetTraceroute(ipAddress, timeout, 30, bufferSize);

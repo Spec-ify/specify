@@ -16,7 +16,6 @@ namespace specify_client.data;
 
 public static partial class Cache
 {
-
     public static async System.Threading.Tasks.Task MakeHardwareData()
     {
         try
@@ -46,7 +45,6 @@ public static partial class Cache
 
             Disks = GetDiskDriveData();
             await DebugLog.LogEventAsync("Drive Data Retrieved.", region);
-
 
             Batteries = GetBatteryData();
             await DebugLog.LogEventAsync("Battery Data Retrieved.", region);
@@ -203,6 +201,7 @@ public static partial class Cache
         }
         return deviceName;
     }
+
     private static List<Monitor> GetMonitorInfo()
     {
         DateTime start = DateTime.Now;
@@ -238,7 +237,6 @@ public static partial class Cache
                     // iterate over the DX registry entries and look for entries that match the DX luid, if they match, update the relevant monitor struct
                     foreach (var k in key.GetSubKeyNames())
                     {
-
                         RegistryKey subKey = Registry.LocalMachine.OpenSubKey($"SOFTWARE\\Microsoft\\DirectX\\{k}");
                         if (subKey != null)
                         {
@@ -294,6 +292,7 @@ public static partial class Cache
         DebugLog.LogEvent($"GetMonitorInfo() completed - Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
         return monitors;
     }
+
     private static List<Monitor> GetMonitorInfoDXDiag()
     {
         var monitorInfo = new List<Monitor>();
@@ -387,7 +386,6 @@ public static partial class Cache
         return monitorInfo;
     }
 
-
     // STORAGE
     private static List<DiskDrive> GetDiskDriveData()
     {
@@ -472,7 +470,6 @@ public static partial class Cache
             var queryCollection = Utils.GetWmiObj("MSStorageDriver_FailurePredictData", "*", "\\\\.\\root\\wmi");
             foreach (var m in queryCollection)
             {
-
                 // The following lines up to the attribute list creationlink smart data to its corresponding drive.
                 // It makes the assumption that the PNPDeviceID in Wmi32_DiskDrive has a matching identification code to MSStorageDriver_FailurePredictData's InstanceID, and that these identification codes are unique.
                 // This is not a safe assumption, testing will be required.
@@ -770,6 +767,7 @@ public static partial class Cache
         attribute.RawValue = rawValue;
         return attribute;
     }
+
     private static string GetAttributeName(byte id)
     {
         return id switch
@@ -863,7 +861,6 @@ public static partial class Cache
         ;
     }
 
-
     // TEMPERATURES
     private static async System.Threading.Tasks.Task<List<TempMeasurement>> GetTemps()
     {
@@ -918,7 +915,6 @@ public static partial class Cache
         return Temps;
     }
 
-
     // BATTERIES
     private static List<BatteryData> GetBatteryData()
     {
@@ -952,7 +948,6 @@ public static partial class Cache
             if (File.Exists(Path.Combine(path, "battery-report.xml")) &&
                 Process.GetProcessesByName("powercfg").Length == 0)
             {
-
                 XmlDocument doc = new XmlDocument();
                 doc.Load(Path.Combine(path, "battery-report.xml"));
                 List<JToken> BatteryData =

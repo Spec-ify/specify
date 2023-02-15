@@ -8,8 +8,10 @@ public static partial class Cache
 {
     [NonSerialized]
     public const int AF_INET = 2;    // IP_v4 = System.Net.Sockets.AddressFamily.InterNetwork
+
     [NonSerialized]
     public const int AF_INET6 = 23; // IP_v6 = System.Net.Sockets.AddressFamily.InterNetworkV6
+
     public static List<string> Issues { get; set; }
     public static Dictionary<string, object> Os { get; private set; }
     public static Dictionary<string, object> Cs { get; private set; }
@@ -37,9 +39,11 @@ public static partial class Cache
     public static string DefaultBrowser { get; private set; }
 
     public static string Username => Environment.UserName;
+
     // all the hardware stuff
     //each item in the list is a stick of ram
     public static List<RamStick> Ram { get; private set; }
+
     public static List<DiskDrive> Disks { get; private set; }
     public static Dictionary<string, object> Cpu { get; private set; }
     public static List<Dictionary<string, object>> Gpu { get; private set; }

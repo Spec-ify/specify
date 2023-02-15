@@ -33,12 +33,7 @@ public class Program
         }
         catch (Exception ex)
         {
-            Settings.EnableDebug = true;
-            await DebugLog.StartDebugLog();
-            await DebugLog.LogEventAsync("FATAL EXCEPTION", DebugLog.Region.Misc, DebugLog.EventType.ERROR);
-            await DebugLog.LogEventAsync(ex.ToString());
-            await DebugLog.StopDebugLog();
-            Monolith.ProgramDone(3);
+            await DebugLog.LogFatalError(ex.ToString(), DebugLog.Region.Misc);
         }
     }
 

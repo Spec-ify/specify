@@ -19,8 +19,6 @@ public static partial class Cache
                 .Select(x => (string)x["displayName"]).ToList();
             await DebugLog.LogEventAsync("Security WMI Information Retrieved.", region);
 
-
-
             if (Environment.GetEnvironmentVariable("firmware_type")!.Equals("UEFI"))
             {
                 var secBootEnabled = Utils.GetRegistryValue<int?>(
@@ -68,9 +66,9 @@ public static partial class Cache
             await DebugLog.LogFatalError($"{ex}", DebugLog.Region.Security);
         }
     }
+
     public static List<string> AVList()
     {
-
         var antiviruses = new List<string>();
 
         antiviruses = Utils.GetWmi("AntivirusProduct", "displayName", @"root\SecurityCenter2")
