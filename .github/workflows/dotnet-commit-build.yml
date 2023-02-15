@@ -16,10 +16,8 @@ jobs:
           msbuild-architecture: x64
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
-      - run: pwd
-      - run: ls
       - name: Install dependencies
-        run: msbuild client\client.sln -t:restore
+        run: nuget restore client\client.sln
       - name: Build
         run: msbuild client\client.sln -property:Configuration=Release
       - name: Upload build
