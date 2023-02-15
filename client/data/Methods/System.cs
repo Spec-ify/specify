@@ -107,7 +107,7 @@ public static partial class Cache
             DebugTasks.Add(DebugLog.LogEventAsync("Browser Extension Information retrieved.", region));
 
             DumpZip = await GetMiniDumps();
-            
+
             string defaultBrowserProgID = Utils.GetRegistryValue<string>(Registry.CurrentUser, "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID");
             string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser,
                 "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
@@ -446,7 +446,7 @@ public static partial class Cache
             return result;
 
         //If Minidumps hasn't been written to in a month, it's not going to have a dump newer than a month inside of it.
-        if (new DirectoryInfo(dumpDir).LastWriteTime < DateTime.Now.AddMonths(-1)) 
+        if (new DirectoryInfo(dumpDir).LastWriteTime < DateTime.Now.AddMonths(-1))
             return result;
 
         string[] dumps = Directory.GetFiles(dumpDir);
@@ -463,7 +463,7 @@ public static partial class Cache
         {
             //Any dump older than a month is not included in the zip.
             foreach (string dump in dumps)
-                if (new FileInfo(dump).CreationTime > DateTime.Now.AddMonths(-1))
+                if (new FileInfo(dump).CreationTime < DateTime.Now.AddMonths(-1))
                     File.Copy(dump, string.Concat(@".\dumps\", Regex.Match(dump, "[^\\\\]*$").Value));
 
             ZipFile.CreateFromDirectory(@".\dumps", @".\dumps.zip");
@@ -472,7 +472,7 @@ public static partial class Cache
         {
             await DebugLog.LogEventAsync($"Error occured manipulating dump files! Is this running as admin?", DebugLog.Region.System, DebugLog.EventType.ERROR);
             await DebugLog.LogEventAsync($"{e}", DebugLog.Region.System);
-            
+
             return result; //If this failed, there's nothing more that can be done here.
         }
 
@@ -505,6 +505,7 @@ public static partial class Cache
 
         return result;
     }
+
     private static List<string> GetMicroCodes()
     {
         const string intelPath = @"C:\Windows\System32\mcupdate_genuineintel.dll";
@@ -620,7 +621,6 @@ public static partial class Cache
             return new List<IRegistryValue>();
         }
     }
-
 
     private static List<Browser> GetBrowserExtensions()
     {
