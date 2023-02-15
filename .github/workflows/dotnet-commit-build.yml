@@ -17,8 +17,9 @@ jobs:
         uses: microsoft/setup-msbuild@v1
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
-      - name: Go to client folder
+      - name: Go to github workspace
         run: cd $GITHUB_WORKSPACE
+      - name: Go to client folder
         run: cd client
       - name: Install dependencies
         run: dotnet restore specify_client.csproj
