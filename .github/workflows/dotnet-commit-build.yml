@@ -6,9 +6,6 @@ jobs:
   build:
 
     runs-on: windows-latest
-    strategy:
-      matrix:
-        dotnet-version: ['4.7.2' ]
 
     steps:
       - name: Checkout repo
@@ -22,9 +19,9 @@ jobs:
       - run: pwd
       - run: ls
       - name: Install dependencies
-        run: msbuild client\specify_client.csproj -t:restore
+        run: msbuild client\client.sln -t:restore
       - name: Build
-        run: msbuild client\specify_client.csproj -property:Configuration=Release
+        run: msbuild client\client.sln -property:Configuration=Release
       - name: Upload build
         uses: actions/upload-artifact@v3.1.2
         with:
