@@ -15,6 +15,8 @@ jobs:
         uses: actions/checkout@v3
       - name: Setup MSBuild 
         uses: microsoft/setup-msbuild@v1
+        with:
+          msbuild-architecture: x64
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
       - name: Go to github workspace
@@ -22,6 +24,11 @@ jobs:
       - name: Go to client folder
         run: cd client
       - name: Install dependencies
-        run: dotnet restore specify_client.csproj
+        run: msbuild -t:restore
       - name: Build
-        run: dotnet build --configuration Release --no-restore specify_client.csproj
+        run: msbuild specify_client.csproj -property:Configuration=Release
+      - name: Upload build
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: specify_client_commit
+          path: bin\Release\specify_client.exe
