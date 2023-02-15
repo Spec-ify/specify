@@ -1,0 +1,26 @@
+name: commit build
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        dotnet-version: ['4.7.2' ]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Setup MSBuild 
+        uses: microsoft/setup-msbuild@v1
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1
+      - name: Go to client folder
+        run: cd $GITHUB_WORKSPACE
+        run: cd client
+      - name: Install dependencies
+        run: dotnet restore specify_client.csproj
+      - name: Build
+        run: dotnet build --configuration Release --no-restore specify_client.csproj
