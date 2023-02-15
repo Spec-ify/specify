@@ -24,7 +24,7 @@ jobs:
       - name: Go to client folder
         run: cd client
       - name: Install dependencies
-        run: msbuild -t:restore
+        run: msbuild specify_client.csproj -t:restore
       - name: Build
         run: msbuild specify_client.csproj -property:Configuration=Release
       - name: Upload build
