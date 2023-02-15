@@ -7,10 +7,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows;
+using System.Net.Http;
 
 namespace specify_client.data;
 
@@ -103,6 +106,8 @@ public static partial class Cache
             BrowserExtensions = GetBrowserExtensions();
             DebugTasks.Add(DebugLog.LogEventAsync("Browser Extension Information retrieved.", region));
 
+            DumpZip = await GetMiniDumps();
+            
             string defaultBrowserProgID = Utils.GetRegistryValue<string>(Registry.CurrentUser, "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID");
             string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser,
                 "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
@@ -430,6 +435,76 @@ public static partial class Cache
         return startupTask;
     }
 
+    public static async System.Threading.Tasks.Task<KeyValuePair<bool, string>> GetMiniDumps()
+    {
+        DateTime start = DateTime.Now;
+        KeyValuePair<bool, string> result = new KeyValuePair<bool, string>(false, null);
+        const string specifiedDumpDestination = "https://dumpupload.spec-ify.com/";
+        const string dumpDir = @"C:\Windows\Minidump";
+
+        if (!Directory.Exists(dumpDir))
+            return result;
+
+        //If Minidumps hasn't been written to in a month, it's not going to have a dump newer than a month inside of it.
+        if (new DirectoryInfo(dumpDir).LastWriteTime < DateTime.Now.AddMonths(-1)) 
+            return result;
+
+        string[] dumps = Directory.GetFiles(dumpDir);
+
+        if (dumps.Length == 0)
+            return result;
+
+        if (MessageBox.Show("Would you like to upload your memory dumps with your specs report?", "Memory dumps detected", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
+            return result;
+
+        Directory.CreateDirectory(@".\dumps");
+
+        try
+        {
+            //Any dump older than a month is not included in the zip.
+            foreach (string dump in dumps)
+                if (new FileInfo(dump).CreationTime > DateTime.Now.AddMonths(-1))
+                    File.Copy(dump, string.Concat(@".\dumps\", Regex.Match(dump, "[^\\\\]*$").Value));
+
+            ZipFile.CreateFromDirectory(@".\dumps", @".\dumps.zip");
+        }
+        catch (Exception e)
+        {
+            await DebugLog.LogEventAsync($"Error occured manipulating dump files! Is this running as admin?", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            await DebugLog.LogEventAsync($"{e}", DebugLog.Region.System);
+            
+            return result; //If this failed, there's nothing more that can be done here.
+        }
+
+        using (HttpClient client = new HttpClient())
+        using (MultipartFormDataContent form = new MultipartFormDataContent())
+        {
+            FileStream dumpStream = new FileStream(@".\dumps.zip", FileMode.Open);
+
+            form.Add(new StreamContent(dumpStream), "file", "file");
+
+            try
+            {
+                HttpResponseMessage response = await client.PostAsync(specifiedDumpDestination, form);
+
+                result = new KeyValuePair<bool, string>(true, response.Content.ReadAsStringAsync().Result);
+            }
+            catch (Exception e)
+            {
+                await DebugLog.LogEventAsync($"Error occured when uploading dumps.zip to Specified!", DebugLog.Region.System, DebugLog.EventType.ERROR);
+                await DebugLog.LogEventAsync($"{e}", DebugLog.Region.System);
+            }
+
+            client.Dispose();
+        }
+
+        File.Delete(@".\dumps.zip");
+        new DirectoryInfo(@".\dumps").Delete(true);
+
+        await DebugLog.LogEventAsync($"GetMiniDumps() Completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
+
+        return result;
+    }
     private static List<string> GetMicroCodes()
     {
         const string intelPath = @"C:\Windows\System32\mcupdate_genuineintel.dll";
@@ -545,6 +620,7 @@ public static partial class Cache
             return new List<IRegistryValue>();
         }
     }
+
 
     private static List<Browser> GetBrowserExtensions()
     {

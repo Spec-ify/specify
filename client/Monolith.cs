@@ -337,6 +337,7 @@ public class Monolith
         public List<Dictionary<string, object>> PowerProfiles;
         public List<string> MicroCodes;
         public int RecentMinidumps;
+        public KeyValuePair<bool, string> DumpZip;
         public bool? StaticCoreCount;
         public List<IRegistryValue> ChoiceRegistryValues;
         public bool? UsernameSpecialCharacters;
@@ -360,6 +361,7 @@ public class Monolith
             PowerProfiles = Cache.PowerProfiles;
             MicroCodes = Cache.MicroCodes;
             RecentMinidumps = Cache.RecentMinidumps;
+            DumpZip = Cache.DumpZip;
             StaticCoreCount = Cache.StaticCoreCount;
             ChoiceRegistryValues = Cache.ChoiceRegistryValues;
             UsernameSpecialCharacters = Cache.UsernameSpecialCharacters;
