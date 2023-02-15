@@ -21,6 +21,8 @@ jobs:
         uses: NuGet/setup-nuget@v1
       - name: Go to client folder
         run: cd client
+      - run: pwd
+      - run: ls
       - name: Install dependencies
         run: msbuild specify_client.csproj -t:restore
       - name: Build
