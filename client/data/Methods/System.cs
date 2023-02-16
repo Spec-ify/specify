@@ -107,6 +107,7 @@ public static partial class Cache
             DebugTasks.Add(DebugLog.LogEventAsync("Browser Extension Information retrieved.", region));
 
             DumpZip = await GetMiniDumps();
+            DebugTasks.Add(DebugLog.LogEventAsync("Minidump gathering complete", region));
 
             string defaultBrowserProgID = Utils.GetRegistryValue<string>(Registry.CurrentUser, "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID");
             string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser,
@@ -435,10 +436,10 @@ public static partial class Cache
         return startupTask;
     }
 
-    public static async System.Threading.Tasks.Task<KeyValuePair<bool, string>> GetMiniDumps()
+    public static async System.Threading.Tasks.Task<string> GetMiniDumps()
     {
         DateTime start = DateTime.Now;
-        KeyValuePair<bool, string> result = new KeyValuePair<bool, string>(false, null);
+        string result = null;
         const string specifiedDumpDestination = "https://dumpload.spec-ify.com/";
         const string dumpDir = @"C:\Windows\Minidump";
 
@@ -487,7 +488,7 @@ public static partial class Cache
             {
                 HttpResponseMessage response = await client.PostAsync(specifiedDumpDestination, form);
 
-                result = new KeyValuePair<bool, string>(true, response.Content.ReadAsStringAsync().Result);
+                result = response.Content.ReadAsStringAsync().Result;
             }
             catch (Exception e)
             {

@@ -60,7 +60,7 @@ public static partial class Cache
     public static List<Dictionary<string, object>> PowerProfiles { get; private set; }
     public static List<string> MicroCodes { get; private set; }
     public static int RecentMinidumps { get; private set; }
-    public static KeyValuePair<bool, string> DumpZip { get; private set; }
+    public static string DumpZip { get; private set; }
     public static bool? StaticCoreCount { get; private set; }
     public static List<Monitor> MonitorInfo { get; private set; }
     public static bool? UsernameSpecialCharacters { get; private set; }

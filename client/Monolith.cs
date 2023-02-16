@@ -337,7 +337,7 @@ public class Monolith
         public List<Dictionary<string, object>> PowerProfiles;
         public List<string> MicroCodes;
         public int RecentMinidumps;
-        public KeyValuePair<bool, string> DumpZip;
+        public string DumpZip;
         public bool? StaticCoreCount;
         public List<IRegistryValue> ChoiceRegistryValues;
         public bool? UsernameSpecialCharacters;
