@@ -48,11 +48,11 @@ public static class DebugLog
         }*/
         LogText = "";
         LogStartTime = DateTime.Now;
-        if (!File.Exists(LogFilePath))
+        if (!File.Exists(LogFilePath) && Settings.EnableDebug)
         {
             File.Create(LogFilePath).Close();
         }
-        else
+        else if (Settings.EnableDebug)
         {
             await Task.Run(() => File.WriteAllText(LogFilePath, ""));
         }
