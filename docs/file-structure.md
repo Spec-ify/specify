@@ -2,9 +2,36 @@
 
 This file contains the file structure of the C# project file.
 
+# Table of Contents
+
+- [client Folder](file-structure#client-folder)
+    - [data Folder](file-structure#data-folder)
+        - [Methods Folder](file-structure#methods-folder)
+            - [BasicInfo.cs](file-structure#basicinfocs)
+            - [Hardware.cs](file-structure#hardwarecs)
+            - [Network.cs](file-structure#networkcs)
+            - [Security.cs](file-structure#securitycs)
+            - [System.cs](file-structure#systemcs)
+        - [Cache.cs](file-structure#cachecs)
+        - [Structs.cs](file-structure#structscs)
+        - [Utils.cs](file-structure#utilscs)
+    - [Frontend Folder](file-structure#frontend-folder)
+        - [Fonts Folder](file-structure#fonts-folder)
+        - [Images Folder](file-structure#images-folder)
+        - [EndScreen Folder](file-structure#endscreen-folder)
+        - [Landing.xaml](file-structure#landingxaml)
+        - [StartButtons.xaml](file-structure#startbuttonsxaml)
+        - [Run.xaml](file-structure#runxaml)
+    - [Program.cs](file-structure#programcs)
+    - [Settings.cs](file-structure#settingscs)
+    - [Progress.cs](file-structure#progresscs)
+    - [Monolith.cs](file-structure#monolithcs)
+    - [DebugLog.cs](file-structure#debuglogcs)
+    - [Interop.cs](file-structure#interopcs)
+
 ## [Client Folder](/client/)
 
-The actual folder of the project file. Self-explanatory.
+The actual folder containing the project file (client.sln / specify_client.csproj).
 
 ### [data Folder](/client/data/)
 
@@ -47,9 +74,37 @@ Contains the class in which the collected info that are lists are stored. Separa
 
 Contains methods that are frequently used in the Methods folder. For example, the code for `GetWMI()` is stored in here.
 
+### [Frontend Folder](/client/Frontend/)
+
+Contains all the GUI stuff.
+
+#### [Fonts Folder](/client/Frontend/Fonts/)
+
+Contains [AldoTheApache.ttf](/client/Frontend/Fonts/AldotheApache.ttf), which is used in the endscreens.
+
+#### [Images Folder](/client/Frontend/Images/)
+
+Contains the magnifying glass animations (loop(number).gif), and other images, saved as SVGs (Images.xaml).
+
+#### [EndScreen Folder](/client/Frontend/EndScreen/)
+
+Contains the frames when Specify finishes.
+
+#### [Landing.xaml](/client/Frontend/Landing.xaml)
+
+Is the Main Window of the GUI. Contains the logo and the corner hyperlink.
+
+#### [StartButtons.xaml](/client/Frontend/StartButtons.xaml)
+
+Contains the toggle buttons that controls the settings.
+
+#### [Run.xaml](/client/Frontend/Run.xaml)
+
+Contains the loading screen. It's codebehind calls Program.cs to run the program.
+
 ### [Program.cs](/client/Program.cs)
 
-Program.cs contains the method that triggers Progress.cs to do the info collection, and (in the text-based UI) contains the input and output.
+Program.cs contains the method that triggers Progress.cs to do the info collection.
 
 ### [Settings.cs](/client/Settings.cs)
 
@@ -57,7 +112,7 @@ This has the class that contains.. well.. the settings. It modifies Monolith.cs'
 
 ### [Progress.cs](/client/Progress.cs)
 
-Progress.cs contains the code that triggers the files in the Methods Folder (collection), and Monolith.cs (Upload / Export). Also contains (in the text-based UI) the colors for the status texts.
+Progress.cs contains the code that triggers the files in the Methods Folder (collection), and Monolith.cs (Upload / Export).
 
 ### [Monolith.cs](/client/Monolith.cs)
 
@@ -69,4 +124,4 @@ DebugLog.cs contains the code for... well.. the debug log. When the proper setti
 
 ### [Interop.cs](/client/Interop.cs)
 
-Interop.cs contains methods that query specific Window dlls for info. Probably shouldn't touch this if you're inexperienced.
+Interop.cs contains methods that query specific Windows dlls for info. Probably shouldn't touch this if you don't know what you're doing.

@@ -1,24 +1,20 @@
 # Specify!
 
-
 # What is it good for
 
-***Absolutely(Almost) Everything***
+***Absolutely (Almost) Everything***
 
 **Specify** is one part of the two part stack of **Specify** and **Specified**.
 
-**Specify** collects data from the system it's running on and then passes all this data to a website;
-www.spec-ify.com, henceforth **Specified**.
-
+**Specify** collects data from the system it's running on and then passes all this data to a website; [spec-ify.com](https://spec-ify.com/), henceforth **Specified**.
 
 ## Methodology
 
 **Specify** probes various WMI and win32 classes on the host machine for an exhaustive list of data, parsing and pushing keyed information into a JSON standard object tree.
 
-
 ## What kinds of data?
 
-**Specify** is developed with the intent of being used as a quick way to relay the state of one's system to another person, as such, the data gathered is always whatever is relevant for the diagnosis of a tech issue.
+**Specify** is developed *with the intent* of being used as a quick way to relay the state of one's system to another person, as such, the data gathered is always whatever is relevant for the diagnosis of a tech issue.
 
 There is no explicitly **sensitive** or **private** information that gets passed in.
 This does not necessarily mean that there is no **subjectively sensitive** or **private information** that does get included into the snapshot that **Specify** generates.
@@ -36,13 +32,10 @@ This does mean that your snapshot, should you want to revisit it, will potential
 If prompted, **Specify** will upload your recent **Minidumps** to our server, for others to analyze.
 These are also automatically deleted after 24 hours.
 
-No information is otherwise kept in storage, and no **cookies** are set by **Specified** of any form.
-
+Only [one cookie](https://github.com/Spec-ify/specified/blob/main/static/js/themes.js#L42) is set by **Specified**, but other than that, no information is kept in storage.
 
 ## Fallback
 
 As previously mentioned, **Specify** automatically **POST**s the results of it's runtime to **Specified** and then automatically opens the customized page, while also copying that URL to the clipboard.
 
-Alternatively, whenever **Specify** is unable to complete said **POST** request, the **.json** file is instead written into the same directory as the **Specify** **executable** is ran from.
-This **.json** can then be manually uploaded to **Specified** to generate the view.
-
+Alternatively, whenever **Specify** is unable to complete said **POST** request, or is set to not upload by the user, the **.json** file is instead written into the same directory as the **Specify** **executable** is ran from. This **.json** can then be manually uploaded to **Specified** to generate the view.
