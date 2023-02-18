@@ -488,7 +488,9 @@ public static partial class Cache
             {
                 HttpResponseMessage response = await client.PostAsync(specifiedDumpDestination, form);
 
-                result = response.Content.ReadAsStringAsync().Result;
+                string rawlink = response.Content.ReadAsStringAsync().Result;
+
+                result = Regex.Replace(rawlink, @"\t|\n|\r", "");
             }
             catch (Exception e)
             {
