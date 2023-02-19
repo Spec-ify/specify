@@ -442,12 +442,14 @@ public static partial class Cache
         string result = null;
         const string specifiedDumpDestination = "https://dumpload.spec-ify.com/";
         const string dumpDir = @"C:\Windows\Minidump";
+        string TempFolder = Path.GetTempPath() + @"specify-dumps";
+        string TempZip = Path.GetTempPath() + @"specify-dumps.zip";
 
         if (!Directory.Exists(dumpDir))
             return result;
 
         //If Minidumps hasn't been written to in a month, it's not going to have a dump newer than a month inside of it.
-        if (new DirectoryInfo(dumpDir).LastWriteTime < DateTime.Now.AddMonths(-1))
+        if (new DirectoryInfo(dumpDir).LastWriteTime < DateTime.Now.AddMonths(-12))
             return result;
 
         string[] dumps = Directory.GetFiles(dumpDir);
@@ -458,16 +460,16 @@ public static partial class Cache
         if (MessageBox.Show("Would you like to upload your BSOD minidumps with your specs report?", "Minidumps detected", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
             return result;
 
-        Directory.CreateDirectory(@".\dumps");
+        Directory.CreateDirectory(TempFolder);
 
         try
         {
             //Any dump older than a month is not included in the zip.
             foreach (string dump in dumps)
-                if (new FileInfo(dump).CreationTime < DateTime.Now.AddMonths(-1))
-                    File.Copy(dump, string.Concat(@".\dumps\", Regex.Match(dump, "[^\\\\]*$").Value));
+                if (new FileInfo(dump).CreationTime < DateTime.Now.AddMonths(-12))
+                    File.Copy(dump, string.Concat(TempFolder + @"/", Regex.Match(dump, "[^\\\\]*$").Value));
 
-            ZipFile.CreateFromDirectory(@".\dumps", @".\dumps.zip");
+            ZipFile.CreateFromDirectory(TempFolder, TempZip);
         }
         catch (Exception e)
         {
@@ -480,7 +482,7 @@ public static partial class Cache
         using (HttpClient client = new HttpClient())
         using (MultipartFormDataContent form = new MultipartFormDataContent())
         {
-            FileStream dumpStream = new FileStream(@".\dumps.zip", FileMode.Open);
+            FileStream dumpStream = new FileStream(TempZip, FileMode.Open);
 
             form.Add(new StreamContent(dumpStream), "file", "file.zip");
 
@@ -501,8 +503,8 @@ public static partial class Cache
             client.Dispose();
         }
 
-        File.Delete(@".\dumps.zip");
-        new DirectoryInfo(@".\dumps").Delete(true);
+        File.Delete(TempZip);
+        new DirectoryInfo(TempFolder).Delete(true);
 
         await DebugLog.LogEventAsync($"GetMiniDumps() Completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
 
