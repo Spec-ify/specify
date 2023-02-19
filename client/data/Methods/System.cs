@@ -449,7 +449,7 @@ public static partial class Cache
             return result;
 
         //If Minidumps hasn't been written to in a month, it's not going to have a dump newer than a month inside of it.
-        if (new DirectoryInfo(dumpDir).LastWriteTime < DateTime.Now.AddMonths(-12))
+        if (new DirectoryInfo(dumpDir).LastWriteTime < DateTime.Now.AddMonths(-1))
             return result;
 
         string[] dumps = Directory.GetFiles(dumpDir);
@@ -466,7 +466,7 @@ public static partial class Cache
         {
             //Any dump older than a month is not included in the zip.
             foreach (string dump in dumps)
-                if (new FileInfo(dump).CreationTime < DateTime.Now.AddMonths(-12))
+                if (new FileInfo(dump).CreationTime < DateTime.Now.AddMonths(-1))
                     File.Copy(dump, string.Concat(TempFolder + @"/", Regex.Match(dump, "[^\\\\]*$").Value));
 
             ZipFile.CreateFromDirectory(TempFolder, TempZip);
