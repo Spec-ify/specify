@@ -32,7 +32,7 @@ This does mean that your snapshot, should you want to revisit it, will potential
 If prompted, **Specify** will upload your recent **Minidumps** to our server, for others to analyze.
 These are also automatically deleted after 24 hours.
 
-Only [one cookie](https://github.com/Spec-ify/specified/blob/main/static/js/themes.js#L42) is set by **Specified**, but other than that, no information is kept in storage.
+No information is otherwise kept in storage, and no cookies are set by **Specified**.
 
 ## Fallback
 
