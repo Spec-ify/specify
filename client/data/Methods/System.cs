@@ -561,7 +561,7 @@ public static partial class Cache
         {
             var lastWriteTime = File.GetLastWriteTime(file);
 
-            if (lastWriteTime > DateTime.Now.AddDays(-7))
+            if (lastWriteTime > DateTime.Now.AddMonths(-1))
             {
                 count++;
             }

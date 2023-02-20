@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace WpfApp2.Properties
+namespace specify_client.Properties
 {
 
 
