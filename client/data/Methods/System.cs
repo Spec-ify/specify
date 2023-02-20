@@ -466,7 +466,7 @@ public static partial class Cache
         {
             //Any dump older than a month is not included in the zip.
             foreach (string dump in dumps)
-                if (new FileInfo(dump).CreationTime < DateTime.Now.AddMonths(-1))
+                if (new FileInfo(dump).CreationTime > DateTime.Now.AddMonths(-1))
                     File.Copy(dump, string.Concat(TempFolder + @"/", Regex.Match(dump, "[^\\\\]*$").Value));
 
             ZipFile.CreateFromDirectory(TempFolder, TempZip);
