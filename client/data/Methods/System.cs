@@ -457,8 +457,11 @@ public static partial class Cache
         if (dumps.Length == 0)
             return result;
 
+        await DebugLog.LogEventAsync("Dump Upload Requested.", DebugLog.Region.System);
         if (MessageBox.Show("Would you like to upload your BSOD minidumps with your specs report?", "Minidumps detected", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
             return result;
+        
+        await DebugLog.LogEventAsync("Dump Upload Request Approved.", DebugLog.Region.System);
 
         Directory.CreateDirectory(TempFolder);
 
@@ -479,6 +482,7 @@ public static partial class Cache
             return result; //If this failed, there's nothing more that can be done here.
         }
 
+        await DebugLog.LogEventAsync("Dump zip file built. Attempting upload.", DebugLog.Region.System);
         using (HttpClient client = new HttpClient())
         using (MultipartFormDataContent form = new MultipartFormDataContent())
         {
@@ -503,6 +507,7 @@ public static partial class Cache
             client.Dispose();
         }
 
+        await DebugLog.LogEventAsync($"Dump file upload result: {result ?? "null"}", DebugLog.Region.System);
         File.Delete(TempZip);
         new DirectoryInfo(TempFolder).Delete(true);
 
