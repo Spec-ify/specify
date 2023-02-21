@@ -32,13 +32,13 @@ public static partial class Cache
 
             //[CLEANUP] I think all of these should be async.
 
-            CheckCommercialOneDrive();
-
             GetEnvironmentVariables();
             DebugTasks.Add(DebugLog.LogEventAsync("Environment Variables retrieved.", region));
 
             GetSystemWMIInfo();
             DebugTasks.Add(DebugLog.LogEventAsync("System WMI Information retrieved.", region));
+
+            CheckCommercialOneDrive();
 
             InstalledApps = GetInstalledApps();
             DebugTasks.Add(DebugLog.LogEventAsync("InstalledApps Information retrieved.", region));
@@ -287,10 +287,7 @@ public static partial class Cache
     public static async System.Threading.Tasks.Task<StartupTask> GetFileInformation(StartupTask startupTask)
     {
         //get information about an executable file
-        // .Trim requires a character array.
-        char[] charArray = new char[1];
-        charArray[0] = '\"';
-        var filePath = startupTask.ImagePath.Trim(charArray);
+        var filePath = startupTask.ImagePath.Trim('\"');
 
         // Trim the target path to be a locateable filepath.
         var substringIndex = filePath.ToLower().IndexOf(".exe\"");
@@ -326,9 +323,12 @@ public static partial class Cache
         const string dumpDir = @"C:\Windows\Minidump";
         string TempFolder = Path.GetTempPath() + @"specify-dumps";
         string TempZip = Path.GetTempPath() + @"specify-dumps.zip";
-        string[] dumps = Directory.GetFiles(dumpDir);
+        
+        if (!MinidumpsExist(dumpDir)) 
+            return result;
 
-        if (!MinidumpsExist(dumpDir, dumps)) 
+        string[] dumps = Directory.GetFiles(dumpDir);
+        if (dumps.Length == 0)
             return result;
 
         await DebugLog.LogEventAsync("Dump Upload Requested.", DebugLog.Region.System);
@@ -355,15 +355,13 @@ public static partial class Cache
 
         return result;
     }
-    private static bool MinidumpsExist(string dumpDir, string[] dumps)
+    private static bool MinidumpsExist(string dumpDir)
     {
         if (!Directory.Exists(dumpDir)) return false;
 
         //If Minidumps hasn't been written to in a month, it's not going to have a dump newer than a month inside of it.
         if (new DirectoryInfo(dumpDir).LastWriteTime < DateTime.Now.AddMonths(-1))
             return false;
-
-        if (dumps.Length == 0) return false;
 
         return true;
     }
