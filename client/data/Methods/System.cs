@@ -14,6 +14,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Net.Http;
+using System.Windows.Documents;
+using System.Windows.Input;
+using HidSharp.Utility;
 
 namespace specify_client.data;
 
@@ -27,65 +30,20 @@ public static partial class Cache
             DebugLog.Region region = DebugLog.Region.System;
             await DebugLog.StartRegion(region);
 
-            SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
-            UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
+            //[CLEANUP] I think all of these should be async.
+
+            CheckCommercialOneDrive();
+
+            GetEnvironmentVariables();
             DebugTasks.Add(DebugLog.LogEventAsync("Environment Variables retrieved.", region));
 
-            bool ODFound = false;
-            try
-            {
-                if (UserVariables["OneDriveCommercial"] is string pathOneDriveCommercial)
-                {
-                    var actualOneDriveCommercial =
-                        pathOneDriveCommercial.Split(new string[] { "OneDrive - " }, StringSplitOptions.None)[1];
-                    OneDriveCommercialPathLength = pathOneDriveCommercial.Length;
-                    OneDriveCommercialNameLength = actualOneDriveCommercial.Length;
-                    DebugTasks.Add(DebugLog.LogEventAsync("OneDriveCommercial information retrieved.", region));
-                    ODFound = true;
-                }
-            }
-            finally
-            {
-                if (!ODFound)
-                {
-                    if (Settings.RedactOneDriveCommercial)
-                    {
-                        Settings.RedactOneDriveCommercial = false;
-                        DebugTasks.Add(DebugLog.LogEventAsync("RedactOneDriveCommercial setting disabled. OneDriveCommercial variable not found.", region, DebugLog.EventType.WARNING));
-                    }
-                    else
-                    {
-                        DebugTasks.Add(DebugLog.LogEventAsync("OneDriveCommercial variable not found.", region));
-                    }
-                }
-            }
-
-            Services = Utils.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
-            InstalledHotfixes = Utils.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
-            // As far as I can tell, Size is the size of the file on the filesystem and Usage is the amount actually used
-            PageFile = Utils.GetWmi("Win32_PageFileUsage", "AllocatedBaseSize, Caption, CurrentUsage, PeakUsage").FirstOrDefault();
-            try
-            {
-                PowerProfiles = Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
-            }
-            catch (COMException)
-            {
-                Issues.Add("Could not get power profiles");
-            }
+            GetSystemWMIInfo();
             DebugTasks.Add(DebugLog.LogEventAsync("System WMI Information retrieved.", region));
 
             InstalledApps = GetInstalledApps();
             DebugTasks.Add(DebugLog.LogEventAsync("InstalledApps Information retrieved.", region));
 
-            var ts = new TaskService();
-            var rawTaskList = EnumScheduledTasks(ts.RootFolder);
-            ScheduledTasks = new List<ScheduledTask>();
-            WinScheduledTasks = new List<ScheduledTask>();
-            foreach (Task task in rawTaskList)
-                if (task.Path.StartsWith("\\Microsoft"))
-                    WinScheduledTasks.Add(new ScheduledTask(task));
-                else
-                    ScheduledTasks.Add(new ScheduledTask(task));
+            ScheduledTasks = GetScheduledTasks();
             DebugTasks.Add(DebugLog.LogEventAsync("ScheduledTasks Information retrieved.", region));
 
             StartupTasks = await GetStartupTasks();
@@ -109,10 +67,7 @@ public static partial class Cache
             DumpZip = await GetMiniDumps();
             DebugTasks.Add(DebugLog.LogEventAsync("Minidump gathering complete", region));
 
-            string defaultBrowserProgID = Utils.GetRegistryValue<string>(Registry.CurrentUser, "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID");
-            string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser,
-                "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
-            DefaultBrowser = (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
+            DefaultBrowser = GetDefaultBrowser();
             DebugTasks.Add(DebugLog.LogEventAsync("Default Browser Infomation retrieved.", region));
 
             RunningProcesses = GetProcesses();
@@ -125,9 +80,6 @@ public static partial class Cache
         }
         catch (Exception ex)
         {
-            /*await DebugLog.LogEventAsync("UNEXPECTED FATAL EXCEPTION", DebugLog.Region.System, DebugLog.EventType.ERROR);
-            await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.System);
-            Environment.Exit(-1);*/
             await DebugLog.LogFatalError($"{ex}", DebugLog.Region.System);
         }
     }
@@ -141,7 +93,7 @@ public static partial class Cache
 
         foreach (var rawProcess in rawProcesses)
         {
-            var cpuPercent = -1.0; // TODO: make this actually work properly
+            var cpuPercent = 1.0; // TODO: make this actually work properly
             var exePath = "";
             /*try
             {
@@ -168,23 +120,17 @@ public static partial class Cache
                     if (!SystemProcesses.Contains(rawProcess.ProcessName))
                     {
                         exePath = "Not Found";
-                        Issues.Add($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})");
+                        DebugLog.LogEvent($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})", DebugLog.Region.System, DebugLog.EventType.WARNING);
                     }
-                    else
-                    {
-                        exePath = "SYSTEM";
-                    }
+                    else exePath = "SYSTEM";
                 }
-                else
-                {
-                    exePath = sb.ToString();
-                }
+                else exePath = sb.ToString();
             }
             catch (Win32Exception e)
             {
-                exePath = "null - Win32Exception";
-                Issues.Add($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})");
-                Console.WriteLine(e.GetBaseException());
+                exePath = "null - See Debug Log.";
+                DebugLog.LogEvent($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})", DebugLog.Region.System, DebugLog.EventType.ERROR);
+                DebugLog.LogEvent($"{e}", DebugLog.Region.System);
             }
 
             outputProcesses.Add(new OutputProcess
@@ -208,96 +154,46 @@ public static partial class Cache
 
         List<InstalledApp> InstalledApps = new List<InstalledApp>();
 
-        string appName, appVersion, appDate;
-        RegistryKey key;
-
-        // Current User
-        try
-        {
-            key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
-            foreach (String keyName in key.GetSubKeyNames())
-            {
-                RegistryKey subkey = key.OpenSubKey(keyName);
-                appName = subkey.GetValue("DisplayName") as string;
-                appVersion = subkey.GetValue("DisplayVersion") as string;
-                appDate = subkey.GetValue("InstallDate") as string;
-
-                if (appName != null)
-                {
-                    InstalledApps.Add(
-                        new InstalledApp()
-                        {
-                            Name = appName,
-                            Version = appVersion,
-                            InstallDate = appDate
-                        });
-                }
-            }
-        }
-        catch (NullReferenceException)
-        {
-            DebugLog.LogEvent(@"Registry Read Error @ HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", DebugLog.Region.System, DebugLog.EventType.WARNING);
-        }
-
-        // Local Machine 32
-        try
-        {
-            key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
-            foreach (String keyName in key.GetSubKeyNames())
-            {
-                RegistryKey subkey = key.OpenSubKey(keyName);
-                appName = subkey.GetValue("DisplayName") as string;
-                appVersion = subkey.GetValue("DisplayVersion") as string;
-                appDate = subkey.GetValue("InstallDate") as string;
-
-                if (appName != null)
-                {
-                    InstalledApps.Add(
-                        new InstalledApp()
-                        {
-                            Name = appName,
-                            Version = appVersion,
-                            InstallDate = appDate
-                        });
-                }
-            }
-        }
-        catch (NullReferenceException)
-        {
-            DebugLog.LogEvent(@"Registry Read Error @ HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ninstall", DebugLog.Region.System, DebugLog.EventType.WARNING);
-        }
-
-        // Local Machine 64
-        try
-        {
-            key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall");
-            foreach (String keyName in key.GetSubKeyNames())
-            {
-                RegistryKey subkey = key.OpenSubKey(keyName);
-                appName = subkey.GetValue("DisplayName") as string;
-                appVersion = subkey.GetValue("DisplayVersion") as string;
-                appDate = subkey.GetValue("InstallDate") as string;
-
-                if (appName != null)
-                {
-                    InstalledApps.Add(
-                        new InstalledApp()
-                        {
-                            Name = appName,
-                            Version = appVersion,
-                            InstallDate = appDate
-                        });
-                }
-            }
-        }
-        catch (NullReferenceException)
-        {
-            DebugLog.LogEvent(@"Registry Read Error @ KKLM\SOFTWARE\Wow6432NodeMicrosoft\Windows\CurrentVersion\Uninstall", DebugLog.Region.System, DebugLog.EventType.WARNING);
-        }
+        var hckuList = GetInstalledAppsAtKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", Registry.CurrentUser);
+        var lm32List = GetInstalledAppsAtKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", Registry.LocalMachine);
+        var lm64List = GetInstalledAppsAtKey(@"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall", Registry.LocalMachine);
+        InstalledApps.AddRange(hckuList);
+        InstalledApps.AddRange(lm32List);
+        InstalledApps.AddRange(lm64List);
 
         return InstalledApps;
     }
+    private static List<InstalledApp> GetInstalledAppsAtKey(string keyLocation, RegistryKey reg)
+    {
+        var InstalledApps = new List<InstalledApp>();
+        try
+        {
+            var key = reg.OpenSubKey(keyLocation);
+            foreach (String keyName in key.GetSubKeyNames())
+            {
+                RegistryKey subkey = key.OpenSubKey(keyName);
+                var appName = subkey.GetValue("DisplayName") as string;
+                var appVersion = subkey.GetValue("DisplayVersion") as string;
+                var appDate = subkey.GetValue("InstallDate") as string;
 
+                if (appName != null)
+                {
+                    InstalledApps.Add(
+                        new InstalledApp()
+                        {
+                            Name = appName,
+                            Version = appVersion,
+                            InstallDate = appDate
+                        });
+                }
+            }
+        }
+        catch (NullReferenceException)
+        {
+            DebugLog.LogEvent($"Registry Read Error @ {keyLocation}", DebugLog.Region.System, DebugLog.EventType.WARNING);
+        }
+        return InstalledApps;
+    }
     public static async System.Threading.Tasks.Task<StartupTask> CreateStartupTask(string appName, string imagePath)
     {
         StartupTask startupTask = new();
@@ -305,7 +201,6 @@ public static partial class Cache
         if (string.IsNullOrEmpty(imagePath))
         {
             startupTask.ImagePath = "Image Path not found";
-            Issues.Add($"Data not found for Startup app {appName}");
             await DebugLog.LogEventAsync($"No ImagePath data found for {appName}", DebugLog.Region.System, DebugLog.EventType.WARNING);
             return startupTask;
         }
@@ -327,54 +222,43 @@ public static partial class Cache
     }
 
     // Returns startup tasks from the following locations:
-    // 1: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
-    // 2: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
-    // 3: HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run
-    // 4: %AppData%\Microsoft\Windows\Start Menu\Programs\Startup
+    // Group 1: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+    // Group 2: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+    // Group 3: HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run
+    // Group 4: %AppData%\Microsoft\Windows\Start Menu\Programs\Startup
     public static async System.Threading.Tasks.Task<List<StartupTask>> GetStartupTasks()
     {
         DateTime start = DateTime.Now;
         await DebugLog.LogEventAsync("GetStartupTasks() Started", DebugLog.Region.System);
         List<StartupTask> startupTasks = new();
 
-        //
-        // Group 1
-        //
+        var group1TaskList = await GetStartupTasksAtKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", Registry.CurrentUser);
+        var group2TaskList = await GetStartupTasksAtKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", Registry.LocalMachine);
+        var group3TaskList = await GetStartupTasksAtKey(@"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run", Registry.LocalMachine);
+        var group4TaskList = await GetStartupTasksAtAppData();
 
-        // The intent of WorkingSource is to label each startup task by where it is on the PC. It's not implemented, and I'm not sure it's necessary.
-        string WorkingSource = @"HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-        var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run");
+        startupTasks.AddRange(group1TaskList);
+        startupTasks.AddRange(group2TaskList);
+        startupTasks.AddRange(group3TaskList);
+        startupTasks.AddRange(group4TaskList);
+
+        await DebugLog.LogEventAsync($"GetStartupTasks() Completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
+        return startupTasks;
+    }
+    private static async System.Threading.Tasks.Task<List<StartupTask>> GetStartupTasksAtKey(string keyLocation, RegistryKey reg)
+    {
+        List<StartupTask> startupTasks = new();
+        var key = reg.OpenSubKey(keyLocation);
         foreach (var appName in key.GetValueNames())
         {
             var startupTask = await CreateStartupTask(appName, (string)key.GetValue(appName));
             startupTasks.Add(startupTask);
         }
-
-        //
-        // Group 2
-        //
-        WorkingSource = @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-        key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run");
-        foreach (var appName in key.GetValueNames())
-        {
-            var startupTask = await CreateStartupTask(appName, (string)key.GetValue(appName));
-            startupTasks.Add(startupTask);
-        }
-
-        //
-        // Group 3
-        //
-        WorkingSource = @"HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run";
-        key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run");
-        foreach (var appName in key.GetValueNames())
-        {
-            var startupTask = await CreateStartupTask(appName, (string)key.GetValue(appName));
-            startupTasks.Add(startupTask);
-        }
-
-        //
-        // Group 4 - This should be expanded to get file information of the shortcuts' target application.
-        //
+        return startupTasks;
+    }
+    private static async System.Threading.Tasks.Task<List<StartupTask>> GetStartupTasksAtAppData()
+    {
+        List<StartupTask> startupTasks = new();
         try
         {
             var startupFiles = Directory.GetFiles(Environment.ExpandEnvironmentVariables("%AppData%") + @"\Microsoft\Windows\Start Menu\Programs\Startup");
@@ -390,10 +274,8 @@ public static partial class Cache
             await DebugLog.LogEventAsync($"File Read error in group 4 of GetStartupTasks", DebugLog.Region.System, DebugLog.EventType.ERROR);
             await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.System);
         }
-        await DebugLog.LogEventAsync($"GetStartupTasks() Completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
         return startupTasks;
     }
-
     public static async System.Threading.Tasks.Task<StartupTask> StartupTaskFileError(StartupTask startupTask, Exception ex)
     {
         Issues.Add($"{startupTask.ImagePath} file not found for startup app {startupTask.AppName}");
@@ -444,27 +326,49 @@ public static partial class Cache
         const string dumpDir = @"C:\Windows\Minidump";
         string TempFolder = Path.GetTempPath() + @"specify-dumps";
         string TempZip = Path.GetTempPath() + @"specify-dumps.zip";
-
-        if (!Directory.Exists(dumpDir))
-            return result;
-
-        //If Minidumps hasn't been written to in a month, it's not going to have a dump newer than a month inside of it.
-        if (new DirectoryInfo(dumpDir).LastWriteTime < DateTime.Now.AddMonths(-1))
-            return result;
-
         string[] dumps = Directory.GetFiles(dumpDir);
 
-        if (dumps.Length == 0)
+        if (!MinidumpsExist(dumpDir, dumps)) 
             return result;
 
         await DebugLog.LogEventAsync("Dump Upload Requested.", DebugLog.Region.System);
         if (MessageBox.Show("Would you like to upload your BSOD minidumps with your specs report?", "Minidumps detected", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
             return result;
-        
+
         await DebugLog.LogEventAsync("Dump Upload Request Approved.", DebugLog.Region.System);
 
         Directory.CreateDirectory(TempFolder);
 
+        if (!await CreateMinidumpZipFile(dumps, TempFolder, TempZip)) 
+            return result;
+
+        await DebugLog.LogEventAsync("Dump zip file built. Attempting upload.", DebugLog.Region.System);
+
+        if (string.IsNullOrEmpty(await UploadMinidumps(TempZip, specifiedDumpDestination))) 
+            return result;
+
+        await DebugLog.LogEventAsync($"Dump file upload result: {result ?? "null"}", DebugLog.Region.System);
+        File.Delete(TempZip);
+        new DirectoryInfo(TempFolder).Delete(true);
+
+        await DebugLog.LogEventAsync($"GetMiniDumps() Completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
+
+        return result;
+    }
+    private static bool MinidumpsExist(string dumpDir, string[] dumps)
+    {
+        if (!Directory.Exists(dumpDir)) return false;
+
+        //If Minidumps hasn't been written to in a month, it's not going to have a dump newer than a month inside of it.
+        if (new DirectoryInfo(dumpDir).LastWriteTime < DateTime.Now.AddMonths(-1))
+            return false;
+
+        if (dumps.Length == 0) return false;
+
+        return true;
+    }
+    private static async System.Threading.Tasks.Task<bool> CreateMinidumpZipFile(string[] dumps, string TempFolder, string TempZip)
+    {
         try
         {
             //Any dump older than a month is not included in the zip.
@@ -473,16 +377,19 @@ public static partial class Cache
                     File.Copy(dump, string.Concat(TempFolder + @"/", Regex.Match(dump, "[^\\\\]*$").Value));
 
             ZipFile.CreateFromDirectory(TempFolder, TempZip);
+            return true;
         }
         catch (Exception e)
         {
             await DebugLog.LogEventAsync($"Error occured manipulating dump files! Is this running as admin?", DebugLog.Region.System, DebugLog.EventType.ERROR);
             await DebugLog.LogEventAsync($"{e}", DebugLog.Region.System);
 
-            return result; //If this failed, there's nothing more that can be done here.
+            return false; //If this failed, there's nothing more that can be done here.
         }
-
-        await DebugLog.LogEventAsync("Dump zip file built. Attempting upload.", DebugLog.Region.System);
+    }
+    private static async System.Threading.Tasks.Task<string> UploadMinidumps(string TempZip, string specifiedDumpDestination)
+    {
+        string result = string.Empty;
         using (HttpClient client = new HttpClient())
         using (MultipartFormDataContent form = new MultipartFormDataContent())
         {
@@ -506,16 +413,8 @@ public static partial class Cache
 
             client.Dispose();
         }
-
-        await DebugLog.LogEventAsync($"Dump file upload result: {result ?? "null"}", DebugLog.Region.System);
-        File.Delete(TempZip);
-        new DirectoryInfo(TempFolder).Delete(true);
-
-        await DebugLog.LogEventAsync($"GetMiniDumps() Completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
-
         return result;
     }
-
     private static List<string> GetMicroCodes()
     {
         const string intelPath = @"C:\Windows\System32\mcupdate_genuineintel.dll";
@@ -822,5 +721,86 @@ public static partial class Cache
         }
         DebugLog.LogEvent($"GetBrowserExtensions() completed. Total runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
         return Browsers;
+    }
+    private static void CheckCommercialOneDrive()
+    {
+        bool ODFound = false;
+        try
+        {
+            if (UserVariables["OneDriveCommercial"] is string pathOneDriveCommercial)
+            {
+                var actualOneDriveCommercial =
+                    pathOneDriveCommercial.Split(new string[] { "OneDrive - " }, StringSplitOptions.None)[1];
+                OneDriveCommercialPathLength = pathOneDriveCommercial.Length;
+                OneDriveCommercialNameLength = actualOneDriveCommercial.Length;
+                DebugLog.LogEvent("OneDriveCommercial information retrieved.", DebugLog.Region.System);
+                ODFound = true;
+            }
+        }
+        finally
+        {
+            if (!ODFound)
+            {
+                if (Settings.RedactOneDriveCommercial)
+                {
+                    Settings.RedactOneDriveCommercial = false;
+                    DebugLog.LogEvent("RedactOneDriveCommercial setting disabled. OneDriveCommercial variable not found.", DebugLog.Region.System, DebugLog.EventType.WARNING);
+                }
+                else
+                {
+                    DebugLog.LogEvent("OneDriveCommercial variable not found.", DebugLog.Region.System);
+                }
+            }
+        }
+    }
+    private static List<ScheduledTask> GetScheduledTasks()
+    {
+        var scheduledTasks = new List<ScheduledTask>();
+        var ts = new TaskService();
+        var rawTaskList = EnumScheduledTasks(ts.RootFolder);
+        
+        WinScheduledTasks = new List<ScheduledTask>();
+        foreach (Task task in rawTaskList)
+            if (task.Path.StartsWith("\\Microsoft"))
+                WinScheduledTasks.Add(new ScheduledTask(task));
+            else
+                scheduledTasks.Add(new ScheduledTask(task));
+
+        return scheduledTasks;
+    }
+    private static string GetDefaultBrowser()
+    {
+        // [CLEANUP] Is defaultBrowserProgID necessary?
+        string defaultBrowserProgID = Utils.GetRegistryValue<string>(Registry.CurrentUser, "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID");
+        string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser,
+            "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
+        return (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
+    }
+    private static List<Dictionary<string, object>> GetPowerProfiles()
+    {
+        try
+        {
+            return Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
+        }
+        catch (COMException)
+        {
+            Issues.Add("Could not get power profiles");
+            //[CLEANUP] Will an empty list break something or should it return null?
+            return new();
+        }
+    }
+    private static void GetEnvironmentVariables()
+    {
+        SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
+        UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
+    }
+    private static void GetSystemWMIInfo()
+    {
+        Services = Utils.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
+        InstalledHotfixes = Utils.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
+        // As far as I can tell, Size is the size of the file on the filesystem and Usage is the amount actually used
+        PageFile = Utils.GetWmi("Win32_PageFileUsage", "AllocatedBaseSize, Caption, CurrentUsage, PeakUsage").FirstOrDefault();
+
+        PowerProfiles = GetPowerProfiles();
     }
 }
