@@ -102,6 +102,9 @@ public class Monolith
             //Redacts the username from BasicInfo
             serialized = serialized.Replace($@"""Username"": ""{Cache.Username}""", @"""Username"": ""[REDACTED]""");
             
+            //DOMAIN\Username -> DOMAIN\[REDACTED]
+            serialized = serialized.Replace($@"{m.BasicInfo.Domain}\\{Cache.Username}", $@"{m.BasicInfo.Domain}\\[REDACTED]");
+            
             await DebugLog.LogEventAsync("Username Redacted from report");
         }
 
