@@ -344,7 +344,8 @@ public static partial class Cache
 
         await DebugLog.LogEventAsync("Dump zip file built. Attempting upload.", DebugLog.Region.System);
 
-        if (string.IsNullOrEmpty(await UploadMinidumps(TempZip, specifiedDumpDestination))) 
+        result = await UploadMinidumps(TempZip, specifiedDumpDestination);
+        if (string.IsNullOrEmpty(result)) 
             return result;
 
         await DebugLog.LogEventAsync($"Dump file upload result: {result ?? "null"}", DebugLog.Region.System);
