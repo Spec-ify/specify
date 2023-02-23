@@ -93,7 +93,9 @@ public class Monolith
 
         if (Settings.RedactUsername)
         {
-            serialized = serialized.Replace(Cache.Username, "[REDACTED]");
+            serialized = serialized.Replace($@"C:\\Users\\{Cache.Username}", @"C:\\Users\\[REDACTED]");
+            serialized = serialized.Replace($@"{m.BasicInfo.Hostname}\\{Cache.Username}", $@"{m.BasicInfo.Hostname}\\[REDACTED]");
+            serialized = serialized.Replace($@"""Username"": ""{Cache.Username}""", @"""Username"": ""[REDACTED]""");
             await DebugLog.LogEventAsync("Username Redacted from report");
         }
 
