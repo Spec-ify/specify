@@ -768,12 +768,20 @@ public static partial class Cache
         return scheduledTasks;
     }
     private static string GetDefaultBrowser()
-    {
-        // [CLEANUP] Is defaultBrowserProgID necessary?
-        string defaultBrowserProgID = Utils.GetRegistryValue<string>(Registry.CurrentUser, "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID");
-        string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser,
+    { 
+        try
+        {
+            string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser,
             "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
-        return (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
+            return (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
+        }
+        catch (Exception e)
+        {
+            DebugLog.LogEventAsync($"Error occured when fetching default browser!", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            DebugLog.LogEventAsync($"{e}", DebugLog.Region.System);
+            return "";
+        }
+        
     }
     private static List<Dictionary<string, object>> GetPowerProfiles()
     {
