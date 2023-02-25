@@ -6,7 +6,9 @@
         xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif"
         mc:Ignorable="d"
         Title="Specify - Running..."
-        d:DesignHeight="400" d:DesignWidth="800">
+        Width="800" Height="400"
+        MinWidth="800" MinHeight="400"
+        d:Height="400" d:Width="800">
 
     <Page.Resources>
         <ResourceDictionary>
