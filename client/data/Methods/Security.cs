@@ -86,10 +86,13 @@ public static partial class Cache
                 Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender",
                 "DisableAntiSpyware");
 
+        // Check if Defender is disabled
         if (PassiveMode != null || DisableAV != 0 || DisableASW != 0)
-        {
             antiviruses.RemoveAll(x => ((string)x) == "Windows Defender");
-        }
+
+        // Check if Defender is not the only entry in list
+        if (antiviruses.Count > 1 && antiviruses.All(a => a == "Windows Defender"))
+            antiviruses.RemoveAll(x => ((string)x) == "Windows Defender");
 
         return antiviruses;
     }
