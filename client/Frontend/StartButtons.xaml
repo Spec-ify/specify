@@ -6,12 +6,92 @@
         xmlns:local="clr-namespace:specify_client"
         mc:Ignorable="d"
         Title="Specify"
-        d:DesignHeight="400" d:DesignWidth="800"
-        Background="#232731">
+        d:Height="400" d:Width="800">
 
     <Page.Resources>
         <ResourceDictionary>
+            <Style x:Key="CheckBoxStyle1" TargetType="{x:Type CheckBox}">
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
+                <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type CheckBox}">
+                            <ControlTemplate.Resources>
+                                <Storyboard x:Key="OnChecking">
+                                    <DoubleAnimationUsingKeyFrames BeginTime="00:00:00" Storyboard.TargetName="slider"
+                                                                   Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[3].(TranslateTransform.X)">
+                                        <SplineDoubleKeyFrame KeyTime="00:00:00.1000000" Value="16" />
+                                    </DoubleAnimationUsingKeyFrames>
+                                    <ColorAnimationUsingKeyFrames Storyboard.TargetProperty="(Border.Background).Color"
+                                                                  Storyboard.TargetName="bg"
+                                                                  FillBehavior="HoldEnd">
+                                        <ColorAnimationUsingKeyFrames.KeyFrames>
+                                            <SplineColorKeyFrame KeyTime="00:00:00.2000000" Value="#40abce" />
+                                        </ColorAnimationUsingKeyFrames.KeyFrames>
+                                    </ColorAnimationUsingKeyFrames>
+                                </Storyboard>
+                                <Storyboard x:Key="OnUnchecking">
+                                    <DoubleAnimationUsingKeyFrames BeginTime="00:00:00" Storyboard.TargetName="slider"
+                                                                   Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[3].(TranslateTransform.X)">
+                                        <SplineDoubleKeyFrame KeyTime="00:00:00.1000000" Value="0" />
+                                    </DoubleAnimationUsingKeyFrames>
+                                    <ColorAnimationUsingKeyFrames Storyboard.TargetProperty="(Border.Background).Color"
+                                                                  Storyboard.TargetName="bg"
+                                                                  FillBehavior="HoldEnd">
+                                        <ColorAnimationUsingKeyFrames.KeyFrames>
+                                            <SplineColorKeyFrame KeyTime="00:00:00.2000000" Value="#3b4252" />
+                                        </ColorAnimationUsingKeyFrames.KeyFrames>
+                                    </ColorAnimationUsingKeyFrames>
+                                </Storyboard>
+                            </ControlTemplate.Resources>
+
+                            <DockPanel x:Name="dockPanel">
+                                <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                                                  Content="{TemplateBinding Content}" ContentStringFormat="{TemplateBinding ContentStringFormat}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}" RecognizesAccessKey="True"
+                                                  VerticalAlignment="Center" />
+                                <Grid Margin="5,5,0,5" Background="#3b4252" Height="20">
+
+                                    <Border x:Name="bg" BorderBrush="#515d7a" HorizontalAlignment="Center"
+                                            Width="36" BorderThickness="1" CornerRadius="10"
+                                            Background="#3b4252" />
+
+                                    <Border HorizontalAlignment="Left" x:Name="slider"
+                                            Height="20" Width="20" BorderThickness="1" CornerRadius="400"
+                                            RenderTransformOrigin="0.5,0.5" Background="#232731">
+                                        <Border.RenderTransform>
+                                            <TransformGroup>
+                                                <ScaleTransform ScaleX="1" ScaleY="1" />
+                                                <SkewTransform AngleX="0" AngleY="0" />
+                                                <RotateTransform Angle="0" />
+                                                <TranslateTransform X="0" Y="0" />
+                                            </TransformGroup>
+                                        </Border.RenderTransform>
+                                    </Border>
+                                </Grid>
+                            </DockPanel>
+
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard Storyboard="{StaticResource OnUnchecking}" x:Name="OnUnchecking_BeginStoryboard" />
+                                    </Trigger.ExitActions>
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard Storyboard="{StaticResource OnChecking}" x:Name="OnChecking_BeginStoryboard" />
+                                    </Trigger.EnterActions>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <FontFamily x:Key="AldoFont" >Fonts/AldotheApache.ttf#Aldo The Apache</FontFamily>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Images/images.xaml" />
+            </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Page.Resources>
 
@@ -19,12 +99,11 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="50*" />
-            <RowDefinition Height="75*" />
-            <RowDefinition Height="25*" />
             <RowDefinition Height="30*" />
-            <RowDefinition Height="45*" />
-            <RowDefinition Height="20*" />
+            <RowDefinition Height="60*" />
+            <RowDefinition Height="30*" />
+            <RowDefinition Height="30*" />
+            <RowDefinition Height="30*" />
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
@@ -40,43 +119,40 @@
                Grid.ColumnSpan="10"
                NavigationUIVisibility="Hidden" />
 
-        <!-- Info Text -->
+        <!-- Specify Image-->
 
-        <StackPanel Grid.Row="2" Grid.RowSpan="3"
-                    Grid.Column="0" Grid.ColumnSpan="5"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch">
+        <Border CornerRadius="8"
+                BorderThickness="1"
+                    BorderBrush="#3b4252"
+                    Background="#3b4252"
+                    Grid.Row="1"
+                    Grid.Column="1" Grid.ColumnSpan="3" Margin="5,5,5,5" />
 
-            <StackPanel Orientation="Horizontal"
-                        HorizontalAlignment = "Center"
-                        VerticalAlignment = "Center">
-                <TextBlock TextWrapping="Wrap"
-                           Text="This tool gathers information about your computer. "
-                           FontFamily="Consolas" Foreground="White"
-                           HorizontalAlignment = "Center"
-                           VerticalAlignment = "Center" />
-            </StackPanel>
-
-            <TextBlock TextWrapping="Wrap"
-                           Text="It does not collect any private information."
-                           FontFamily="Consolas" Foreground="White"
-                           HorizontalAlignment = "Center"
-                           VerticalAlignment = "Bottom" />
-        </StackPanel>
+        <Image Source="{StaticResource specifycl_logo_whiteDrawingImage}"
+                    Stretch="Uniform" Width="270" VerticalAlignment="Center"
+                    Grid.Row="1"
+                    Grid.Column="1" Grid.ColumnSpan="3"
+                    HorizontalAlignment="Center" />
 
         <!-- Start Button -->
 
-        <StackPanel Grid.Row="3" Grid.RowSpan="1"
-                    Grid.Column="0" Grid.ColumnSpan="5"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Center">
+        <Border CornerRadius="8"
+                BorderThickness="1"
+                    BorderBrush="#3b4252"
+                    Background="#3b4252"
+                    Grid.Row="2" Grid.RowSpan="2"
+                    Grid.Column="2" Margin="5,5,5,5" />
+
+        <StackPanel Grid.Row="2" Grid.RowSpan="2"
+                    Grid.Column="2" Grid.ColumnSpan="1"
+                    Margin="0,15,0,50">
 
             <Button x:Name = "StartButton"
                               Content = "Start"
                               FontSize="16"
                               FontWeight="Medium"
                               Click="StartAction"
-                              Background="#3b4252"
+                              Background="#40abce"
                               Foreground="White">
 
                 <Button.Style>
@@ -90,7 +166,7 @@
                             <Trigger Property="IsMouseOver"
                                      Value="True">
                                 <Setter Property="Background"
-                                        Value="#3b4252" />
+                                        Value="#30809b" />
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -100,7 +176,7 @@
                     <ControlTemplate TargetType="{x:Type Button}">
                         <Border Width="100"
                                 Height="35"
-                                CornerRadius="16"
+                                CornerRadius="8"
                                 Background="{TemplateBinding Background}">
                             <ContentPresenter VerticalAlignment="Center"
                                               HorizontalAlignment="Center" />
@@ -110,220 +186,83 @@
             </Button>
         </StackPanel>
 
+        <TextBlock HorizontalAlignment = "Center"
+                   TextAlignment="Center"
+                        VerticalAlignment = "Top"
+                        FontFamily="Consolas" Foreground="White"
+                        TextWrapping="Wrap" xml:space="preserve"
+                        Grid.Row="3" Grid.RowSpan="2"
+                        Grid.Column="2" Grid.ColumnSpan="1"
+                        Text="This tool gathers information about your computer" Width="140" />
+
         <!-- Toggle Buttons -->
 
-        <Grid Grid.Row="4" Grid.ColumnSpan="5">
+        <!-- Redact Username -->
 
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="4*" />
-                <ColumnDefinition Width="4*" />
-                <ColumnDefinition Width="4*" />
-                <ColumnDefinition Width="4*" />
-                <ColumnDefinition Width="2*" />
-            </Grid.ColumnDefinitions>
+        <Border CornerRadius="8"
+                BorderThickness="1"
+                    BorderBrush="#3b4252"
+                    Background="#3b4252"
+                    Grid.Row="2" Grid.RowSpan="1"
+                    Grid.Column="1" Margin="5,5,5,5" />
 
-            <!-- Redact OneDrive -->
+        <CheckBox HorizontalAlignment="Center"
+                  VerticalAlignment="Center" Content="Remove Username"
+                  Checked="UsernameOn" Unchecked="UsernameOff"
+                  Style="{DynamicResource CheckBoxStyle1}"
+                  Grid.Row="2" Grid.Column="1"
+                  Width="140" Foreground="White"
+                  FontFamily="Consolas" />
 
-            <StackPanel Grid.Row="4" Grid.RowSpan="1"
-                    Grid.Column="1" VerticalAlignment="Center">
+        <!-- Redact OneDrive -->
 
-                <StackPanel Orientation="Horizontal"
-                HorizontalAlignment="Center">
-                    <ToggleButton x:Name = "OneDriveToggle"
-                    Checked = "OneDriveOn"
-                    Unchecked = "OneDriveOff"
-                    FontSize="12"
-                    FontWeight="Medium">
+        <Border CornerRadius="8"
+                BorderThickness="1"
+                    BorderBrush="#3b4252"
+                    Background="#3b4252"
+                    Grid.Row="3" Grid.RowSpan="1"
+                    Grid.Column="1" Margin="5,5,5,5" />
 
-                        <TextBlock Text="Remove Commercial OneDrive Name"
-                               TextWrapping="Wrap"
-                               TextAlignment="Center" />
+        <CheckBox HorizontalAlignment="Center"
+                  VerticalAlignment="Center" Content="Remove OneDrive&#x0a;Commercial Name"
+                  Checked="OneDriveOn" Unchecked="OneDriveOff"
+                  Style="{DynamicResource CheckBoxStyle1}"
+                  Grid.Row="3" Grid.Column="1"
+                  Width="140" Foreground="White"
+                  FontFamily="Consolas" />
 
-                        <ToggleButton.Style>
-                            <Style TargetType="{x:Type ToggleButton}">
-                                <Setter Property="TextElement.FontFamily"
-                            Value="Bahnschrift SemiBold Condensed" />
+        <!-- Upload Toggle -->
 
-                                <Setter Property="Cursor"
-                                Value="Hand" />
+        <Border CornerRadius="8"
+                BorderThickness="1"
+                    BorderBrush="#3b4252"
+                    Background="#3b4252"
+                    Grid.Row="2" Grid.RowSpan="1"
+                    Grid.Column="3" Margin="5,5,5,5" />
 
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver"
-                                    Value="True">
-                                        <Setter Property="Background"
-                                        Value="#3b4252" />
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ToggleButton.Style>
+        <CheckBox HorizontalAlignment="Center"
+                  VerticalAlignment="Center" Content=" Don't Upload  "
+                  Checked="UploadOff" Unchecked="UploadOn"
+                  Style="{DynamicResource CheckBoxStyle1}"
+                  Grid.Row="2" Grid.Column="3"
+                  Width="140" Foreground="White"
+                  FontFamily="Consolas" VerticalContentAlignment="Center" />
 
-                        <ToggleButton.Template>
-                            <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                <Border Width="100"
-                                Height="35"
-                                CornerRadius="16"
-                                Background="{TemplateBinding Background}">
-                                    <ContentPresenter VerticalAlignment="Center"
-                                    HorizontalAlignment="Center" />
-                                </Border>
-                            </ControlTemplate>
-                        </ToggleButton.Template>
-                    </ToggleButton>
-                </StackPanel>
-            </StackPanel>
+        <!-- Debug Log -->
 
-            <!-- Redact Username -->
+        <Border CornerRadius="8"
+                BorderThickness="1"
+                    BorderBrush="#3b4252"
+                    Background="#3b4252"
+                    Grid.Row="3" Grid.RowSpan="1"
+                    Grid.Column="3" Margin="5,5,5,5" />
 
-            <StackPanel Grid.Row="4" Grid.RowSpan="1"
-                    Grid.Column="2" VerticalAlignment="Center">
-
-                <StackPanel Orientation="Horizontal"
-                        Grid.Column="0" Grid.ColumnSpan="1"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Stretch">
-
-                    <ToggleButton x:Name = "Username"
-                              FontSize="12"
-                              FontWeight="Medium"
-                              Checked = "UsernameOn"
-                              Unchecked = "UsernameOff">
-
-                        <TextBlock Text="Remove Username"
-                               TextWrapping="Wrap"
-                               TextAlignment="Center" Padding="20,0,20,0" />
-
-                        <ToggleButton.Style>
-                            <Style TargetType="{x:Type ToggleButton}">
-
-                                <Setter Property="TextElement.FontFamily"
-                            Value="Bahnschrift SemiBold SemiCondensed" />
-
-                                <Setter Property="Cursor"
-                                Value="Hand" />
-
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver"
-                                     Value="True">
-                                        <Setter Property="Background"
-                                        Value="#3b4252" />
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ToggleButton.Style>
-
-                        <ToggleButton.Template>
-                            <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                <Border Width="100"
-                                Height="35"
-                                CornerRadius="16"
-                                Background="{TemplateBinding Background}">
-                                    <ContentPresenter VerticalAlignment="Center"
-                                              HorizontalAlignment="Center" />
-                                </Border>
-                            </ControlTemplate>
-                        </ToggleButton.Template>
-                    </ToggleButton>
-                </StackPanel>
-            </StackPanel>
-
-            <!-- Upload Toggle -->
-
-            <StackPanel Grid.Row="4" Grid.RowSpan="1"
-                    Grid.Column="3" VerticalAlignment="Center">
-
-                <StackPanel Orientation="Horizontal"
-                HorizontalAlignment="Center">
-                    <ToggleButton x:Name = "UploadToggle"
-                    Content = "Don't Upload"
-                    Checked = "UploadOn"
-                    Unchecked = "UploadOff"
-                    FontSize="14"
-                    FontWeight="Medium">
-
-                        <ToggleButton.Style>
-                            <Style TargetType="{x:Type ToggleButton}">
-                                <Setter Property="TextElement.FontFamily"
-                            Value="Bahnschrift SemiBold SemiCondensed" />
-
-                                <Setter Property="Cursor"
-                                Value="Hand" />
-
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver"
-                                    Value="True">
-                                        <Setter Property="Background"
-                                        Value="#3b4252" />
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ToggleButton.Style>
-
-                        <ToggleButton.Template>
-                            <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                <Border Width="100"
-                                Height="35"
-                                CornerRadius="16"
-                                Background="{TemplateBinding Background}">
-                                    <ContentPresenter VerticalAlignment="Center"
-                                    HorizontalAlignment="Center" />
-                                </Border>
-                            </ControlTemplate>
-                        </ToggleButton.Template>
-                    </ToggleButton>
-                </StackPanel>
-            </StackPanel>
-
-            <!-- Debug Log -->
-
-            <StackPanel Grid.Row="4" Grid.RowSpan="1"
-                    Grid.Column="4" VerticalAlignment="Center">
-
-                <StackPanel Orientation="Horizontal"
-                HorizontalAlignment="Center">
-
-                    <ToggleButton x:Name = "DebugLogToggle"
-                    Checked = "DebugLogToggleOn"
-                    Unchecked = "DebugLogToggleOff"
-                    FontSize="14"
-                    FontWeight="Medium">
-
-                        <TextBlock Text="Debug Logging"
-                               TextWrapping="Wrap"
-                               TextAlignment="Center" />
-
-                        <ToggleButton.Style>
-                            <Style TargetType="{x:Type ToggleButton}">
-                                <Setter Property="TextElement.FontFamily"
-                            Value="Bahnschrift SemiBold Condensed" />
-
-                                <Setter Property="Cursor"
-                                Value="Hand" />
-
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver"
-                                    Value="True">
-                                        <Setter Property="Background"
-                                        Value="#3b4252" />
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ToggleButton.Style>
-
-                        <ToggleButton.Template>
-                            <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                <Border Width="100"
-                                Height="35"
-                                CornerRadius="16"
-                                Background="{TemplateBinding Background}">
-                                    <ContentPresenter VerticalAlignment="Center"
-                                    HorizontalAlignment="Center" />
-                                </Border>
-                            </ControlTemplate>
-                        </ToggleButton.Template>
-                    </ToggleButton>
-                </StackPanel>
-            </StackPanel>
-        </Grid>
+        <CheckBox HorizontalAlignment="Center"
+                  VerticalAlignment="Center" Content=" Enable Debug  &#x0a;    Logging"
+                  Checked="DebugLogToggleOn" Unchecked="DebugLogToggleOff"
+                  Style="{DynamicResource CheckBoxStyle1}"
+                  Grid.Row="3" Grid.Column="3"
+                  Width="140" Foreground="White"
+                  FontFamily="Consolas" />
     </Grid>
 </Page>

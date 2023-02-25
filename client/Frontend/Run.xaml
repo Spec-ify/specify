@@ -5,7 +5,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif"
         mc:Ignorable="d"
-        Background="#232731"
         Title="Specify - Running..."
         d:DesignHeight="400" d:DesignWidth="800">
 
