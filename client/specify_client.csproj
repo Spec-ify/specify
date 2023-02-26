@@ -202,8 +202,8 @@
   <ItemGroup>
     <Resource Include="Frontend\Images\sync-alt-inv.png" />
     <Content Include="app.manifest" />
-    <Resource Include="Frontend\Images\loop2.gif" />
-    <Resource Include="Frontend\Images\loop1.gif" />
+    <Resource Include="Frontend\Images\RunLoops\loop2.gif" />
+    <Resource Include="Frontend\Images\RunLoops\loop1.gif" />
     <Content Include="specify-client-favicon.ico" />
   </ItemGroup>
   <ItemGroup />
