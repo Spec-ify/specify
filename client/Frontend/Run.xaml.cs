@@ -55,7 +55,7 @@ public partial class Run : Page
 
         string[] gifimages =
         {
-            "Images/loop1.gif", "Images/loop2.gif"
+            "Images/RunLoops/loop1.gif", "Images/RunLoops/loop2.gif"
         };
 
         int gifindex = rng.Next(2);
