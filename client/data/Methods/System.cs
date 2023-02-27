@@ -22,6 +22,7 @@ namespace specify_client.data;
 
 public static partial class Cache
 {
+    //[CLEANUP] add using statement to simplify System.Threading.Tasks.Task to something easier to read.
     public static async System.Threading.Tasks.Task MakeSystemData()
     {
         try
@@ -163,7 +164,6 @@ public static partial class Cache
 
         return InstalledApps;
     }
-
     private static List<InstalledApp> GetInstalledAppsAtKey(string keyLocation, RegistryKey reg)
     {
         var InstalledApps = new List<InstalledApp>();
@@ -195,7 +195,6 @@ public static partial class Cache
         }
         return InstalledApps;
     }
-
     public static async System.Threading.Tasks.Task<StartupTask> CreateStartupTask(string appName, string imagePath)
     {
         StartupTask startupTask = new();
@@ -247,7 +246,6 @@ public static partial class Cache
         await DebugLog.LogEventAsync($"GetStartupTasks() Completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
         return startupTasks;
     }
-
     private static async System.Threading.Tasks.Task<List<StartupTask>> GetStartupTasksAtKey(string keyLocation, RegistryKey reg)
     {
         List<StartupTask> startupTasks = new();
@@ -259,7 +257,6 @@ public static partial class Cache
         }
         return startupTasks;
     }
-
     private static async System.Threading.Tasks.Task<List<StartupTask>> GetStartupTasksAtAppData()
     {
         List<StartupTask> startupTasks = new();
@@ -280,7 +277,6 @@ public static partial class Cache
         }
         return startupTasks;
     }
-
     public static async System.Threading.Tasks.Task<StartupTask> StartupTaskFileError(StartupTask startupTask, Exception ex)
     {
         Issues.Add($"{startupTask.ImagePath} file not found for startup app {startupTask.AppName}");
@@ -328,8 +324,8 @@ public static partial class Cache
         const string dumpDir = @"C:\Windows\Minidump";
         string TempFolder = Path.GetTempPath() + @"specify-dumps";
         string TempZip = Path.GetTempPath() + @"specify-dumps.zip";
-
-        if (!MinidumpsExist(dumpDir))
+        
+        if (!MinidumpsExist(dumpDir)) 
             return result;
 
         string[] dumps = Directory.GetFiles(dumpDir);
@@ -344,13 +340,13 @@ public static partial class Cache
 
         Directory.CreateDirectory(TempFolder);
 
-        if (!await CreateMinidumpZipFile(dumps, TempFolder, TempZip))
+        if (!await CreateMinidumpZipFile(dumps, TempFolder, TempZip)) 
             return result;
 
         await DebugLog.LogEventAsync("Dump zip file built. Attempting upload.", DebugLog.Region.System);
 
         result = await UploadMinidumps(TempZip, specifiedDumpDestination);
-        if (string.IsNullOrEmpty(result))
+        if (string.IsNullOrEmpty(result)) 
             return result;
 
         await DebugLog.LogEventAsync($"Dump file upload result: {result ?? "null"}", DebugLog.Region.System);
@@ -361,7 +357,6 @@ public static partial class Cache
 
         return result;
     }
-
     private static bool MinidumpsExist(string dumpDir)
     {
         if (!Directory.Exists(dumpDir)) return false;
@@ -372,7 +367,6 @@ public static partial class Cache
 
         return true;
     }
-
     private static async System.Threading.Tasks.Task<bool> CreateMinidumpZipFile(string[] dumps, string TempFolder, string TempZip)
     {
         try
@@ -393,7 +387,6 @@ public static partial class Cache
             return false; //If this failed, there's nothing more that can be done here.
         }
     }
-
     private static async System.Threading.Tasks.Task<string> UploadMinidumps(string TempZip, string specifiedDumpDestination)
     {
         string result = string.Empty;
@@ -422,7 +415,6 @@ public static partial class Cache
         }
         return result;
     }
-
     private static List<string> GetMicroCodes()
     {
         const string intelPath = @"C:\Windows\System32\mcupdate_genuineintel.dll";
@@ -730,7 +722,6 @@ public static partial class Cache
         DebugLog.LogEvent($"GetBrowserExtensions() completed. Total runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
         return Browsers;
     }
-
     private static void CheckCommercialOneDrive()
     {
         bool ODFound = false;
@@ -762,13 +753,12 @@ public static partial class Cache
             }
         }
     }
-
     private static List<ScheduledTask> GetScheduledTasks()
     {
         var scheduledTasks = new List<ScheduledTask>();
         var ts = new TaskService();
         var rawTaskList = EnumScheduledTasks(ts.RootFolder);
-
+        
         WinScheduledTasks = new List<ScheduledTask>();
         foreach (Task task in rawTaskList)
             if (task.Path.StartsWith("\\Microsoft"))
@@ -778,23 +768,14 @@ public static partial class Cache
 
         return scheduledTasks;
     }
-
     private static string GetDefaultBrowser()
     {
-        try
-        {
-            string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser,
+        // [CLEANUP] Is defaultBrowserProgID necessary?
+        string defaultBrowserProgID = Utils.GetRegistryValue<string>(Registry.CurrentUser, "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID");
+        string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser,
             "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
-            return (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
-        }
-        catch (Exception e)
-        {
-            DebugLog.LogEvent($"Error occured when fetching default browser!", DebugLog.Region.System, DebugLog.EventType.ERROR);
-            DebugLog.LogEvent($"{e}", DebugLog.Region.System);
-            return "";
-        }
+        return (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
     }
-
     private static List<Dictionary<string, object>> GetPowerProfiles()
     {
         try
@@ -808,13 +789,11 @@ public static partial class Cache
             return new();
         }
     }
-
     private static void GetEnvironmentVariables()
     {
         SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
         UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
     }
-
     private static void GetSystemWMIInfo()
     {
         Services = Utils.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");

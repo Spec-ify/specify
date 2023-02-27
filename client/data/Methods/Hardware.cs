@@ -1,3 +1,4 @@
+using HidSharp.Reports;
 using LibreHardwareMonitor.Hardware;
 using Microsoft.Win32;
 using Newtonsoft.Json;
@@ -11,6 +12,7 @@ using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Xml;
+using static specify_client.Interop;
 
 namespace specify_client.data;
 
@@ -56,9 +58,6 @@ public static partial class Cache
         }
         catch (Exception ex)
         {
-            /*await DebugLog.LogEventAsync("UNEXPECTED FATAL EXCEPTION", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
-            await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.Hardware);
-            Environment.Exit(-1);*/
             await DebugLog.LogFatalError($"{ex}", DebugLog.Region.Hardware);
         }
     }
@@ -451,10 +450,10 @@ public static partial class Cache
         {
             var partition = new Partition()
             {
-                PartitionCapacity = (UInt64)partitionWmi["Size"],
+                PartitionCapacity = (ulong)partitionWmi["Size"],
                 Caption = (string)partitionWmi["Caption"]
             };
-            var diskIndex = (UInt32)partitionWmi["DiskIndex"];
+            var diskIndex = (uint)partitionWmi["DiskIndex"];
 
             foreach (var disk in drives)
             {
@@ -522,6 +521,7 @@ public static partial class Cache
             DebugLog.LogEvent("Unexpected exception thrown during SMART Data Retrieval.", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
             DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
         }
+        
         var LDtoP = Utils.GetWmiObj("Win32_LogicalDiskToPartition");
         for (var di = 0; di < drives.Count(); di++)
         {
@@ -553,6 +553,22 @@ public static partial class Cache
                         DebugLog.LogEvent("Unexpected exception thrown during paritition linking", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
                         DebugLog.LogEvent($"{ex}", DebugLog.Region.Hardware);
                     }
+                }
+            }
+        }
+        for(int i = 0; i < drives.Count; i++)
+        {
+            var drive = drives[i];
+            if (drive.SmartData == null)
+            {
+                try
+                {
+                    drive = GetNvmeSmart(drive);
+                }
+                catch(Exception e)
+                {
+                    DebugLog.LogEvent($"Exception during NVMe Smart Data retrieval on drive {drive.DeviceName}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                    DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
                 }
             }
         }
@@ -747,7 +763,249 @@ public static partial class Cache
         DebugLog.LogEvent($"GetDiskDriveInfo() completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
         return drives;
     }
+    private static DiskDrive GetNvmeSmart(DiskDrive drive)
+    {
+        // Get the drive letter to send to CreateFile()
+        string driveLetter = "";
+        foreach(var partition in drive.Partitions) 
+        {
+            if(partition.PartitionLabel != null && partition.PartitionLabel.Length == 2)
+            {
+                driveLetter = partition.PartitionLabel;
+                break;
+            }
+        }
 
+        // If no drive letter was found, it is impossible to obtain a valid handle.
+        if(string.IsNullOrEmpty(driveLetter))
+        {
+            DebugLog.LogEvent($"Attempted to gather smart data from unlettered drive. {drive.DeviceName}", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+            return drive;
+        }
+
+        // Find a valid handle.
+        driveLetter = $@"\\.\{driveLetter}" + '\0';
+        var handle = Interop.CreateFile(driveLetter, 0x40000000, 0x1 | 0x2, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
+
+        // Verify the handle.
+        if(handle == new IntPtr(-1))
+        {
+            DebugLog.LogEvent($"NVMe Smart Data could not be retrieved. Invalid Handle. {driveLetter}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            return drive;
+        }
+
+        // Definitions
+        uint NVME_MAX_LOG_SIZE = 0x1000;
+        bool result;
+        IntPtr buffer = IntPtr.Zero;
+        uint bufferLength = 0;
+        uint returnedLength = 0;
+        unsafe
+        {
+            STORAGE_PROPERTY_QUERY* query = null;
+            STORAGE_PROPERTY_SET* setProperty = null;
+            STORAGE_PROTOCOL_SPECIFIC_DATA* protocolData = null;
+            STORAGE_PROTOCOL_DATA_DESCRIPTOR* protocolDataDescr = null;
+
+            // Set the maximum memory the smart log can be.
+            bufferLength = (uint)(Marshal.OffsetOf(typeof(STORAGE_PROPERTY_QUERY), "AdditionalParameters") + sizeof(STORAGE_PROTOCOL_SPECIFIC_DATA_EXT));
+            bufferLength += NVME_MAX_LOG_SIZE;
+
+            // Allocate a space in memory for the log.
+            buffer = Marshal.AllocHGlobal((int)bufferLength);
+
+            // Overlay the data structures on top of the allocated memory.
+            query = (STORAGE_PROPERTY_QUERY*)buffer;
+            protocolDataDescr = (STORAGE_PROTOCOL_DATA_DESCRIPTOR*)buffer;
+            protocolData = (STORAGE_PROTOCOL_SPECIFIC_DATA*)query->AdditionalParameters;
+
+            // Set up the Smart log query
+            query->PropertyId = STORAGE_PROPERTY_ID.StorageDeviceProtocolSpecificProperty;
+            query->QueryType = STORAGE_QUERY_TYPE.PropertyStandardQuery;
+            protocolData->ProtocolType = STORAGE_PROTOCOL_TYPE.ProtocolTypeNvme;
+            protocolData->DataType = (uint)STORAGE_PROTOCOL_NVME_DATA_TYPE.NVMeDataTypeLogPage;
+            protocolData->ProtocolDataRequestValue = (uint)NVME_LOG_PAGES.NVME_LOG_PAGE_HEALTH_INFO;
+            protocolData->ProtocolDataRequestSubValue = 0;
+            protocolData->ProtocolDataRequestSubValue2 = 0;
+            protocolData->ProtocolDataRequestSubValue3 = 0;
+            protocolData->ProtocolDataRequestSubValue4 = 0;
+            protocolData->ProtocolDataOffset = (uint)sizeof(STORAGE_PROTOCOL_SPECIFIC_DATA);
+            protocolData->ProtocolDataLength = (uint)sizeof(NVME_HEALTH_INFO_LOG);
+
+            // Run the query.
+            // This is sending data to the allocated buffer and returning a true or false if the command was successful.
+            result = DeviceIoControl(handle,
+                             ((0x0000002d) << 16) | ((0) << 14) | ((0x0500) << 2) | (0), // This disaster is what the macro IOCTL_STORAGE_QUERY_PROPERTY equates to.
+                             buffer,
+                             bufferLength,
+                             buffer,
+                             bufferLength,
+                             out returnedLength,
+                             IntPtr.Zero
+                             );
+
+            // Verify the command was successful and report any errors.
+            if(!result)
+            {
+                DebugLog.LogEvent($"Interop failure during NVMe SMART data retrieval. {Marshal.GetLastWin32Error()} on drive {driveLetter}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                return drive;
+            }
+
+            // Overlay the smart info structure atop the allocated memory buffer.
+            NVME_HEALTH_INFO_LOG* smartInfo = (NVME_HEALTH_INFO_LOG*)((sbyte*)protocolData + protocolData->ProtocolDataOffset);
+
+            // Hacky data verification; checking if the drive temperature is within a normal range.
+            // [CLEANUP] This is method should be changed to something more reliable.
+            var driveTemperature = ((uint)smartInfo->Temperature[1] << 8 | smartInfo->Temperature[0]) -273;
+            if (driveTemperature < 0 || driveTemperature > 100)
+            {
+                DebugLog.LogEvent($"SMART data retrieval error - Data not valid on drive {driveLetter}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                return drive;
+            }
+            /*
+             * NVME CriticalWarning is defined by 8 bits:
+             * 0: Available Space Low
+             * 1: Temperature Threshold Exceeded
+             * 2: NVM Subsytem Reliability Significantly Degraded
+             * 3: Media has been set to Read Only
+             * 4: Volatile Memory Device Backup Failed
+             * 5: Persistent Memory Region set to Read Only
+             * 6-7: Reserved
+             */ 
+            var criticalWarningValue = Convert.ToString(smartInfo->CriticalWarning.CriticalWarning, 2).PadLeft(8, '0');
+            SmartAttribute criticalWarning = new()
+            {
+                Id = 0x01,
+                Name = "Critical Warning(!)",
+                RawValue = criticalWarningValue
+            };
+            SmartAttribute compositeTemperature = new()
+            {
+                Id = 0x02,
+                Name = "Temperature",
+                RawValue = driveTemperature.ToString() + " C"
+            };
+            SmartAttribute availableSpare = new()
+            {
+                Id = 0x03,
+                Name = "Available Spare",
+                RawValue = smartInfo->AvailableSpare.ToString()
+            };
+            SmartAttribute availableSpareThreshold = new()
+            {
+                Id = 0x04,
+                Name = "Available Spare Threshold",
+                RawValue = smartInfo->AvailableSpareThreshold.ToString()
+            };
+            SmartAttribute percentageUsed = new()
+            {
+                Id = 0x05,
+                Name = "Percentage Used",
+                RawValue = smartInfo->PercentageUsed.ToString()
+            };
+            // [CLEANUP]: This can be more readable.
+            System.Span<byte> dataUnitsReadSpan = new(smartInfo->DataUnitRead, 6);
+            byte[] dataUnitsReadArray = dataUnitsReadSpan.ToArray().Reverse().ToArray();
+            SmartAttribute dataUnitsRead = new()
+            {
+                Id = 0x06,
+                Name = "Data Units Read",
+                RawValue = BitConverter.ToString(dataUnitsReadArray).Replace("-", string.Empty)
+            };
+            Span<byte> dataUnitsWrittenSpan = new(smartInfo->DataUnitWritten, 6);
+            byte[] dataUnitsWrittenArray = dataUnitsWrittenSpan.ToArray().Reverse().ToArray();
+            SmartAttribute dataUnitsWritten = new()
+            {
+                Id = 0x07,
+                Name = "Data Units Written",
+                RawValue = BitConverter.ToString(dataUnitsWrittenArray).Replace("-", string.Empty)
+            };
+            Span<byte> hostReadSpan = new(smartInfo->HostReadCommands, 6);
+            byte[] hostReadArray = hostReadSpan.ToArray().Reverse().ToArray();
+            SmartAttribute hostReadCommands = new()
+            {
+                Id = 0x08,
+                Name = "Host Read Commands",
+                RawValue = BitConverter.ToString(hostReadArray).Replace("-", string.Empty)
+            };
+            Span<byte> hostWrittenSpan = new(smartInfo->HostWrittenCommands, 6);
+            byte[] hostWrittenArray = hostWrittenSpan.ToArray().Reverse().ToArray();
+            SmartAttribute hostWrittenCommands = new()
+            {
+                Id = 0x09,
+                Name = "Host Written Commands",
+                RawValue = BitConverter.ToString(hostWrittenArray).Replace("-", string.Empty)
+            };
+            Span<byte> controllerBusyTimeSpan = new(smartInfo->ControllerBusyTime, 6);
+            byte[] controllerBusyTimeArray = controllerBusyTimeSpan.ToArray().Reverse().ToArray();
+            SmartAttribute controllerBusyTime = new()
+            {
+                Id = 0x0A,
+                Name = "Controller Busy Time",
+                RawValue = BitConverter.ToString(controllerBusyTimeArray).Replace("-", string.Empty)
+            };
+            Span<byte> powerCycleSpan = new(smartInfo->PowerCycle, 6);
+            byte[] powerCycleArray = powerCycleSpan.ToArray().Reverse().ToArray();
+            SmartAttribute powerCycle = new()
+            {
+                Id = 0x0B,
+                Name = "Power Cycles",
+                RawValue = BitConverter.ToString(powerCycleArray).Replace("-", string.Empty)
+            };
+            Span<byte> powerOnHoursSpan = new(smartInfo->PowerOnHours, 6);
+            byte[] powerOnHoursArray = powerOnHoursSpan.ToArray().Reverse().ToArray();
+            SmartAttribute powerOnHours = new()
+            {
+                Id = 0x0C,
+                Name = "Power-On Hours",
+                RawValue = BitConverter.ToString(powerOnHoursArray).Replace("-", string.Empty)
+            };
+            Span<byte> unsafeShutdownsSpan = new(smartInfo->UnsafeShutdowns, 6);
+            byte[] unsafeShutdownsArray = unsafeShutdownsSpan.ToArray().Reverse().ToArray();
+            SmartAttribute unsafeShutdowns = new()
+            {
+                Id = 0x0D,
+                Name = "Unsafe Shutdowns",
+                RawValue = BitConverter.ToString(unsafeShutdownsArray).Replace("-", string.Empty)
+            };
+            Span<byte> mediaErrorsSpan = new(smartInfo->MediaErrors, 6);
+            byte[] mediaErrorsArray = mediaErrorsSpan.ToArray().Reverse().ToArray();
+            SmartAttribute mediaErrors = new()
+            {
+                Id = 0x0E,
+                Name = "Media and Integrity Errors",
+                RawValue = BitConverter.ToString(mediaErrorsArray).Replace("-", string.Empty)
+            };
+            Span<byte> errorLogEntriesSpan = new(smartInfo->ErrorInfoLogEntryCount, 6);
+            byte[] errorLogEntriesArray = errorLogEntriesSpan.ToArray().Reverse().ToArray();
+            SmartAttribute errorLogEntries = new()
+            {
+                Id = 0x0F,
+                Name = "Number of Error Information Log Entries",
+                RawValue = BitConverter.ToString(errorLogEntriesArray).Replace("-", string.Empty)
+            };
+            drive.SmartData = new()
+            {
+                criticalWarning,
+                compositeTemperature,
+                availableSpare,
+                availableSpareThreshold,
+                percentageUsed,
+                dataUnitsRead,
+                dataUnitsWritten,
+                hostReadCommands,
+                hostWrittenCommands,
+                controllerBusyTime,
+                powerCycle,
+                powerOnHours,
+                unsafeShutdowns,
+                mediaErrors,
+                errorLogEntries
+            };
+        }
+
+        return drive;
+    }
     private static SmartAttribute GetAttribute(byte[] data)
     {
         // Smart data is fed backwards, with byte 10 being the first byte for the attribute and byte 5 being the last.

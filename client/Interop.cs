@@ -26,6 +26,22 @@ public static class Interop
         bool bInheritHandle,
         int processId);
 
+    [DllImport("kernel32", ExactSpelling = true, SetLastError = true, CharSet = CharSet.Auto)]
+    internal static extern bool DeviceIoControl(IntPtr hDevice, uint dwIoControlCode,
+        IntPtr lpInBuffer, uint nInBufferSize,
+        IntPtr lpOutBuffer, uint nOutBufferSize,
+        out uint lpBytesReturned, IntPtr lpOverlapped);
+
+
+    [DllImport("kernel32", CharSet = CharSet.Auto, SetLastError = true)]
+    internal static extern IntPtr CreateFile(string lpFileName,
+        UInt32 dwDesiredAccess,
+        UInt32 dwShareMode,
+        IntPtr lpAttributes,
+        UInt32 dwCreationDisposition,
+        UInt32 dwFlagsAndAttributes,
+        IntPtr hTemplateFile);
+
     [StructLayout(LayoutKind.Sequential)]
     public struct MIB_TCPROW_OWNER_PID
     {
@@ -352,4 +368,191 @@ public static class Interop
 
     [DllImport("kernel32", SetLastError = true)] // this function is used to get the pointer on the process heap required by AllocateAndGetTcpExTableFromStack
     internal static extern IntPtr GetProcessHeap();
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct STORAGE_PROPERTY_SET
+    {
+        STORAGE_PROPERTY_ID PropertyId;
+        STORAGE_SET_TYPE SetType;
+        fixed byte AdditionalParameters[1];
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct STORAGE_PROTOCOL_SPECIFIC_DATA_EXT
+    {
+        public STORAGE_PROTOCOL_TYPE ProtocolType;
+        public uint DataType;
+        public uint ProtocolDataValue;
+        public uint ProtocolDataSubValue;
+        public uint ProtocolDataOffset;
+        public uint ProtocolDataLength;
+        public uint FixedProtocolReturnData;
+        public uint ProtocolDataSubValue2;
+        public uint ProtocolDataSubValue3;
+        public uint ProtocolDataSubValue4;
+        public uint ProtocolDataSubValue5;
+        public fixed uint Reserved[5];
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct STORAGE_PROTOCOL_DATA_DESCRIPTOR_EXT
+    {
+        ulong Version;
+        ulong Size;
+        STORAGE_PROTOCOL_SPECIFIC_DATA_EXT ProtocolSpecificData;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct STORAGE_PROPERTY_QUERY
+    {
+        public STORAGE_PROPERTY_ID PropertyId;
+        public STORAGE_QUERY_TYPE QueryType;
+        public fixed byte AdditionalParameters[1];
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct STORAGE_PROTOCOL_SPECIFIC_DATA
+    {
+        public STORAGE_PROTOCOL_TYPE ProtocolType;
+        public uint DataType;
+        public uint ProtocolDataRequestValue;
+        public uint ProtocolDataRequestSubValue;
+        public uint ProtocolDataOffset;
+        public uint ProtocolDataLength;
+        public uint FixedProtocolReturnData;
+        public uint ProtocolDataRequestSubValue2;
+        public uint ProtocolDataRequestSubValue3;
+        public uint ProtocolDataRequestSubValue4;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct STORAGE_PROTOCOL_DATA_DESCRIPTOR
+    {
+        public uint Version;
+        public uint Size;
+        public STORAGE_PROTOCOL_SPECIFIC_DATA ProtocolSpecificData;
+    }
+    public enum STORAGE_PROTOCOL_NVME_DATA_TYPE
+    {
+        NVMeDataTypeUnknown = 0,
+        NVMeDataTypeIdentify,
+        NVMeDataTypeLogPage,
+        NVMeDataTypeFeature
+    }
+    public enum STORAGE_QUERY_TYPE
+    {
+        PropertyStandardQuery = 0,
+        PropertyExistsQuery,
+        PropertyMaskQuery,
+        PropertyQueryMaxDefined
+    }
+    public enum STORAGE_PROTOCOL_TYPE
+    {
+        ProtocolTypeUnknown = 0x00,
+        ProtocolTypeScsi,
+        ProtocolTypeAta,
+        ProtocolTypeNvme,
+        ProtocolTypeSd,
+        ProtocolTypeUfs,
+        ProtocolTypeProprietary = 0x7E,
+        ProtocolTypeMaxReserved = 0x7F
+    }
+    public enum STORAGE_SET_TYPE
+    {
+        PropertyStandardSet,
+        PropertyExistsSet,
+        PropertySetMaxDefined
+    }
+    public enum STORAGE_PROPERTY_ID
+    {
+        StorageDeviceProperty = 0,
+        StorageAdapterProperty,
+        StorageDeviceIdProperty,
+        StorageDeviceUniqueIdProperty,
+        StorageDeviceWriteCacheProperty,
+        StorageMiniportProperty,
+        StorageAccessAlignmentProperty,
+        StorageDeviceSeekPenaltyProperty,
+        StorageDeviceTrimProperty,
+        StorageDeviceWriteAggregationProperty,
+        StorageDeviceDeviceTelemetryProperty,
+        StorageDeviceLBProvisioningProperty,
+        StorageDevicePowerProperty,
+        StorageDeviceCopyOffloadProperty,
+        StorageDeviceResiliencyProperty,
+        StorageDeviceMediumProductType,
+        StorageAdapterRpmbProperty,
+        StorageAdapterCryptoProperty,
+        StorageDeviceIoCapabilityProperty = 48,
+        StorageAdapterProtocolSpecificProperty,
+        StorageDeviceProtocolSpecificProperty,
+        StorageAdapterTemperatureProperty,
+        StorageDeviceTemperatureProperty,
+        StorageAdapterPhysicalTopologyProperty,
+        StorageDevicePhysicalTopologyProperty,
+        StorageDeviceAttributesProperty,
+        StorageDeviceManagementStatus,
+        StorageAdapterSerialNumberProperty,
+        StorageDeviceLocationProperty,
+        StorageDeviceNumaProperty,
+        StorageDeviceZonedDeviceProperty,
+        StorageDeviceUnsafeShutdownCount,
+        StorageDeviceEnduranceProperty,
+        StorageDeviceLedStateProperty,
+        StorageDeviceSelfEncryptionProperty = 64,
+        StorageFruIdProperty
+    }
+    public enum NVME_LOG_PAGES
+    {
+        NVME_LOG_PAGE_ERROR_INFO = 1,
+        NVME_LOG_PAGE_HEALTH_INFO,
+        NVME_LOG_PAGE_FIRMWARE_SLOT_INFO,
+        NVME_LOG_PAGE_CHANGED_NAMESPACE_LIST,
+        NVME_LOG_PAGE_COMMAND_EFFECTS,
+        NVME_LOG_PAGE_DEVICE_SELF_TEST,
+        NVME_LOG_PAGE_TELEMETRY_HOST_INITIATED,
+        NVME_LOG_PAGE_TELEMETRY_CTLR_INITIATED,
+        NVME_LOG_PAGE_ENDURANCE_GROUP_INFORMATION,
+        NVME_LOG_PAGE_PREDICTABLE_LATENCY_NVM_SET,
+        NVME_LOG_PAGE_PREDICTABLE_LATENCY_EVENT_AGGREGATE,
+        NVME_LOG_PAGE_ASYMMETRIC_NAMESPACE_ACCESS,
+        NVME_LOG_PAGE_PERSISTENT_EVENT_LOG,
+        NVME_LOG_PAGE_LBA_STATUS_INFORMATION,
+        NVME_LOG_PAGE_ENDURANCE_GROUP_EVENT_AGGREGATE,
+        NVME_LOG_PAGE_RESERVATION_NOTIFICATION,
+        NVME_LOG_PAGE_SANITIZE_STATUS,
+        NVME_LOG_PAGE_CHANGED_ZONE_LIST
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct NVME_HEALTH_INFO_LOG
+    {
+        public DUMMYUNION CriticalWarning;
+        [StructLayout(LayoutKind.Explicit)]
+        public struct DUMMYUNION
+        {
+            [FieldOffset(0)] public byte CriticalWarning;
+            [FieldOffset(0)] public byte AsUchar;
+        }
+        public fixed byte Temperature[2];
+        public byte AvailableSpare;
+        public byte AvailableSpareThreshold;
+        public byte PercentageUsed;
+        public fixed byte Reserved0[26];
+        public fixed byte DataUnitRead[16];
+        public fixed byte DataUnitWritten[16];
+        public fixed byte HostReadCommands[16];
+        public fixed byte HostWrittenCommands[16];
+        public fixed byte ControllerBusyTime[16];
+        public fixed byte PowerCycle[16];
+        public fixed byte PowerOnHours[16];
+        public fixed byte UnsafeShutdowns[16];
+        public fixed byte MediaErrors[16];
+        public fixed byte ErrorInfoLogEntryCount[16];
+        public uint WarningCompositeTemperatureTime;
+        public uint CriticalCompositeTemperatureTime;
+        public ushort TemperatureSensor1;
+        public ushort TemperatureSensor2;
+        public ushort TemperatureSensor3;
+        public ushort TemperatureSensor4;
+        public ushort TemperatureSensor5;
+        public ushort TemperatureSensor6;
+        public ushort TemperatureSensor7;
+        public ushort TemperatureSensor8;
+        public fixed byte Reserved1[296];
+    }
+
 }
