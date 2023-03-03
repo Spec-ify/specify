@@ -74,6 +74,7 @@ public static partial class Cache
         antiviruses = Utils.GetWmi("AntivirusProduct", "displayName", @"root\SecurityCenter2")
                             .Select(x => (string)x["displayName"]).ToList();
 
+        // Checks for registry items
         int? PassiveMode = Utils.GetRegistryValue<int?>(
                 Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender",
                 "PassiveMode");
@@ -86,13 +87,41 @@ public static partial class Cache
                 Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender",
                 "DisableAntiSpyware");
 
-        // Check if Defender is disabled
-        if (PassiveMode != null || DisableAV != 0 || DisableASW != 0)
+        int? PassiveModePolicies = Utils.GetRegistryValue<int?>(
+                Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender",
+                "PassiveMode");
+
+        int? DisableAVPolicies = Utils.GetRegistryValue<int?>(
+                Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender",
+                "DisableAntiVirus");
+
+        int? DisableASWPolicies = Utils.GetRegistryValue<int?>(
+                Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender",
+                "DisableAntiSpyware");
+
+        // Move to end of list
+        // Check if Defender is disabled in any way
+        if (PassiveMode != 0 || DisableAV != 0 || DisableASW != 0)
+        {
             antiviruses.RemoveAll(x => ((string)x) == "Windows Defender");
+            antiviruses.Add("Windows Defender (Disabled)");
+        }
+
+        if (PassiveModePolicies != null || DisableAVPolicies != null || DisableASWPolicies != null)
+        {
+            if (PassiveModePolicies != 0 || DisableAVPolicies != 0 || DisableASWPolicies != 0)
+            {
+                antiviruses.RemoveAll(x => ((string)x) == "Windows Defender");
+                antiviruses.Add("Windows Defender (Disabled)");
+            }
+        }
 
         // Check if Defender is not the only entry in list
         if (antiviruses.Count > 1 && antiviruses.All(a => a == "Windows Defender"))
+        {
             antiviruses.RemoveAll(x => ((string)x) == "Windows Defender");
+            antiviruses.Add("Windows Defender");
+        }
 
         return antiviruses;
     }
