@@ -95,16 +95,19 @@ public class Monolith
         {
             //C:\Users\Username -> C:\Users\[REDACTED]
             serialized = serialized.Replace($@"C:\\Users\\{Cache.Username}", @"C:\\Users\\[REDACTED]");
-            
+
             //COMPUTERNAME\Username -> COMPUTERNAME\[REDACTED]
             serialized = serialized.Replace($@"{m.BasicInfo.Hostname}\\{Cache.Username}", $@"{m.BasicInfo.Hostname}\\[REDACTED]");
-            
+
             //Redacts the username from BasicInfo
             serialized = serialized.Replace($@"""Username"": ""{Cache.Username}""", @"""Username"": ""[REDACTED]""");
-            
+
             //DOMAIN\Username -> DOMAIN\[REDACTED]
             serialized = serialized.Replace($@"{m.BasicInfo.Domain}\\{Cache.Username}", $@"{m.BasicInfo.Domain}\\[REDACTED]");
-            
+
+            // ... for USERNAME -> ... for [REDACTED]
+            serialized = serialized.Replace($@"for {Cache.Username}", $@"for [REDACTED]");
+
             await DebugLog.LogEventAsync("Username Redacted from report");
         }
 
