@@ -16,7 +16,7 @@ namespace specify_client.data;
  * </summary>
  */
 
-public class Utils
+public static class Utils
 {
     /**
      * <summary>
@@ -149,5 +149,19 @@ public class Utils
             else
                 return null;
         }
+    }
+    /// <summary>
+    /// Attempts to retrieve a value from a WMI Dictionary retrieved through GetWmi(). The value will be stored in `value`.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="collection"></param>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns>true if the value could be retrieved and is of the requested data type</returns>
+    public static bool TryWmiRead<T>(this Dictionary<string, object> collection, string key, out T value)
+    {
+        bool success = collection.TryGetValue(key, out object? wmi) && wmi is T;
+        value = (T)wmi;
+        return success;
     }
 }

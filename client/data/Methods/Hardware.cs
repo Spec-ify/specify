@@ -12,13 +12,16 @@ using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Xml;
+using System.Threading.Tasks;
 using static specify_client.Interop;
 
 namespace specify_client.data;
 
+using static Utils;
+
 public static partial class Cache
 {
-    public static async System.Threading.Tasks.Task MakeHardwareData()
+    public static async Task MakeHardwareData()
     {
         try
         {
@@ -27,16 +30,16 @@ public static partial class Cache
 
             var TemperatureTask = GetTemps();
 
-            Cpu = Utils.GetWmi("Win32_Processor",
+            Cpu = GetWmi("Win32_Processor",
                 "CurrentClockSpeed, Manufacturer, Name, SocketDesignation, NumberOfEnabledCore, ThreadCount").First();
-            Gpu = Utils.GetWmi("Win32_VideoController",
+            Gpu = GetWmi("Win32_VideoController",
                 "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
                 + "CurrentRefreshRate, CurrentBitsPerPixel");
-            Motherboard = Utils.GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").FirstOrDefault();
-            AudioDevices = Utils.GetWmi("Win32_SoundDevice", "Name, Manufacturer, Status, DeviceID");
-            Drivers = Utils.GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
-            Devices = Utils.GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
-            BiosInfo = Utils.GetWmi("Win32_bios");
+            Motherboard = GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").FirstOrDefault();
+            AudioDevices = GetWmi("Win32_SoundDevice", "Name, Manufacturer, Status, DeviceID");
+            Drivers = GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
+            Devices = GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
+            BiosInfo = GetWmi("Win32_bios");
             await DebugLog.LogEventAsync("Hardware WMI Information Retrieved.", region);
 
             MonitorInfo = GetMonitorInfo();
@@ -68,22 +71,16 @@ public static partial class Cache
         DateTime start = DateTime.Now;
         DebugLog.LogEvent("GetSMBiosMemoryInfo() started.", DebugLog.Region.Hardware);
 
-        var SMBiosObj = Utils.GetWmiObj("MSSMBios_RawSMBiosTables", "*", "root\\WMI");
+        var SMBiosObj = GetWmi("MSSMBios_RawSMBiosTables", "*", "root\\WMI").FirstOrDefault();
 
         // If no data is received, stop before it excepts. Add error message?
-        if (SMBiosObj == null)
+        byte[] SMBios;
+        if (!SMBiosObj.TryWmiRead("SMBiosData", out SMBios))
         {
             DebugLog.LogEvent($"SMBios information not retrieved.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
             Issues.Add("Hardware Data: Could not get SMBios info for RAM.");
             return null;
-        }
-
-        // Store raw SMBios Data
-        byte[] SMBios = null;
-        foreach (ManagementObject obj in SMBiosObj)
-        {
-            SMBios = (byte[])obj["SMBiosData"];
-        }
+        }        
 
         var offset = 0;
         var type = SMBios[offset];
@@ -170,30 +167,15 @@ public static partial class Cache
     }
 
     //MONITORS
-    /*private static string MonitorFriendlyName(Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME deviceName)
+    private static DISPLAYCONFIG_TARGET_DEVICE_NAME GetDisplayDevice(LUID adapterId, uint targetId)
     {
-        /*Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME deviceName = new Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME();
-        deviceName.header.size = (uint)Marshal.SizeOf(typeof(Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME));
+        DISPLAYCONFIG_TARGET_DEVICE_NAME deviceName = new DISPLAYCONFIG_TARGET_DEVICE_NAME();
+        deviceName.header.size = (uint)Marshal.SizeOf(typeof(DISPLAYCONFIG_TARGET_DEVICE_NAME));
         deviceName.header.adapterId = adapterId;
         deviceName.header.id = targetId;
-        deviceName.header.type = Interop.DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
-        int error = Interop.DisplayConfigGetDeviceInfo(ref deviceName);
-        if (error != Interop.ERROR_SUCCESS)
-        {
-            DebugLog.LogEvent($"Interop Failure in MonitorFriendlyName() {error}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
-            Issues.Add($"Interop failure during monitor data collection {error}");
-        }*/
-        /*return deviceName.monitorFriendlyDeviceName;
-    }*/
-    private static Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME GetDisplayDevice(Interop.LUID adapterId, uint targetId)
-    {
-        Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME deviceName = new Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME();
-        deviceName.header.size = (uint)Marshal.SizeOf(typeof(Interop.DISPLAYCONFIG_TARGET_DEVICE_NAME));
-        deviceName.header.adapterId = adapterId;
-        deviceName.header.id = targetId;
-        deviceName.header.type = Interop.DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
-        int error = Interop.DisplayConfigGetDeviceInfo(ref deviceName);
-        if (error != Interop.ERROR_SUCCESS)
+        deviceName.header.type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+        int error = DisplayConfigGetDeviceInfo(ref deviceName);
+        if (error != ERROR_SUCCESS)
         {
             DebugLog.LogEvent($"Interop Failure in MonitorFriendlyName() {error}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
             Issues.Add($"Interop failure during monitor data collection {error}");
@@ -207,18 +189,18 @@ public static partial class Cache
         DebugLog.LogEvent("GetMonitorInfo() started", DebugLog.Region.Hardware);
         List<Monitor> monitors = new();
         uint PathCount, ModeCount;
-        int error = Interop.GetDisplayConfigBufferSizes(Interop.QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
+        int error = GetDisplayConfigBufferSizes(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
             out PathCount, out ModeCount);
-        if (error != Interop.ERROR_SUCCESS)
+        if (error != ERROR_SUCCESS)
         {
             DebugLog.LogEvent($"Interop Failure in MonitorFriendlyName() {error}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
             Issues.Add($"Interop failure during monitor data collection {error}");
         }
-        Interop.DISPLAYCONFIG_PATH_INFO[] DisplayPaths = new Interop.DISPLAYCONFIG_PATH_INFO[PathCount];
-        Interop.DISPLAYCONFIG_MODE_INFO[] DisplayModes = new Interop.DISPLAYCONFIG_MODE_INFO[ModeCount];
-        error = Interop.QueryDisplayConfig(Interop.QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
+        DISPLAYCONFIG_PATH_INFO[] DisplayPaths = new DISPLAYCONFIG_PATH_INFO[PathCount];
+        DISPLAYCONFIG_MODE_INFO[] DisplayModes = new DISPLAYCONFIG_MODE_INFO[ModeCount];
+        error = QueryDisplayConfig(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
             ref PathCount, DisplayPaths, ref ModeCount, DisplayModes, IntPtr.Zero);
-        if (error != Interop.ERROR_SUCCESS)
+        if (error != ERROR_SUCCESS)
         {
             DebugLog.LogEvent($"Interop Failure in GetMonitorInfo() {error}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
             Issues.Add($"Interop failure during monitor data collection {error}");
@@ -226,7 +208,7 @@ public static partial class Cache
 
         for (int i = 0; i < ModeCount; i++)
         {
-            if (DisplayModes[i].infoType == Interop.DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET)
+            if (DisplayModes[i].infoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET)
             {
                 // unique display adapter UID, the LUID struct contains a low part and a high part, these are already combined in the registry so we do so here for ease of use - arc
                 Int64 luid = (long)DisplayModes[i].adapterId.LowPart + (long)DisplayModes[i].adapterId.HighPart;
@@ -392,50 +374,39 @@ public static partial class Cache
         DebugLog.LogEvent("GetDiskDriveData() started", DebugLog.Region.Hardware);
         List<DiskDrive> drives = new List<DiskDrive>();
 
-        var driveWmiInfo = Utils.GetWmiObj("Win32_DiskDrive");
+        var driveWmiInfo = GetWmi("Win32_DiskDrive");
 
         // This assumes the WMI info reports disks in order by drive number. I'm not certain this is a safe assumption.
         var diskNumber = 0;
         foreach (var driveWmi in driveWmiInfo)
         {
             DiskDrive drive = new();
-            try
+            if(!driveWmi.TryWmiRead("Model", out drive.DeviceName))
             {
-                drive.DeviceName = ((string)driveWmi["Model"]).Trim();
-            }
-            catch (NullReferenceException)
-            {
-                drive.DeviceName = null;
                 Issues.Add($"Could not retrieve device name of drive @ index {diskNumber}");
             }
-            try
+            else
             {
-                drive.SerialNumber = ((string)driveWmi["SerialNumber"]).Trim();
+                drive.DeviceName = drive.DeviceName.Trim();
             }
-            catch (NullReferenceException)
+            if(!driveWmi.TryWmiRead("SerialNumber", out drive.SerialNumber))
             {
-                drive.SerialNumber = null;
                 Issues.Add($"Could not retrieve serial number of drive @ index {diskNumber}");
             }
-
-            drive.DiskNumber = (UInt32)driveWmi["Index"];
-
-            try
+            else
             {
-                drive.DiskCapacity = (ulong)driveWmi["Size"];
+                drive.SerialNumber = drive.SerialNumber.Trim();
             }
-            catch (NullReferenceException)
+
+            //[CLEANUP] Why isn't this checked? What's it used for?
+            drive.DiskNumber = (uint)driveWmi["Index"];
+
+            if(!driveWmi.TryWmiRead("Size", out drive.DiskCapacity))
             {
-                drive.DiskCapacity = null;
                 Issues.Add($"Could not retrieve capacity of drive @ index {diskNumber}");
             }
-            try
+            if(!driveWmi.TryWmiRead("PNPDeviceID", out drive.InstanceId))
             {
-                drive.InstanceId = (string)driveWmi["PNPDeviceID"];
-            }
-            catch (NullReferenceException)
-            {
-                drive.InstanceId = null;
                 Issues.Add($"Could not retrieve Instance ID of drive @ index {diskNumber}");
             }
 
@@ -445,7 +416,7 @@ public static partial class Cache
             drives.Add(drive);
         }
 
-        var partitionWmiInfo = Utils.GetWmiObj("Win32_DiskPartition");
+        var partitionWmiInfo = GetWmi("Win32_DiskPartition");
         foreach (var partitionWmi in partitionWmiInfo)
         {
             var partition = new Partition()
@@ -466,10 +437,10 @@ public static partial class Cache
         }
         try
         {
-            var queryCollection = Utils.GetWmiObj("MSStorageDriver_FailurePredictData", "*", "\\\\.\\root\\wmi");
+            var queryCollection = GetWmi("MSStorageDriver_FailurePredictData", "*", "\\\\.\\root\\wmi");
             foreach (var m in queryCollection)
             {
-                // The following lines up to the attribute list creationlink smart data to its corresponding drive.
+                // The following lines up the attribute list creationlink smart data to its corresponding drive.
                 // It makes the assumption that the PNPDeviceID in Wmi32_DiskDrive has a matching identification code to MSStorageDriver_FailurePredictData's InstanceID, and that these identification codes are unique.
                 // This is not a safe assumption, testing will be required.
                 var instanceId = (string)m["InstanceName"];
@@ -522,7 +493,7 @@ public static partial class Cache
             DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
         }
         
-        var LDtoP = Utils.GetWmiObj("Win32_LogicalDiskToPartition");
+        var LDtoP = GetWmi("Win32_LogicalDiskToPartition");
         for (var di = 0; di < drives.Count(); di++)
         {
             for (var pi = 0; pi < drives[di].Partitions.Count(); pi++)
@@ -534,15 +505,15 @@ public static partial class Cache
                         if (((string)logicalDisk["Antecedent"]).Contains(drives[di].Partitions[pi].Caption))
                         {
                             var dependent = (string)logicalDisk["Dependent"];
-                            var whatIActuallyWantFromDependent = dependent.Split('"')[1].Replace("\\", string.Empty);
-                            var runningOutOfVariableNames = Utils.GetWmiObj("Win32_LogicalDisk");
-                            foreach (var lackingCreativity in runningOutOfVariableNames)
+                            var trimmedDependent = dependent.Split('"')[1].Replace("\\", string.Empty);
+                            var dependentLogicalDisk = GetWmi("Win32_LogicalDisk");
+                            foreach (var letteredDrive in dependentLogicalDisk)
                             {
-                                if (whatIActuallyWantFromDependent == (string)lackingCreativity["DeviceID"])
+                                if (trimmedDependent == (string)letteredDrive["DeviceID"])
                                 {
-                                    drives[di].Partitions[pi].PartitionLabel = whatIActuallyWantFromDependent;
-                                    drives[di].Partitions[pi].PartitionFree = (UInt64)lackingCreativity["FreeSpace"];
-                                    drives[di].Partitions[pi].Filesystem = (string)lackingCreativity["FileSystem"];
+                                    drives[di].Partitions[pi].PartitionLabel = trimmedDependent;
+                                    drives[di].Partitions[pi].PartitionFree = (ulong)letteredDrive["FreeSpace"];
+                                    drives[di].Partitions[pi].Filesystem = (string)letteredDrive["FileSystem"];
                                     break;
                                 }
                             }
@@ -572,7 +543,7 @@ public static partial class Cache
                 }
             }
         }
-        var partitionInfo = Utils.GetWmiObj("Win32_Volume");
+        var partitionInfo = GetWmi("Win32_Volume");
         foreach (var partition in partitionInfo)
         {
             // Check if partition drive size is identical to exactly one partition drive size in the list of disks. If it is, add win32_volume data to it.
@@ -785,7 +756,7 @@ public static partial class Cache
 
         // Find a valid handle.
         driveLetter = $@"\\.\{driveLetter}" + '\0';
-        var handle = Interop.CreateFile(driveLetter, 0x40000000, 0x1 | 0x2, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
+        var handle = CreateFile(driveLetter, 0x40000000, 0x1 | 0x2, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
 
         // Verify the handle.
         if(handle == new IntPtr(-1))
@@ -1122,7 +1093,7 @@ public static partial class Cache
     }
 
     // TEMPERATURES
-    private static async System.Threading.Tasks.Task<List<TempMeasurement>> GetTemps()
+    private static async Task<List<TempMeasurement>> GetTemps()
     {
         DateTime start = DateTime.Now;
         await DebugLog.LogEventAsync("GetTemps() Started", DebugLog.Region.Hardware);
