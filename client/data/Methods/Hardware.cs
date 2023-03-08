@@ -780,7 +780,6 @@ public static partial class Cache
         if(string.IsNullOrEmpty(driveLetter))
         {
             DebugLog.LogEvent($"Attempted to gather smart data from unlettered drive. {drive.DeviceName}", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
-            Marshal.FreeHGlobal(buffer);
             return drive;
         }
 
@@ -792,7 +791,6 @@ public static partial class Cache
         if(handle == new IntPtr(-1))
         {
             DebugLog.LogEvent($"NVMe Smart Data could not be retrieved. Invalid Handle. {driveLetter}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
-            Marshal.FreeHGlobal(buffer);
             return drive;
         }
 
