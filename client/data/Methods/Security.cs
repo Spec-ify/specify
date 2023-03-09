@@ -75,29 +75,26 @@ public static partial class Cache
                             .Select(x => (string)x["displayName"]).ToList();
 
         // Checks for registry items
-        int? PassiveMode = Utils.GetRegistryValue<int?>(
+        int PassiveMode = Utils.GetRegistryValue<int?>(
                 Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender",
-                "PassiveMode");
+                "PassiveMode") ?? 0;
 
-        int? DisableAV = Utils.GetRegistryValue<int?>(
+        int DisableAV = Utils.GetRegistryValue<int?>(
                 Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender",
-                "DisableAntiVirus");
+                "DisableAntiVirus") ?? 0;
 
-        int? DisableASW = Utils.GetRegistryValue<int?>(
-                Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender",
-                "DisableAntiSpyware");
+        int DisableASW = Utils.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender",
+                "DisableAntiSpyware") ?? 0;
 
-        int? PassiveModePolicies = Utils.GetRegistryValue<int?>(
+        int PassiveModePolicies = Utils.GetRegistryValue<int?>(
                 Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender",
-                "PassiveMode");
+                "PassiveMode") ?? 0;
 
-        int? DisableAVPolicies = Utils.GetRegistryValue<int?>(
-                Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender",
-                "DisableAntiVirus");
+        int DisableAVPolicies = Utils.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender",
+                "DisableAntiVirus") ?? 0;
 
-        int? DisableASWPolicies = Utils.GetRegistryValue<int?>(
-                Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender",
-                "DisableAntiSpyware");
+        int DisableASWPolicies = Utils.GetRegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender",
+                "DisableAntiSpyware") ?? 0;
 
         // Move to end of list
         // Check if Defender is disabled in any way
@@ -107,17 +104,15 @@ public static partial class Cache
             antiviruses.Add("Windows Defender (Disabled)");
         }
 
-        if (PassiveModePolicies != null || DisableAVPolicies != null || DisableASWPolicies != null)
+        // Same, but checks in policies
+        else if (PassiveModePolicies != 0 || DisableAVPolicies != 0 || DisableASWPolicies != 0)
         {
-            if (PassiveModePolicies != 0 || DisableAVPolicies != 0 || DisableASWPolicies != 0)
-            {
-                antiviruses.RemoveAll(x => ((string)x) == "Windows Defender");
-                antiviruses.Add("Windows Defender (Disabled)");
-            }
+            antiviruses.RemoveAll(x => ((string)x) == "Windows Defender");
+            antiviruses.Add("Windows Defender (Disabled)");
         }
 
         // Check if Defender is not the only entry in list
-        if (antiviruses.Count > 1 && antiviruses.All(a => a == "Windows Defender"))
+        else if (antiviruses.Count > 1 && antiviruses.All(a => a == "Windows Defender"))
         {
             antiviruses.RemoveAll(x => ((string)x) == "Windows Defender");
             antiviruses.Add("Windows Defender");
