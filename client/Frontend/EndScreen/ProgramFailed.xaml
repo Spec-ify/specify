@@ -36,7 +36,7 @@
                     VerticalAlignment="Stretch">
 
             <TextBlock TextWrapping="Wrap"
-                           Text="Program Crashed"
+                           Text="Something's wrong..."
                            FontFamily="{DynamicResource AldoFont}" Foreground="White"
                            HorizontalAlignment = "Center"
                            VerticalAlignment = "Center" FontSize="48" />
@@ -48,8 +48,9 @@
                     VerticalAlignment="Stretch">
 
             <TextBlock TextWrapping="Wrap"
-                           Text="The program somehow crashed. Outputted crash log specify-debug.log in the same folder as the program."
-                           FontFamily="Consolas" Foreground="White" />
+                           Text="Specify encountered a critical error. We will continue to gather what we can, but data may be incomplete or broken. The error log specify-debug.log has been created in the same folder as the program."
+                           FontFamily="Consolas" Foreground="White" 
+                           TextAlignment="Center"/>
 
             <TextBlock TextWrapping="Wrap"
                            Text="Please make an issue in our GitHub in the corner, or send over the file to us. Thanks!"

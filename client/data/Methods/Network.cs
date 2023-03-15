@@ -100,6 +100,7 @@ public static partial class Cache
 
             var la = connection.localAddr;
 
+            // [CLEANUP]: This can be simplified with BitConverter
             uint localAddr1 = la % 256;
             la = la / 256;
             uint localAddr2 = la % 256;
