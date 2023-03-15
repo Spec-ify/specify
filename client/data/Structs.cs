@@ -81,6 +81,7 @@ public class Partition
     public ulong PartitionCapacity;
     public ulong PartitionFree;
     public string PartitionLabel;
+    public string PartitionLetter;
     public string Filesystem;
     [NonSerialized()] public string Caption; // Only used to link partitions, do not serialize.
 }

@@ -512,6 +512,7 @@ public static partial class Cache
                                 if (trimmedDependent == (string)letteredDrive["DeviceID"])
                                 {
                                     drives[di].Partitions[pi].PartitionLabel = trimmedDependent;
+                                    drives[di].Partitions[pi].PartitionLetter = trimmedDependent;
                                     drives[di].Partitions[pi].PartitionFree = (ulong)letteredDrive["FreeSpace"];
                                     drives[di].Partitions[pi].Filesystem = (string)letteredDrive["FileSystem"];
                                     break;
