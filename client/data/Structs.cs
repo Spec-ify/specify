@@ -57,10 +57,10 @@ public class RamStick
     public string SerialNumber;
     public string PartNumber;
     /** MHz */
-    public int? ConfiguredSpeed;
+    public uint? ConfiguredSpeed;
 
     /** MiB */
-    public int? Capacity;
+    public ulong? Capacity;
 }
 
 public class DiskDrive

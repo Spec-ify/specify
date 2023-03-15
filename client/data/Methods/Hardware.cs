@@ -45,8 +45,20 @@ public static partial class Cache
             MonitorInfo = GetMonitorInfo();
             await DebugLog.LogEventAsync("Monitor Information Retrieved.", region);
 
-            Ram = GetSMBiosMemoryInfo();
-            await DebugLog.LogEventAsync("SMBios Information Retrieved.", region);
+            try
+            {
+                Ram = GetSMBiosMemoryInfo();
+                SMBiosRamInfo = true;
+                await DebugLog.LogEventAsync("SMBios Information Retrieved.", region);
+            }
+            catch (Exception e)
+            {
+                await DebugLog.LogEventAsync("SMBios retrieval failed.", region, DebugLog.EventType.ERROR);
+                await DebugLog.LogEventAsync($"{e}");
+                Ram = GetWmiMemoryInfo();
+                SMBiosRamInfo = false;
+                await DebugLog.LogEventAsync("WMI Ram Info Retrieved.", region);
+            }
 
             Disks = GetDiskDriveData();
             await DebugLog.LogEventAsync("Drive Data Retrieved.", region);
@@ -79,7 +91,7 @@ public static partial class Cache
         {
             DebugLog.LogEvent($"SMBios information not retrieved.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
             Issues.Add("Hardware Data: Could not get SMBios info for RAM.");
-            return null;
+            throw new ManagementException("MSSMBios_RawSMBiosTables returned null.");
         }        
 
         var offset = 0;
@@ -153,19 +165,53 @@ public static partial class Cache
 
             if (0x15 + 1 < data.Length)
             {
-                stick.ConfiguredSpeed = (data[0x15 + 1] << 8) | data[0x15];
+                stick.ConfiguredSpeed = (uint?)(data[0x15 + 1] << 8) | data[0x15];
             }
 
             if (0xC + 1 < data.Length)
             {
-                stick.Capacity = (data[0xC + 1] << 8) | data[0xC];
+                stick.Capacity = (ulong?)(data[0xC + 1] << 8) | data[0xC];
             }
             SMBiosMemoryInfo.Add(stick);
         }
         DebugLog.LogEvent($"GetSMBiosMemoryInfo() completed - Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
         return SMBiosMemoryInfo;
     }
-
+    // This is used as a backup in case SMBios memory info retrieval fails.
+    private static List<RamStick> GetWmiMemoryInfo()
+    {
+        List<RamStick> RamInfo = new();
+        var WmiRamData = Utils.GetWmi("Win32_PhysicalMemory");
+        foreach (var wmiStick in WmiRamData) {
+            RamStick stick = new();
+            if (!wmiStick.TryWmiRead("Manufacturer", out stick.Manufacturer))
+            {
+                DebugLog.LogEvent($"RAM Manufacturer could not be read.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+            }
+            if (!wmiStick.TryWmiRead("ConfiguredClockSpeed", out stick.ConfiguredSpeed))
+            {
+                DebugLog.LogEvent($"RAM Clock Speed could not be read.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+            }
+            if (!wmiStick.TryWmiRead("DeviceLocator", out stick.DeviceLocation))
+            {
+                DebugLog.LogEvent($"RAM Device Locator could not be read.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+            }
+            if (!wmiStick.TryWmiRead("Capacity", out stick.Capacity))
+            {
+                DebugLog.LogEvent($"RAM Capacity could not be read.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+            }
+            if (!wmiStick.TryWmiRead("SerialNumber", out stick.SerialNumber))
+            {
+                DebugLog.LogEvent($"RAM Serial Number could not be read.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+            }
+            if (!wmiStick.TryWmiRead("PartNumber", out stick.PartNumber))
+            {
+                DebugLog.LogEvent($"RAM Part Number could not be read.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+            }
+            RamInfo.Add(stick);
+        }
+        return RamInfo;
+    }
     //MONITORS
     private static DISPLAYCONFIG_TARGET_DEVICE_NAME GetDisplayDevice(LUID adapterId, uint targetId)
     {

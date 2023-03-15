@@ -257,6 +257,7 @@ public class Monolith
         public string Domain;
         public string BootMode;
         public string BootState;
+        public bool SMBiosRamInformation;
 
         public MonolithBasicInfo()
         {
@@ -279,6 +280,7 @@ public class Monolith
             Domain = Environment.GetEnvironmentVariable("userdomain");
             BootMode = Environment.GetEnvironmentVariable("firmware_type");
             BootState = (string)cs["BootupState"];
+            SMBiosRamInformation = Cache.SMBiosRamInfo;
         }
     }
 

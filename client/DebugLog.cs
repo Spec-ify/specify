@@ -274,6 +274,7 @@ public static class DebugLog
 
     public static async Task LogFatalError(string message, Region region)
     {
+        Settings.EnableDebug = true;
         await LogEventAsync("UNEXPECTED FATAL EXCEPTION", region, EventType.ERROR);
         await LogEventAsync(message, region, EventType.ERROR);
         while (true)

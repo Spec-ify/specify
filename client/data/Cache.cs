@@ -44,7 +44,7 @@ public static partial class Cache
     // all the hardware stuff
     //each item in the list is a stick of ram
     public static List<RamStick> Ram { get; private set; }
-
+    public static bool SMBiosRamInfo { get; private set; }
     public static List<DiskDrive> Disks { get; private set; }
     public static Dictionary<string, object> Cpu { get; private set; }
     public static List<Dictionary<string, object>> Gpu { get; private set; }
