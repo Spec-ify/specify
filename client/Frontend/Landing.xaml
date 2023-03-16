@@ -11,14 +11,6 @@
         Background="#232731" SizeToContent="WidthAndHeight"
         ResizeMode="CanMinimize">
 
-    <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Images/images.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </Window.Resources>
-
     <!-- Define the Grids -->
 
     <Grid>
