@@ -44,7 +44,7 @@ public partial class Run : Page
 
         InitializeComponent();
 
-        Program.Main();
+        //Program.Main();
     }
 
     public string Gifsource { get; set; }

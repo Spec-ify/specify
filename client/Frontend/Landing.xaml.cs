@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Navigation;
 using System.Windows.Threading;
+using System.Threading.Tasks;
 
 namespace specify_client;
 
@@ -18,9 +19,10 @@ public partial class Landing : Window
         Application.Current.MainWindow = this;
     }
 
-    public void RunApp()
+    public async Task RunApp()
     {
         Frame.Navigate(new Run());
+        await Program.Main();
     }
 
     private void DisplayButtons()

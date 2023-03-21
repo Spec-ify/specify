@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace specify_client;
 
@@ -35,6 +36,7 @@ public class Program
         {
             await DebugLog.LogFatalError(ex.ToString(), DebugLog.Region.Misc);
         }
+
     }
 
     public static void PrettyPrintObject(object o)

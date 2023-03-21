@@ -259,7 +259,7 @@ public static class DebugLog
         {
             debugString += $" {region}";
         }
-        debugString += "\n";
+        debugString += "\r\n";
         return debugString;
     }
 

@@ -54,9 +54,9 @@ public partial class StartButtons : Page
         Settings.EnableDebug = false;
     }
 
-    private void StartAction(object sender, RoutedEventArgs e)
+    private async void StartAction(object sender, RoutedEventArgs e)
     {
         var main = App.Current.MainWindow as Landing;
-        main.RunApp();
+        await main.RunApp();
     }
 }

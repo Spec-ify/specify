@@ -20,6 +20,9 @@
     <ApplicationIcon>specify-client-favicon.ico</ApplicationIcon>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFrameworkVersion)' == 'v4.7.2'">
+    <DefineConstants>$(DefineConstants);DOTNET_472</DefineConstants>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
