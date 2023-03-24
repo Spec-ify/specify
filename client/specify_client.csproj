@@ -98,14 +98,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="data\Cache.cs" />
-    <Compile Include="data\Methods\BasicInfo.cs" />
-    <Compile Include="data\Methods\Hardware.cs" />
-    <Compile Include="data\Methods\Network.cs" />
-    <Compile Include="data\Methods\Security.cs" />
-    <Compile Include="data\Methods\System.cs" />
-    <Compile Include="data\Utils.cs" />
-    <Compile Include="data\Structs.cs" />
+    <Compile Include="Data\Cache.cs" />
+    <Compile Include="Data\Methods\BasicInfo.cs" />
+    <Compile Include="Data\Methods\Hardware.cs" />
+    <Compile Include="Data\Methods\Network.cs" />
+    <Compile Include="Data\Methods\Security.cs" />
+    <Compile Include="Data\Methods\System.cs" />
+    <Compile Include="Data\Utils.cs" />
+    <Compile Include="Data\Structs.cs" />
     <Compile Include="DebugLog.cs" />
     <Compile Include="Interop.cs" />
     <Compile Include="Monolith.cs" />
