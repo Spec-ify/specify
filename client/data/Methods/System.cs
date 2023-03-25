@@ -9,14 +9,11 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
-using System.Net.Http;
-using System.Windows.Documents;
-using System.Windows.Input;
-using HidSharp.Utility;
 
 namespace specify_client.data;
 

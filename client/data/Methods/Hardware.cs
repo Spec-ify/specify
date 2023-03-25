@@ -1,18 +1,16 @@
-using HidSharp.Reports;
 using LibreHardwareMonitor.Hardware;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
-using System.Xml;
 using System.Threading.Tasks;
+using System.Xml;
 using static specify_client.Interop;
 
 namespace specify_client.data;
@@ -92,7 +90,7 @@ public static partial class Cache
             DebugLog.LogEvent($"SMBios information not retrieved.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
             Issues.Add("Hardware Data: Could not get SMBios info for RAM.");
             throw new ManagementException("MSSMBios_RawSMBiosTables returned null.");
-        }        
+        }
 
         var offset = 0;
         var type = SMBios[offset];
@@ -177,12 +175,14 @@ public static partial class Cache
         DebugLog.LogEvent($"GetSMBiosMemoryInfo() completed - Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
         return SMBiosMemoryInfo;
     }
+
     // This is used as a backup in case SMBios memory info retrieval fails.
     private static List<RamStick> GetWmiMemoryInfo()
     {
         List<RamStick> RamInfo = new();
         var WmiRamData = Utils.GetWmi("Win32_PhysicalMemory");
-        foreach (var wmiStick in WmiRamData) {
+        foreach (var wmiStick in WmiRamData)
+        {
             RamStick stick = new();
             if (!wmiStick.TryWmiRead("Manufacturer", out stick.Manufacturer))
             {
@@ -212,6 +212,7 @@ public static partial class Cache
         }
         return RamInfo;
     }
+
     //MONITORS
     private static DISPLAYCONFIG_TARGET_DEVICE_NAME GetDisplayDevice(LUID adapterId, uint targetId)
     {
@@ -427,7 +428,7 @@ public static partial class Cache
         foreach (var driveWmi in driveWmiInfo)
         {
             DiskDrive drive = new();
-            if(!driveWmi.TryWmiRead("Model", out drive.DeviceName))
+            if (!driveWmi.TryWmiRead("Model", out drive.DeviceName))
             {
                 Issues.Add($"Could not retrieve device name of drive @ index {diskNumber}");
             }
@@ -435,7 +436,7 @@ public static partial class Cache
             {
                 drive.DeviceName = drive.DeviceName.Trim();
             }
-            if(!driveWmi.TryWmiRead("SerialNumber", out drive.SerialNumber))
+            if (!driveWmi.TryWmiRead("SerialNumber", out drive.SerialNumber))
             {
                 Issues.Add($"Could not retrieve serial number of drive @ index {diskNumber}");
             }
@@ -447,11 +448,11 @@ public static partial class Cache
             //[CLEANUP] Why isn't this checked? What's it used for?
             drive.DiskNumber = (uint)driveWmi["Index"];
 
-            if(!driveWmi.TryWmiRead("Size", out drive.DiskCapacity))
+            if (!driveWmi.TryWmiRead("Size", out drive.DiskCapacity))
             {
                 Issues.Add($"Could not retrieve capacity of drive @ index {diskNumber}");
             }
-            if(!driveWmi.TryWmiRead("PNPDeviceID", out drive.InstanceId))
+            if (!driveWmi.TryWmiRead("PNPDeviceID", out drive.InstanceId))
             {
                 Issues.Add($"Could not retrieve Instance ID of drive @ index {diskNumber}");
             }
@@ -538,7 +539,7 @@ public static partial class Cache
             DebugLog.LogEvent("Unexpected exception thrown during SMART Data Retrieval.", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
             DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
         }
-        
+
         var LDtoP = GetWmi("Win32_LogicalDiskToPartition");
         for (var di = 0; di < drives.Count(); di++)
         {
@@ -574,7 +575,7 @@ public static partial class Cache
                 }
             }
         }
-        for(int i = 0; i < drives.Count; i++)
+        for (int i = 0; i < drives.Count; i++)
         {
             var drive = drives[i];
             if (drive.SmartData == null)
@@ -583,7 +584,7 @@ public static partial class Cache
                 {
                     drive = GetNvmeSmart(drive);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     DebugLog.LogEvent($"Exception during NVMe Smart Data retrieval on drive {drive.DeviceName}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
                     DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
@@ -781,13 +782,14 @@ public static partial class Cache
         DebugLog.LogEvent($"GetDiskDriveInfo() completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
         return drives;
     }
+
     private static DiskDrive GetNvmeSmart(DiskDrive drive)
     {
         // Get the drive letter to send to CreateFile()
         string driveLetter = "";
-        foreach(var partition in drive.Partitions) 
+        foreach (var partition in drive.Partitions)
         {
-            if(partition.PartitionLabel != null && partition.PartitionLabel.Length == 2)
+            if (partition.PartitionLabel != null && partition.PartitionLabel.Length == 2)
             {
                 driveLetter = partition.PartitionLabel;
                 break;
@@ -795,7 +797,7 @@ public static partial class Cache
         }
 
         // If no drive letter was found, it is impossible to obtain a valid handle.
-        if(string.IsNullOrEmpty(driveLetter))
+        if (string.IsNullOrEmpty(driveLetter))
         {
             DebugLog.LogEvent($"Attempted to gather smart data from unlettered drive. {drive.DeviceName}", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
             return drive;
@@ -806,7 +808,7 @@ public static partial class Cache
         var handle = CreateFile(driveLetter, 0x40000000, 0x1 | 0x2, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
 
         // Verify the handle.
-        if(handle == new IntPtr(-1))
+        if (handle == new IntPtr(-1))
         {
             DebugLog.LogEvent($"NVMe Smart Data could not be retrieved. Invalid Handle. {driveLetter}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
             return drive;
@@ -863,7 +865,7 @@ public static partial class Cache
                              );
 
             // Verify the command was successful and report any errors.
-            if(!result)
+            if (!result)
             {
                 DebugLog.LogEvent($"Interop failure during NVMe SMART data retrieval. {Marshal.GetLastWin32Error()} on drive {driveLetter}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
                 Marshal.FreeHGlobal(buffer);
@@ -875,7 +877,7 @@ public static partial class Cache
 
             // Hacky data verification; checking if the drive temperature is within a normal range.
             // [CLEANUP] This is method should be changed to something more reliable.
-            var driveTemperature = ((uint)smartInfo->Temperature[1] << 8 | smartInfo->Temperature[0]) -273;
+            var driveTemperature = ((uint)smartInfo->Temperature[1] << 8 | smartInfo->Temperature[0]) - 273;
             if (driveTemperature < 0 || driveTemperature > 100)
             {
                 DebugLog.LogEvent($"SMART data retrieval error - Data not valid on drive {driveLetter}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
@@ -891,7 +893,7 @@ public static partial class Cache
              * 4: Volatile Memory Device Backup Failed
              * 5: Persistent Memory Region set to Read Only
              * 6-7: Reserved
-             */ 
+             */
             var criticalWarningValue = Convert.ToString(smartInfo->CriticalWarning.CriticalWarning, 2).PadLeft(8, '0');
             SmartAttribute criticalWarning = new()
             {
@@ -1026,6 +1028,7 @@ public static partial class Cache
         Marshal.FreeHGlobal(buffer);
         return drive;
     }
+
     private static SmartAttribute GetAttribute(byte[] data)
     {
         // Smart data is fed backwards, with byte 10 being the first byte for the attribute and byte 5 being the last.
