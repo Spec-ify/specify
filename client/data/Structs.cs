@@ -20,7 +20,7 @@ public class InstalledApp
 {
     public string Name;
     public string Version;
-    public string InstallDate;
+    public long? InstallDate;
 }
 
 public class MicroCode
@@ -188,7 +188,7 @@ public class StartupTask
     public string AppName;
     public string AppDescription;
     public string ImagePath;
-    public DateTime Timestamp;
+    public long Timestamp;
 }
 
 public class Monitor

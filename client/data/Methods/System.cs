@@ -173,7 +173,9 @@ public static partial class Cache
                 RegistryKey subkey = key.OpenSubKey(keyName);
                 var appName = subkey.GetValue("DisplayName") as string;
                 var appVersion = subkey.GetValue("DisplayVersion") as string;
-                var appDate = subkey.GetValue("InstallDate") as string;
+                var appDateRaw = subkey.GetValue("InstallDate") as string;
+
+                long? appDate = InstAppsConvertToUnix(appDateRaw);
 
                 if (appName != null)
                 {
@@ -192,6 +194,23 @@ public static partial class Cache
             DebugLog.LogEvent($"Registry Read Error @ {keyLocation}", DebugLog.Region.System, DebugLog.EventType.WARNING);
         }
         return InstalledApps;
+    }
+
+    private static long? InstAppsConvertToUnix(string orig)
+    {
+        if (orig == null)
+            return null;
+
+        DateTimeOffset dateTime = new DateTimeOffset(
+            year: int.Parse(orig.Substring(0, 4)),
+            month: int.Parse(orig.Substring(4, 2)),
+            day: int.Parse(orig.Substring(6, 2)),
+            hour: 0, minute: 0, second: 0,
+            offset: TimeSpan.Zero
+        );
+
+        long unixTimeSeconds = dateTime.ToUnixTimeSeconds();
+        return unixTimeSeconds;
     }
 
     public static async System.Threading.Tasks.Task<StartupTask> CreateStartupTask(string appName, string imagePath)
@@ -312,9 +331,13 @@ public static partial class Cache
         }
 
         var timestamp = new FileInfo(filePath).LastWriteTime;
-        startupTask.Timestamp = timestamp;
+        DateTimeOffset dateTime = DateTimeOffset.Parse(timestamp.ToString());
+        long unixTimeSeconds = dateTime.ToUnixTimeSeconds();
+        startupTask.Timestamp = unixTimeSeconds;
+
         var description = FileVersionInfo.GetVersionInfo(filePath).FileDescription;
         startupTask.AppDescription = description;
+
         return startupTask;
     }
 

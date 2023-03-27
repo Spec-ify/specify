@@ -250,7 +250,7 @@ public class Monolith
         public string Edition;
         public string Version;
         public string FriendlyVersion;
-        public string InstallDate;
+        public long InstallDate;
         public long Uptime;
         public string Hostname;
         public string Username;
@@ -273,7 +273,7 @@ public class Monolith
                 "DisplayVersion") ?? Utils.GetRegistryValue<string>(Registry.LocalMachine,
                 @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
                 "ReleaseId");
-            InstallDate = Utils.CimToIsoDate((string)os["InstallDate"]);
+            InstallDate = DateTimeOffset.Parse(Utils.CimToIsoDate((string)os["InstallDate"]).ToString()).ToUnixTimeSeconds();
             Uptime = DateTimeOffset.Now.ToUnixTimeSeconds() - new DateTimeOffset(ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"])).ToUnixTimeSeconds();
             Hostname = Dns.GetHostName();
             Username = Cache.Username;
