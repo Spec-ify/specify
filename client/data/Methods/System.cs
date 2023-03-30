@@ -198,16 +198,26 @@ public static partial class Cache
 
     private static long? InstAppsConvertToUnix(string orig)
     {
+        DateTimeOffset dateTime;
+
         if (orig == null)
             return null;
 
-        DateTimeOffset dateTime = new DateTimeOffset(
+        try
+        {
+            dateTime = new DateTimeOffset(
             year: int.Parse(orig.Substring(0, 4)),
             month: int.Parse(orig.Substring(4, 2)),
             day: int.Parse(orig.Substring(6, 2)),
             hour: 0, minute: 0, second: 0,
             offset: TimeSpan.Zero
-        );
+            );
+        }
+        catch
+        {
+            DebugLog.LogEvent($"Conversion of '{orig}' failed.", DebugLog.Region.System, DebugLog.EventType.WARNING);
+            return null;
+        }
 
         long unixTimeSeconds = dateTime.ToUnixTimeSeconds();
         return unixTimeSeconds;
