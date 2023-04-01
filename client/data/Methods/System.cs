@@ -375,13 +375,32 @@ public static partial class Cache
     {
         try
         {
+            bool copied = false;
             //Any dump older than a month is not included in the zip.
             foreach (string dump in dumps)
+            {
                 if (new FileInfo(dump).CreationTime > DateTime.Now.AddMonths(-1))
-                    File.Copy(dump, string.Concat(TempFolder + @"/", Regex.Match(dump, "[^\\\\]*$").Value));
+                {
+                    var fileName = string.Concat(TempFolder + @"/", Regex.Match(dump, "[^\\\\]*$").Value);
+                    File.Copy(dump, fileName);
+                    if (!File.Exists(fileName))
+                    {
+                        await DebugLog.LogEventAsync($"Failed to copy {Regex.Match(dump, "[^\\\\]*$").Value} to dump folder.", DebugLog.Region.System, DebugLog.EventType.ERROR);
+                    }
+                    else
+                    {
+                        copied = true;
+                    }
+                }
+            }
 
-            ZipFile.CreateFromDirectory(TempFolder, TempZip);
-            return true;
+            // If at least one dump was successfully copied, create the directory and return success.
+            if (copied)
+            {
+                ZipFile.CreateFromDirectory(TempFolder, TempZip);
+                return true;
+            }
+            else return false;
         }
         catch (Exception e)
         {
