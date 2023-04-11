@@ -204,7 +204,7 @@ public static partial class Cache
         int buffSize = 0;
         var dwNumEntriesField = typeof(IPT).GetField("dwNumEntries");
 
-        uint ret = Interop.GetExtendedTcpTable(IntPtr.Zero, ref buffSize, true, ipVersion, Interop.TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_ALL);
+        uint ret;
         IntPtr tcpTablePtr = Marshal.AllocHGlobal(buffSize);
 
         try
@@ -264,7 +264,6 @@ public static partial class Cache
 
     private static async System.Threading.Tasks.Task<(int, double)> GetHostStats(string ipAddress, int timeout = 10000, int pingCount = 100)
     {
-        var pinger = new Ping();
         var pingOptions = new PingOptions();
 
         var data = "meaninglessdatawithalotofletters"; // 32 letters in total.

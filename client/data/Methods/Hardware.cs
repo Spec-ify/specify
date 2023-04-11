@@ -596,12 +596,10 @@ public static partial class Cache
         {
             // Check if partition drive size is identical to exactly one partition drive size in the list of disks. If it is, add win32_volume data to it.
             // If it is not, create an issue for the failed link.
-            ulong partitionSize = 0;
-            ulong blockSize = 0;
+            ulong partitionSize;
             try
             {
                 partitionSize = (ulong)partition["Capacity"];
-                blockSize = (ulong)partition["BlockSize"];
             }
             catch (NullReferenceException)
             {
@@ -825,7 +823,7 @@ public static partial class Cache
             STORAGE_PROPERTY_QUERY* query = null;
             STORAGE_PROPERTY_SET* setProperty = null;
             STORAGE_PROTOCOL_SPECIFIC_DATA* protocolData = null;
-            STORAGE_PROTOCOL_DATA_DESCRIPTOR* protocolDataDescr = null;
+            //STORAGE_PROTOCOL_DATA_DESCRIPTOR* protocolDataDescr = null;
 
             // Set the maximum memory the smart log can be.
             bufferLength = (uint)(Marshal.OffsetOf(typeof(STORAGE_PROPERTY_QUERY), "AdditionalParameters") + sizeof(STORAGE_PROTOCOL_SPECIFIC_DATA_EXT));
@@ -836,7 +834,7 @@ public static partial class Cache
 
             // Overlay the data structures on top of the allocated memory.
             query = (STORAGE_PROPERTY_QUERY*)buffer;
-            protocolDataDescr = (STORAGE_PROTOCOL_DATA_DESCRIPTOR*)buffer;
+            //protocolDataDescr = (STORAGE_PROTOCOL_DATA_DESCRIPTOR*)buffer;
             protocolData = (STORAGE_PROTOCOL_SPECIFIC_DATA*)query->AdditionalParameters;
 
             // Set up the Smart log query
@@ -1256,13 +1254,8 @@ public static partial class Cache
                 File.Delete(Path.Combine(path, "battery-report.xml"));
                 break;
             }
-            var reader = cmd.StandardOutput.ReadToEnd();
             var errorReader = cmd.StandardError.ReadLine();
-            /*if(reader != null && reader != "")
-            {
-                DebugLog.LogEvent($"Battery Report returned", DebugLog.Region.Hardware);
-                break;
-            }*/
+
             if (errorReader != null && errorReader != "")
             {
                 DebugLog.LogEvent($"PowerCfg reported an error: {errorReader}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);

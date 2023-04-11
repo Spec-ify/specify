@@ -17,8 +17,8 @@ public class Program
         try
         {
             data.Cache.Issues = new List<string>();
-            var initialConsoleFg = Console.ForegroundColor;
-            var initialConsoleBg = Console.BackgroundColor;
+            //var initialConsoleFg = Console.ForegroundColor;
+            //var initialConsoleBg = Console.BackgroundColor;
 
             Time = new Stopwatch();
             Time.Start();
