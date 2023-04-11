@@ -142,12 +142,20 @@ public static class Utils
                 };
             }
         }
+        catch (FileNotFoundException)
+        {
+            DebugLog.LogEvent($"Chromium extension files could not be found.", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            return null;
+        }
+        catch (JsonException)
+        {
+            DebugLog.LogEvent($"Chromium extension json files corrupt or invalid.", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            return null;
+        }
         catch (Exception e)
         {
-            if (e is FileNotFoundException || e is JsonException)
-                throw e;
-            else
-                return null;
+            DebugLog.LogEvent($"Unexpected exception occured in ParseChromiumExtension: {e}", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            return null;
         }
     }
     /// <summary>
