@@ -597,12 +597,10 @@ public static partial class Cache
             // Check if partition drive size is identical to exactly one partition drive size in the list of disks. If it is, add win32_volume data to it.
             // If it is not, create an issue for the failed link.
             ulong partitionSize;
-            try
+            partition.TryWmiRead("Capacity", out partitionSize);
+            if (partitionSize == default)
             {
-                partitionSize = (ulong)partition["Capacity"];
-            }
-            catch (NullReferenceException)
-            {
+                DebugLog.LogEvent("Failure to parse partition information - No capacity found. This is likely a virtual or unallocated drive.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
                 Issues.Add("Failure to parse partition information - No capacity found. This is likely a virtual or unallocated drive.");
                 continue;
             }

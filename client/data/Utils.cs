@@ -113,34 +113,27 @@ public static class Utils
 
             if (Regex.IsMatch(manifest.name, "MSG_(.+)") || Regex.IsMatch(manifest.description, "MSG_(.+)"))
                 localeData = JObject.Parse(File.ReadAllText(string.Concat(ldir, manifest.default_locale, "\\messages.json")));
-            try
+           
+            var fallbackName = (string)localeData[manifest.name.Substring(6, manifest.name.Length - 8)]["message"];
+            if(string.IsNullOrEmpty(fallbackName))
             {
-                return new Browser.Extension()
-                {
-                    name = (Regex.IsMatch(manifest.name, "MSG_(.+)"))
-                    ? (string)localeData[manifest.name.Substring(6, manifest.name.Length - 8)]["message"] : manifest.name,
-                    description = (Regex.IsMatch(manifest.description, "MSG_(.+)"))
-                    ? (string)localeData[manifest.description.Substring(6, manifest.description.Length - 8)]["message"] : manifest.description,
-                    version = manifest.version
-                };
+                fallbackName = (string)localeData[manifest.name.Substring(6, manifest.name.Length - 8).ToLower()]["message"];
             }
-            catch (NullReferenceException)
+
+            var fallbackDescription = (string)localeData[manifest.description.Substring(6, manifest.description.Length - 8)]["message"];
+            if (string.IsNullOrEmpty(fallbackDescription))
             {
-                /*
-                 * This handles a rare issues with the format between the manifest and locale
-                 * Essentially the contextual code in manifest can be all caps while the corresponding field in messages is not.
-                 * This mismatch created a null reference. Adding ToLower() in a normal context breaks a lot of extensions for reading.
-                 * If you've got a cleaner way of doing this, feel free to do it.
-                */
-                return new Browser.Extension()
-                {
-                    name = (Regex.IsMatch(manifest.name, "MSG_(.+)"))
-                    ? (string)localeData[manifest.name.Substring(6, manifest.name.Length - 8).ToLower()]["message"] : manifest.name,
-                    description = (Regex.IsMatch(manifest.description, "MSG_(.+)"))
-                    ? (string)localeData[manifest.description.Substring(6, manifest.description.Length - 8).ToLower()]["message"] : manifest.description,
-                    version = manifest.version
-                };
+                fallbackDescription = (string)localeData[manifest.description.Substring(6, manifest.description.Length - 8).ToLower()]["message"];
             }
+
+            return new Browser.Extension()
+            {
+                name = (Regex.IsMatch(manifest.name, "MSG_(.+)"))
+                ? fallbackName : manifest.name,
+                description = (Regex.IsMatch(manifest.description, "MSG_(.+)"))
+                ? fallbackDescription : manifest.description,
+                version = manifest.version
+            };
         }
         catch (FileNotFoundException)
         {

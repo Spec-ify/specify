@@ -165,31 +165,46 @@ public static partial class Cache
     private static List<InstalledApp> GetInstalledAppsAtKey(string keyLocation, RegistryKey reg)
     {
         var InstalledApps = new List<InstalledApp>();
-        try
-        {
-            var key = reg.OpenSubKey(keyLocation);
-            foreach (String keyName in key.GetSubKeyNames())
-            {
-                RegistryKey subkey = key.OpenSubKey(keyName);
-                var appName = subkey.GetValue("DisplayName") as string;
-                var appVersion = subkey.GetValue("DisplayVersion") as string;
-                var appDate = subkey.GetValue("InstallDate") as string;
 
-                if (appName != null)
-                {
-                    InstalledApps.Add(
-                        new InstalledApp()
-                        {
-                            Name = appName,
-                            Version = appVersion,
-                            InstallDate = appDate
-                        });
-                }
-            }
-        }
-        catch (NullReferenceException)
+        var key = reg.OpenSubKey(keyLocation);
+        if (key is null)
         {
-            DebugLog.LogEvent($"Registry Read Error @ {keyLocation}", DebugLog.Region.System, DebugLog.EventType.WARNING);
+            DebugLog.LogEvent($"Registry Read Error @ {keyLocation}", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            return InstalledApps;
+        }
+        foreach (String keyName in key.GetSubKeyNames())
+        {
+            RegistryKey subkey = key.OpenSubKey(keyName);
+            var appName = subkey.GetValue("DisplayName") as string;
+            var appVersion = subkey.GetValue("DisplayVersion") as string;
+            var appDate = subkey.GetValue("InstallDate") as string;
+
+            if (appName == null)
+            {
+                DebugLog.LogEvent($"null app name found @ {keyLocation}", DebugLog.Region.System, DebugLog.EventType.ERROR);
+                continue;
+            }
+
+            //[CLEANUP]: I'm not sure these checks are necessary.
+            if (string.IsNullOrEmpty(appVersion))
+            {
+                appVersion = "";
+            }
+            if (string.IsNullOrEmpty (appDate))
+            {
+                appDate = "";
+            }
+
+            if (appName != null)
+            {
+                InstalledApps.Add(
+                    new InstalledApp()
+                    {
+                        Name = appName,
+                        Version = appVersion,
+                        InstallDate = appDate
+                    });
+            }
         }
         return InstalledApps;
     }
