@@ -69,9 +69,7 @@ public static partial class Cache
 
     public static List<string> AVList()
     {
-        var antiviruses = new List<string>();
-
-        antiviruses = Utils.GetWmi("AntivirusProduct", "displayName", @"root\SecurityCenter2")
+        var antiviruses = Utils.GetWmi("AntivirusProduct", "displayName", @"root\SecurityCenter2")
                             .Select(x => (string)x["displayName"]).ToList();
 
         // Checks for registry items

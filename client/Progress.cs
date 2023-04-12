@@ -87,7 +87,7 @@ public class ProgressList
         new Thread(() =>
         {
             //Console.WriteLine();
-            var allComplete = true;
+            bool allComplete;
             var cPos = new List<int>();
             var oldStatus = new List<ProgressType>();
 
