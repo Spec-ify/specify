@@ -118,7 +118,6 @@ public static partial class Cache
                     if (!SystemProcesses.Contains(rawProcess.ProcessName))
                     {
                         exePath = "Not Found";
-                        DebugLog.LogEvent($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})", DebugLog.Region.System, DebugLog.EventType.WARNING);
                     }
                     else exePath = "SYSTEM";
                 }
@@ -205,13 +204,20 @@ public static partial class Cache
 
         try
         {
-            dateTime = new DateTimeOffset(
-            year: int.Parse(orig.Substring(0, 4)),
-            month: int.Parse(orig.Substring(4, 2)),
-            day: int.Parse(orig.Substring(6, 2)),
-            hour: 0, minute: 0, second: 0,
-            offset: TimeSpan.Zero
-            );
+            if (orig.Contains('/'))
+            {
+                dateTime = DateTimeOffset.Parse(orig);
+            }
+            else
+            {
+                dateTime = new DateTimeOffset(
+                year: int.Parse(orig.Substring(0, 4)),
+                month: int.Parse(orig.Substring(4, 2)),
+                day: int.Parse(orig.Substring(6, 2)),
+                hour: 0, minute: 0, second: 0,
+                offset: TimeSpan.Zero
+                );
+            }
         }
         catch
         {
