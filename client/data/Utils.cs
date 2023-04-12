@@ -61,7 +61,7 @@ public static class Utils
         scope.Connect();
 
         var query = new ObjectQuery($"SELECT {selected} FROM {cls}");
-        var collection = new ManagementObjectSearcher(scope, query).Get();
+        using var collection = new ManagementObjectSearcher(scope, query).Get();
         return collection;
     }
 

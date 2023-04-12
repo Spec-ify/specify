@@ -163,8 +163,8 @@ public class Monolith
         // const string specifiedUploadEndpoint = "specified/upload.php";
         const string specifiedUploadDomain = "https://spec-ify.com";
         const string specifiedUploadEndpoint = "upload.php";
-        var client = new HttpClient();
-        var request = new HttpRequestMessage(HttpMethod.Post, $"{specifiedUploadDomain}/{specifiedUploadEndpoint}");
+        using var client = new HttpClient();
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{specifiedUploadDomain}/{specifiedUploadEndpoint}");
         request.Content = new StringContent(str);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 

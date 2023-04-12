@@ -797,7 +797,7 @@ public static partial class Cache
     private static List<ScheduledTask> GetScheduledTasks()
     {
         var scheduledTasks = new List<ScheduledTask>();
-        var ts = new TaskService();
+        using var ts = new TaskService();
         var rawTaskList = EnumScheduledTasks(ts.RootFolder);
 
         WinScheduledTasks = new List<ScheduledTask>();

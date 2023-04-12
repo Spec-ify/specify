@@ -237,7 +237,8 @@ public static partial class Cache
     {
         try
         {
-            var pingReply = await new Ping().SendPingAsync(ipAddress, timeout, buffer, pingOptions);
+            using var ping = new Ping();
+            var pingReply = await ping.SendPingAsync(ipAddress, timeout, buffer, pingOptions);
 
             if (pingReply != null)
             {

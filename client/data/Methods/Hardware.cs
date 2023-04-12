@@ -821,7 +821,6 @@ public static partial class Cache
         unsafe
         {
             STORAGE_PROPERTY_QUERY* query = null;
-            STORAGE_PROPERTY_SET* setProperty = null;
             STORAGE_PROTOCOL_SPECIFIC_DATA* protocolData = null;
             //STORAGE_PROTOCOL_DATA_DESCRIPTOR* protocolDataDescr = null;
 
@@ -874,9 +873,9 @@ public static partial class Cache
             NVME_HEALTH_INFO_LOG* smartInfo = (NVME_HEALTH_INFO_LOG*)((sbyte*)protocolData + protocolData->ProtocolDataOffset);
 
             // Hacky data verification; checking if the drive temperature is within a normal range.
-            // [CLEANUP] This is method should be changed to something more reliable.
+            // [CLEANUP] This method should be changed to something more reliable.
             var driveTemperature = ((uint)smartInfo->Temperature[1] << 8 | smartInfo->Temperature[0]) - 273;
-            if (driveTemperature < 0 || driveTemperature > 100)
+            if (driveTemperature > 100)
             {
                 DebugLog.LogEvent($"SMART data retrieval error - Data not valid on drive {driveLetter}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
                 Marshal.FreeHGlobal(buffer);
