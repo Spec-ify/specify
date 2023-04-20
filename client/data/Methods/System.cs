@@ -181,7 +181,7 @@ public static partial class Cache
 
             if (appName == null)
             {
-                DebugLog.LogEvent($"null app name found @ {keyLocation}", DebugLog.Region.System, DebugLog.EventType.ERROR);
+                //DebugLog.LogEvent($"null app name found @ {keyLocation}", DebugLog.Region.System, DebugLog.EventType.ERROR);
                 continue;
             }
 

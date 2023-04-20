@@ -11,6 +11,7 @@ using System.Management;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Xml;
+using System.Text;
 using static specify_client.Interop;
 
 namespace specify_client.data;
@@ -709,21 +710,21 @@ public static partial class Cache
 
                     foreach (var drive in drives)
                     {
-                        string errorPartitionInfo = "";
+                        StringBuilder errorPartitionInfo = new();
                         foreach (var errorPartition in drive.Partitions)
                         {
                             var eSize = errorPartition.PartitionCapacity;
                             var eFS = errorPartition.Filesystem;
-                            errorPartitionInfo += $"Size: {eSize} - ";
-                            errorPartitionInfo += $"FS: {eFS} - ";
-                            errorPartitionInfo += $"Difference: {Math.Abs((long)(partitionSize - eSize))} - ";
+                            errorPartitionInfo.Append($"Size: {eSize} - ");
+                            errorPartitionInfo.Append($"FS: {eFS} - ");
+                            errorPartitionInfo.Append($"Difference: {Math.Abs((long)(partitionSize - eSize))} - ");
                             if (eFS != null && fileSystem != null)
                             {
-                                errorPartitionInfo += $"Possible: {eFS.Equals(fileSystem)}\n";
+                                errorPartitionInfo.Append($"Possible: {eFS.Equals(fileSystem)}\n");
                             }
                             else
                             {
-                                errorPartitionInfo += $"Possible: false\n";
+                                errorPartitionInfo.Append($"Possible: false\n");
                             }
                             //errorPartitionInfo += $"Size: {eSize} - FS: {eFS} - Difference: {Math.Abs((float)partitionSize - eSize)} - Possible: {eFS.Equals(fileSystem)}\n";
                         }
@@ -737,7 +738,7 @@ public static partial class Cache
         foreach (var d in drives)
         {
             bool complete = true;
-            UInt64 free = 0;
+            ulong free = 0;
             foreach (var partition in d.Partitions)
             {
                 if (partition.PartitionFree == 0)
@@ -760,7 +761,7 @@ public static partial class Cache
                         {
                             if (letteredDrive.Name.Contains(partition.PartitionLabel[0]))
                             {
-                                d.DiskFree = (UInt64)letteredDrive.AvailableFreeSpace;
+                                d.DiskFree = (ulong)letteredDrive.AvailableFreeSpace;
                             }
                         }
                         catch
@@ -900,7 +901,7 @@ public static partial class Cache
             {
                 Id = 0x02,
                 Name = "Temperature",
-                RawValue = driveTemperature.ToString() + " C"
+                RawValue = driveTemperature + " C"
             };
             SmartAttribute availableSpare = new()
             {

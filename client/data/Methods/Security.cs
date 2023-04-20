@@ -98,21 +98,21 @@ public static partial class Cache
         // Check if Defender is disabled in any way
         if (PassiveMode != 0 || DisableAV != 0 || DisableASW != 0)
         {
-            antiviruses.RemoveAll(x => ((string)x) == "Windows Defender");
+            antiviruses.RemoveAll(x => x == "Windows Defender");
             antiviruses.Add("Windows Defender (Disabled)");
         }
 
         // Same, but checks in policies
         else if (PassiveModePolicies != 0 || DisableAVPolicies != 0 || DisableASWPolicies != 0)
         {
-            antiviruses.RemoveAll(x => ((string)x) == "Windows Defender");
+            antiviruses.RemoveAll(x => x == "Windows Defender");
             antiviruses.Add("Windows Defender (Disabled)");
         }
 
         // Check if Defender is not the only entry in list
         else if (antiviruses.Count > 1 && antiviruses.All(a => a == "Windows Defender"))
         {
-            antiviruses.RemoveAll(x => ((string)x) == "Windows Defender");
+            antiviruses.RemoveAll(x => x == "Windows Defender");
             antiviruses.Add("Windows Defender");
         }
 

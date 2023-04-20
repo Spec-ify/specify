@@ -100,31 +100,24 @@ public static partial class Cache
 
             var la = connection.localAddr;
 
-            // [CLEANUP]: This can be simplified with BitConverter
-            uint localAddr1 = la % 256;
-            la = la / 256;
-            uint localAddr2 = la % 256;
-            la = la / 256;
-            uint localAddr3 = la % 256;
-            uint localAddr4 = la / 256;
+            var localAddrByteArray = BitConverter.GetBytes(la);
+            var localAddr = new IPAddress(localAddrByteArray);
 
             var ra = connection.remoteAddr;
-            uint remoteAddr1 = ra % 256;
-            ra = ra / 256;
-            uint remoteAddr2 = ra % 256;
-            ra = ra / 256;
-            uint remoteAddr3 = ra % 256;
-            uint remoteAddr4 = ra / 256;
+            var remoteAddrByteArray = BitConverter.GetBytes(ra);
+            var remoteAddr = new IPAddress(remoteAddrByteArray);
 
-            conn.LocalIPAddress = $"{localAddr1}.{localAddr2}.{localAddr3}.{localAddr4}";
+            conn.LocalIPAddress = $"{localAddr}";
             conn.LocalPort = port;
-            conn.RemoteIPAddress = $"{remoteAddr1}.{remoteAddr2}.{remoteAddr3}.{remoteAddr4}";
+            conn.RemoteIPAddress = $"{remoteAddr}";
             conn.RemotePort = rport;
             conn.OwningPID = connection.owningPid;
 
             connectionsList.Add(conn);
         }
         var v6connections = GetAllTCPv6Connections();
+
+        //[CLEANUP]: There is a much cleaner way to do this.
         foreach (var connection in v6connections)
         {
             NetworkConnection conn = new();
@@ -200,11 +193,11 @@ public static partial class Cache
 
     private static List<IPR> GetTCPConnections<IPR, IPT>(int ipVersion)
     {
-        IPR[] tableRows;
+        IPR[] tableRows = null;
         int buffSize = 0;
         var dwNumEntriesField = typeof(IPT).GetField("dwNumEntries");
 
-        uint ret;
+        uint ret = Interop.GetExtendedTcpTable(IntPtr.Zero, ref buffSize, true, ipVersion, Interop.TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_ALL);
         IntPtr tcpTablePtr = Marshal.AllocHGlobal(buffSize);
 
         try
@@ -225,6 +218,11 @@ public static partial class Cache
                 tableRows[i] = tcpRow;
                 rowPtr = (IntPtr)((long)rowPtr + rowStructSize);
             }
+        }
+        catch (Exception e)
+        {
+            DebugLog.LogEvent("Unexpected exception in GetTCPConnections", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
+            DebugLog.LogEvent($"{e}", DebugLog.Region.Networking, DebugLog.EventType.INFORMATION);
         }
         finally
         {
@@ -309,12 +307,12 @@ public static partial class Cache
 
     private static string GetHostsFile()
     {
-        var hostsFile = "";
+        StringBuilder hostsFile = new();
         try
         {
             foreach (var str in File.ReadAllLines(@"C:\Windows\System32\drivers\etc\hosts"))
             {
-                hostsFile += $"{str}\n";
+                hostsFile.Append($"{str}\n");
             }
         }
         catch (FileNotFoundException)
@@ -322,7 +320,7 @@ public static partial class Cache
             Issues.Add("Hosts file not found.");
             return "";
         }
-        return hostsFile;
+        return hostsFile.ToString();
     }
 
     public static string GetHostsFileHash()
