@@ -10,13 +10,12 @@ public static class DebugLog
 {
     public const string LogFilePath = "specify_debug.log";
     public static string LogText;
-    private static bool Enabled = true;
     private static bool Started = false;
     private static DateTime LogStartTime { get; set; }
-    private static int[] ErrorCount = new int[6];
-    private static bool[] RegionStarted = new bool[5];
-    private static bool[] RegionCompleted = new bool[5];
-    private static DateTime[] RegionStartTime = new DateTime[5];
+    private static readonly int[] ErrorCount = new int[6];
+    private static readonly bool[] RegionStarted = new bool[5];
+    private static readonly bool[] RegionCompleted = new bool[5];
+    private static readonly DateTime[] RegionStartTime = new DateTime[5];
 
     public enum Region
     {
@@ -127,12 +126,9 @@ public static class DebugLog
             return;
         }
         string debugString = CreateDebugString(message, region, type);
-        if (region != Region.Misc)
+        if (region != Region.Misc && (!RegionStarted[(int)region] || RegionCompleted[(int)region]))
         {
-            if (!RegionStarted[(int)region] || RegionCompleted[(int)region])
-            {
-                debugString = CreateDebugString($"Logging attempted on uninitialized region - {message}", region, EventType.ERROR);
-            }
+            debugString = CreateDebugString($"Logging attempted on uninitialized region - {message}", region, EventType.ERROR);
         }
         var timeout = 5;
         var currentTime = DateTime.Now;
@@ -171,12 +167,9 @@ public static class DebugLog
             return;
         }
         string debugString = CreateDebugString(message, region, type);
-        if (region != Region.Misc)
+        if (region != Region.Misc && (!RegionStarted[(int)region] || RegionCompleted[(int)region]))
         {
-            if (!RegionStarted[(int)region] || RegionCompleted[(int)region])
-            {
-                debugString = CreateDebugString($"Logging attempted on uninitialized region - {message}", region, EventType.ERROR);
-            }
+            debugString = CreateDebugString($"Logging attempted on uninitialized region - {message}", region, EventType.ERROR);
         }
         var timeout = 5;
         var currentTime = DateTime.Now;

@@ -197,12 +197,12 @@ public static partial class Cache
         int buffSize = 0;
         var dwNumEntriesField = typeof(IPT).GetField("dwNumEntries");
 
-        uint ret = Interop.GetExtendedTcpTable(IntPtr.Zero, ref buffSize, true, ipVersion, Interop.TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_ALL);
+        Interop.GetExtendedTcpTable(IntPtr.Zero, ref buffSize, true, ipVersion, Interop.TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_ALL);
         IntPtr tcpTablePtr = Marshal.AllocHGlobal(buffSize);
 
         try
         {
-            ret = Interop.GetExtendedTcpTable(tcpTablePtr, ref buffSize, true, ipVersion, Interop.TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_ALL);
+            uint ret = Interop.GetExtendedTcpTable(tcpTablePtr, ref buffSize, true, ipVersion, Interop.TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_ALL);
             if (ret != 0) return new List<IPR>();
 
             IPT table = (IPT)Marshal.PtrToStructure(tcpTablePtr, typeof(IPT));
@@ -240,14 +240,7 @@ public static partial class Cache
 
             if (pingReply != null)
             {
-                if (pingReply.Status != IPStatus.Success)
-                {
-                    return -1;
-                }
-                else
-                {
-                    return (int)pingReply.RoundtripTime;
-                }
+                return pingReply.Status != IPStatus.Success ? -1 : (int)pingReply.RoundtripTime;
             }
             else
             {

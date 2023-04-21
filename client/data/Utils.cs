@@ -162,10 +162,7 @@ public static class Utils
     public static bool TryWmiRead<T>(this Dictionary<string, object> collection, string key, out T value)
     {
         bool success = collection.TryGetValue(key, out object? wmi) && wmi is T;
-        if (success)
-            value = (T)wmi;
-        else
-            value = default(T);
+        value = success ? (T)wmi : default;
         return success;
     }
 }

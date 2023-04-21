@@ -89,10 +89,12 @@ public static partial class Cache
         var outputProcesses = new List<OutputProcess>();
         var rawProcesses = Process.GetProcesses();
 
+        
+
         foreach (var rawProcess in rawProcesses)
         {
             var cpuPercent = 1.0; // TODO: make this actually work properly
-            var exePath = "";
+            string exePath;
             /*try
             {
                 var counter = new PerformanceCounter("Process", "% Processor Time", rawProcess.ProcessName);
@@ -109,8 +111,8 @@ public static partial class Cache
             {
                 // capacity must be declared so it can be referenced.
                 var capacity = 2000;
-
                 var sb = new StringBuilder(capacity);
+
                 var ptr = Interop.OpenProcess(Interop.ProcessAccessFlags.QueryLimitedInformation, false, rawProcess.Id);
 
                 if (!Interop.QueryFullProcessImageName(ptr, 0, sb, ref capacity))
@@ -150,16 +152,16 @@ public static partial class Cache
         // Code Adapted from https://social.msdn.microsoft.com/Forums/en-US/94c2f14d-c45e-4b55-9ba0-eb091bac1035/c-get-installed-programs, thanks Rajasekhar.R! - K97i
         // Currently throws a hissy fit, NullReferenceException when actually adding to the Class
 
-        List<InstalledApp> InstalledApps = new List<InstalledApp>();
+        List<InstalledApp> apps = new List<InstalledApp>();
 
         var hckuList = GetInstalledAppsAtKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", Registry.CurrentUser);
         var lm32List = GetInstalledAppsAtKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", Registry.LocalMachine);
         var lm64List = GetInstalledAppsAtKey(@"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall", Registry.LocalMachine);
-        InstalledApps.AddRange(hckuList);
-        InstalledApps.AddRange(lm32List);
-        InstalledApps.AddRange(lm64List);
+        apps.AddRange(hckuList);
+        apps.AddRange(lm32List);
+        apps.AddRange(lm64List);
 
-        return InstalledApps;
+        return apps;
     }
 
     private static List<InstalledApp> GetInstalledAppsAtKey(string keyLocation, RegistryKey reg)

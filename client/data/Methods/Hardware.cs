@@ -119,9 +119,10 @@ public static partial class Cache
                 offset++;
 
             // Iterate the byte array to build a list of SMBios structures.
+            var smbDataString = new StringBuilder();
             while (offset < SMBios.Length && SMBios[offset] != 0)
             {
-                var smbDataString = new System.Text.StringBuilder();
+                smbDataString.Clear();
                 while (offset < SMBios.Length && SMBios[offset] != 0)
                 {
                     smbDataString.Append((char)SMBios[offset]);
@@ -693,24 +694,34 @@ public static partial class Cache
             }
             else
             {
-                var driveLetter = "";
-                var fileSystem = "";
+                string driveLetter;
+                partition.TryWmiRead("DriveLetter", out driveLetter);
+                string fileSystem;
+                partition.TryWmiRead("FileSystem", out fileSystem);
+
+                /*if (!string.IsNullOrEmpty((string)partition["DriveLetter"]))
+                    driveLetter = (string)partition["DriveLetter"];
+                if (!string.IsNullOrEmpty((string)partition["FileSystem"]))
+
                 try
                 {
                     driveLetter = (string)partition["DriveLetter"];
                     fileSystem = (string)partition["FileSystem"];
                 }
                 catch
-                { }
+                { 
+                    DebugLog.LogEvent()
+                }*/
+
                 if (driveLetter == "")
                 {
                     DebugLog.LogEvent("Partition Link could not be established. Detailed Information follows:", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
                     DebugLog.LogEvent($"Failing Partion: Size: {partitionSize} - Label: {driveLetter} - File System: {fileSystem}", DebugLog.Region.Hardware);
                     DebugLog.LogEvent("Drive Info:", DebugLog.Region.Hardware);
-
+                    StringBuilder errorPartitionInfo = new();
                     foreach (var drive in drives)
                     {
-                        StringBuilder errorPartitionInfo = new();
+                        errorPartitionInfo.Clear();
                         foreach (var errorPartition in drive.Partitions)
                         {
                             var eSize = errorPartition.PartitionCapacity;
