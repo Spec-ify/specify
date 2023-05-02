@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Net.NetworkInformation;
 
 namespace specify_client.data;
 
@@ -74,6 +75,5 @@ public static partial class Cache
         "Idle",
         "Secure System"
     };
-
     public static Dictionary<string, object> PageFile { get; private set; }
 }

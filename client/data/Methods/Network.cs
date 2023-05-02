@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace specify_client.data;
 
@@ -22,11 +23,14 @@ public static partial class Cache
                 + "DNSServerSearchOrder, IPEnabled, IPAddress, IPSubnet, DHCPLeaseObtained, DHCPLeaseExpires, "
                 + "DefaultIPGateway, MACAddress, InterfaceIndex");
             NetAdapters2 = Utils.GetWmi("MSFT_NetAdapter",
-                "InterfaceIndex,InterfaceDescription,ConnectorPresent,InterfaceType,NdisPhysicalMedium",
+                "*",
                 @"root\standardcimv2");
             IPRoutes = Utils.GetWmi("Win32_IP4RouteTable",
                 "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
             await DebugLog.LogEventAsync("Networking WMI Information Retrieved.", region);
+
+            GetLinkSpeeds();
+            CombineAdapterInformation();
 
             HostsFile = GetHostsFile();
             HostsFileHash = GetHostsFileHash();
@@ -50,6 +54,7 @@ public static partial class Cache
             Environment.Exit(-1);*/
             await DebugLog.LogFatalError($"{ex}", DebugLog.Region.Networking);
         }
+        
     }
 
     private static IEnumerable<IPAddress> GetTraceroute(string ipAddress, int timeout = 10000, int maxTTL = 30, int bufferSize = 100)
@@ -180,7 +185,90 @@ public static partial class Cache
         DebugLog.LogEvent($"GetNetworkConnections() completed. Total Runtime {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Networking);
         return connectionsList;
     }
+    private static void GetLinkSpeeds()
+    {
+        //[CLEANUP]: This is inefficient. How do we make it better?
+        var NICs = NetworkInterface.GetAllNetworkInterfaces();
+        foreach (var NIC in NICs)
+        {
+            foreach(var adapter in NetAdapters)
+            {
+                string desc;
+                if(adapter.TryWmiRead("Description", out desc))
+                {
+                    if(NIC.Description.Equals(desc))
+                    {
+                        adapter.Add("LinkSpeed", NIC.Speed);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    private static void CombineAdapterInformation()
+    {
+        foreach(var adapter2 in NetAdapters2)
+        {
+            string desc2;
+            if(!adapter2.TryWmiRead("DriverDescription", out desc2))
+            {
+                DebugLog.LogEvent("NetAdapter2 contains corrupted adapter information.", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
+                continue;
+            }
+            foreach(var adapter in NetAdapters)
+            {
+                string desc;
+                if (!adapter.TryWmiRead("Description", out desc))
+                {
+                    DebugLog.LogEvent("NetAdapter2 contains corrupted adapter information.", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
+                    continue;
+                }
+                if(desc.Equals(desc2))
+                {
+                    CombineAdapterInformation(adapter, adapter2);
+                }
+            }
+        }
+    }
+    private static void CombineAdapterInformation(Dictionary<string, object> adapter, Dictionary<string, object> adapter2)
+    {
+        object FullDuplex;
+        object MediaConnectionState;
+        object MediaDuplexState;
+        object MtuSize;
+        object Name;
+        object OperationalStatusDownedMediaDisconnected;
+        object PermanentAddress;
+        object PromiscuousMode;
+        object State;
 
+        List<bool> NetAdapter2Integrity = new()
+        {
+            adapter2.TryWmiRead("FullDuplex", out FullDuplex),
+            adapter2.TryWmiRead("MediaConnectionState", out MediaConnectionState),
+            adapter2.TryWmiRead("MediaDuplexState", out MediaDuplexState),
+            adapter2.TryWmiRead("MtuSize", out MtuSize),
+            adapter2.TryWmiRead("Name", out Name),
+            adapter2.TryWmiRead("OperationStatusDownedMediaDisconnected", out OperationalStatusDownedMediaDisconnected),
+            adapter2.TryWmiRead("PermanentAddress", out PermanentAddress),
+            adapter2.TryWmiRead("PromiscuousMode", out PromiscuousMode),
+            adapter2.TryWmiRead("State", out State)
+        };
+        if(NetAdapter2Integrity.Contains(false))
+        {
+            DebugLog.LogEvent($"{adapter["Description"]} information incomplete. MSFT_NetAdapter missing data.", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
+        }
+        adapter.Add("FullDuplex", FullDuplex);
+        adapter.Add("MediaConnectionState", MediaConnectionState);
+        adapter.Add("MediaDuplexState", MediaDuplexState);
+        adapter.Add("MtuSize", MtuSize);
+        adapter.Add("Name", Name);
+        adapter.Add("OperationalStatusDownedMediaDisconnected", OperationalStatusDownedMediaDisconnected);
+        adapter.Add("PermanentAddress", PermanentAddress);
+        adapter.Add("PromiscuousMode", PromiscuousMode);
+        adapter.Add("State", State);
+
+    }
     private static List<Interop.MIB_TCPROW_OWNER_PID> GetAllTCPv4Connections()
     {
         return GetTCPConnections<Interop.MIB_TCPROW_OWNER_PID, Interop.MIB_TCPTABLE_OWNER_PID>(AF_INET);

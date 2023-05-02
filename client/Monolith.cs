@@ -10,6 +10,7 @@ using System.Management;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -393,16 +394,17 @@ public class Monolith
     public class MonolithNetwork
     {
         public List<Dictionary<string, object>> Adapters;
-        public List<Dictionary<string, object>> Adapters2;
+        //public List<Dictionary<string, object>> Adapters2;
         public List<Dictionary<string, object>> Routes;
         public List<NetworkConnection> NetworkConnections;
         public string HostsFile;
         public string HostsFileHash;
+        public NetworkInterface[] howdy;
 
         public MonolithNetwork()
         {
             Adapters = Cache.NetAdapters;
-            Adapters2 = Cache.NetAdapters2;
+            //Adapters2 = Cache.NetAdapters2;
             Routes = Cache.IPRoutes;
             NetworkConnections = Cache.NetworkConnections;
             HostsFile = Cache.HostsFile;
