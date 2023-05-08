@@ -249,7 +249,7 @@ public static partial class Cache
             adapter2.TryWmiRead("MediaDuplexState", out MediaDuplexState),
             adapter2.TryWmiRead("MtuSize", out MtuSize),
             adapter2.TryWmiRead("Name", out Name),
-            adapter2.TryWmiRead("OperationStatusDownMediaDisconnected", out OperationalStatusDownedMediaDisconnected),
+            adapter2.TryWmiRead("OperationalStatusDownMediaDisconnected", out OperationalStatusDownedMediaDisconnected),
             adapter2.TryWmiRead("PermanentAddress", out PermanentAddress),
             adapter2.TryWmiRead("PromiscuousMode", out PromiscuousMode),
             adapter2.TryWmiRead("State", out State)
@@ -257,17 +257,13 @@ public static partial class Cache
         if(NetAdapter2Integrity.Contains(false))
         {
             DebugLog.LogEvent($"{adapter["Description"]} information incomplete. MSFT_NetAdapter missing data.", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
-            foreach(var check in NetAdapter2Integrity)
-            {
-                DebugLog.LogEvent($"{check}");
-            }
         }
         adapter.Add("FullDuplex", FullDuplex);
         adapter.Add("MediaConnectionState", MediaConnectionState);
         adapter.Add("MediaDuplexState", MediaDuplexState);
         adapter.Add("MtuSize", MtuSize);
         adapter.Add("Name", Name);
-        adapter.Add("OperationalStatusDownedMediaDisconnected", OperationalStatusDownedMediaDisconnected);
+        adapter.Add("OperationalStatusDownMediaDisconnected", OperationalStatusDownedMediaDisconnected);
         adapter.Add("PermanentAddress", PermanentAddress);
         adapter.Add("PromiscuousMode", PromiscuousMode);
         adapter.Add("State", State);
