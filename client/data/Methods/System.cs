@@ -308,16 +308,10 @@ public static partial class Cache
     {
         //get information about an executable file
         var filePath = startupTask.ImagePath.Trim('\"');
+        
+        //trim shortcut target information
+        var substringIndex = filePath.IndexOf(".exe");
 
-        // Trim the target path to be a locateable filepath.
-        var substringIndex = filePath.ToLower().IndexOf(".exe\"");
-        if (substringIndex == -1)
-        {
-            // If the target path is not wrapped in quotes, look for a space after the filename instead.
-            substringIndex = filePath.IndexOf(".exe ");
-        }
-
-        // If there is neither a space or quote after .exe, we shouldn't need to substring.
         if (substringIndex != -1)
         {
             substringIndex += 4;

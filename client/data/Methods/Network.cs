@@ -245,11 +245,11 @@ public static partial class Cache
         List<bool> NetAdapter2Integrity = new()
         {
             adapter2.TryWmiRead("FullDuplex", out FullDuplex),
-            adapter2.TryWmiRead("MediaConnectionState", out MediaConnectionState),
+            adapter2.TryWmiRead("MediaConnectState", out MediaConnectionState),
             adapter2.TryWmiRead("MediaDuplexState", out MediaDuplexState),
             adapter2.TryWmiRead("MtuSize", out MtuSize),
             adapter2.TryWmiRead("Name", out Name),
-            adapter2.TryWmiRead("OperationStatusDownedMediaDisconnected", out OperationalStatusDownedMediaDisconnected),
+            adapter2.TryWmiRead("OperationStatusDownMediaDisconnected", out OperationalStatusDownedMediaDisconnected),
             adapter2.TryWmiRead("PermanentAddress", out PermanentAddress),
             adapter2.TryWmiRead("PromiscuousMode", out PromiscuousMode),
             adapter2.TryWmiRead("State", out State)
@@ -257,6 +257,10 @@ public static partial class Cache
         if(NetAdapter2Integrity.Contains(false))
         {
             DebugLog.LogEvent($"{adapter["Description"]} information incomplete. MSFT_NetAdapter missing data.", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
+            foreach(var check in NetAdapter2Integrity)
+            {
+                DebugLog.LogEvent($"{check}");
+            }
         }
         adapter.Add("FullDuplex", FullDuplex);
         adapter.Add("MediaConnectionState", MediaConnectionState);
