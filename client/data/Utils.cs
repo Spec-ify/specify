@@ -98,6 +98,15 @@ public static class Utils
             var msg = $"Registry item {regKey.Name}\\{path}\\{name} cast to {nameof(T)} failed";
             DebugLog.LogEvent(msg, DebugLog.Region.System, DebugLog.EventType.ERROR);
             Cache.Issues.Add(msg);
+            if(typeof(T).Equals(typeof(int?)))
+            {
+                // -1111 to make it very obvious this is a cast failure. Some keys are set to -1 by optimizers. Nothing uses -1111.
+                return (T)(object)-1111;
+            }
+            if(typeof(T).Equals(typeof(string)))
+            {
+                return (T)(object)"Cast Failure";
+            }
             return def;
         }
     }
