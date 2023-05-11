@@ -21,7 +21,7 @@ public static partial class Cache
             NetAdapters = Utils.GetWmi("Win32_NetworkAdapterConfiguration",
                 "Description, DHCPEnabled, DHCPServer, DNSDomain, DNSDomainSuffixSearchOrder, DNSHostName, "
                 + "DNSServerSearchOrder, IPEnabled, IPAddress, IPSubnet, DHCPLeaseObtained, DHCPLeaseExpires, "
-                + "DefaultIPGateway, MACAddress, InterfaceIndex, PhysicalAdapter");
+                + "DefaultIPGateway, MACAddress, InterfaceIndex");
             NetAdapters2 = Utils.GetWmi("MSFT_NetAdapter",
                 "*",
                 @"root\standardcimv2");
