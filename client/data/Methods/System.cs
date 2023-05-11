@@ -339,30 +339,45 @@ public static partial class Cache
         string TempZip = Path.GetTempPath() + @"specify-dumps.zip";
 
         if (!MinidumpsExist(dumpDir))
+        {
+            await DebugLog.LogEventAsync("No current dumps found.", DebugLog.Region.System);
             return result;
+        }
 
         string[] dumps = Directory.GetFiles(dumpDir);
         if (dumps.Length == 0)
+        {
+            await DebugLog.LogEventAsync($"Dumps could not be retrieved from {dumpDir}", DebugLog.Region.System, DebugLog.EventType.ERROR);
             return result;
+        }
 
         await DebugLog.LogEventAsync("Dump Upload Requested.", DebugLog.Region.System);
         if (MessageBox.Show("Would you like to upload your BSOD minidumps with your specs report?", "Minidumps detected", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
+        {
+            await DebugLog.LogEventAsync("Dump Upload Request Refused.", DebugLog.Region.System);
             return result;
+        }
 
         await DebugLog.LogEventAsync("Dump Upload Request Approved.", DebugLog.Region.System);
 
         Directory.CreateDirectory(TempFolder);
 
         if (!await CreateMinidumpZipFile(dumps, TempFolder, TempZip))
+        {
+            await DebugLog.LogEventAsync("Dump zip file creation failure.", DebugLog.Region.System, DebugLog.EventType.ERROR);
             return result;
+        }
 
         await DebugLog.LogEventAsync("Dump zip file built. Attempting upload.", DebugLog.Region.System);
 
         result = await UploadMinidumps(TempZip, specifiedDumpDestination);
         if (string.IsNullOrEmpty(result))
+        {
+            await DebugLog.LogEventAsync($"Dump upload failure. {result}", DebugLog.Region.System, DebugLog.EventType.ERROR);
             return result;
+        }
 
-        await DebugLog.LogEventAsync($"Dump file upload result: {result ?? "null"}", DebugLog.Region.System);
+        await DebugLog.LogEventAsync($"Dump file upload result: {result}", DebugLog.Region.System);
         File.Delete(TempZip);
         new DirectoryInfo(TempFolder).Delete(true);
 
@@ -390,7 +405,8 @@ public static partial class Cache
             //Any dump older than a month is not included in the zip.
             foreach (string dump in dumps)
             {
-                if (new FileInfo(dump).CreationTime > DateTime.Now.AddMonths(-1))
+
+                if (new FileInfo(dump).CreationTime < DateTime.Now.AddMonths(-1))
                 {
                     var fileName = string.Concat(TempFolder + @"/", Regex.Match(dump, "[^\\\\]*$").Value);
                     File.Copy(dump, fileName);
@@ -404,7 +420,6 @@ public static partial class Cache
                     }
                 }
             }
-
             // If at least one dump was successfully copied, create the directory and return success.
             if (copied)
             {

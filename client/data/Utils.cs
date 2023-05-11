@@ -113,15 +113,22 @@ public static class Utils
 
     public static Browser.Extension ParseChromiumExtension(string path)
     {
+        // THIS METHOD IS BROKEN - We had a catch for an NRE which was removed and it now hits the generic catch.
+        // I will look in to this later when I'm on a pc with chrome - Jim
         try
         {
             string ldir = string.Concat(Directory.GetDirectories(path).Last(), "\\_locales\\");
-            JToken localeData = JObject.Parse("{}"); //Prevents NullReferenceException when locale does not exist
+            JObject localeData = null;
             ChromiumManifest manifest = JsonConvert.DeserializeObject<ChromiumManifest>(
                 File.ReadAllText(string.Concat(Directory.GetDirectories(path).Last(), "\\manifest.json")));
 
             if (Regex.IsMatch(manifest.name, "MSG_(.+)") || Regex.IsMatch(manifest.description, "MSG_(.+)"))
                 localeData = JObject.Parse(File.ReadAllText(string.Concat(ldir, manifest.default_locale, "\\messages.json")));
+
+            if(localeData is null)
+            {
+                localeData = JObject.Parse("{}"); //Prevents NullReferenceException when locale does not exist
+            }
            
             var fallbackName = (string)localeData[manifest.name.Substring(6, manifest.name.Length - 8)]["message"];
             if(string.IsNullOrEmpty(fallbackName))

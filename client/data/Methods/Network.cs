@@ -198,7 +198,16 @@ public static partial class Cache
                 {
                     if(NIC.Description.Equals(desc))
                     {
-                        adapter.Add("LinkSpeed", NIC.Speed);
+                        try
+                        {
+                            // TryAdd is not used as it is not available in .NET Framework 4.7.2
+                            adapter.Add("LinkSpeed", NIC.Speed);
+                        }
+                        catch (ArgumentException)
+                        {
+                            DebugLog.LogEvent($"Duplicate LinkSpeed Key found for {desc} - This should only occur if two adapters have the same name", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
+                            continue;
+                        }
                         break;
                     }
                 }
@@ -225,7 +234,15 @@ public static partial class Cache
                 }
                 if(desc.Equals(desc2))
                 {
-                    CombineAdapterInformation(adapter, adapter2);
+                    try
+                    {
+                        CombineAdapterInformation(adapter, adapter2);
+                    }
+                    catch (ArgumentException)
+                    {
+                        DebugLog.LogEvent($"Duplicate entries found for {desc} - This should only occur if two adapters have the same name.", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
+                        continue;
+                    }
                 }
             }
         }
