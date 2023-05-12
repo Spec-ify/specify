@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace specify_client.data;
@@ -174,12 +175,36 @@ public class ScheduledTask
 
     public ScheduledTask(Task t)
     {
-        Name = t.Name;
-        Path = t.Path;
-        State = t.State;
-        IsActive = t.IsActive;
-        Author = t.Definition.RegistrationInfo.Author;
-        TriggerTypes = t.Definition.Triggers.Select(e => e.TriggerType).ToList();
+        // A try-catch in a constructor feels like bad form but I'd rather this than double up the error checking inside GetScheduledTasks()
+        // [CLEANUP] This can be written better to check the file exists first.
+        try
+        {
+            Name = t.Name;
+            Path = t.Path;
+            State = t.State;
+            IsActive = t.IsActive;
+            Author = t.Definition.RegistrationInfo.Author;
+            TriggerTypes = t.Definition.Triggers.Select(e => e.TriggerType).ToList();
+        }
+        catch (FileNotFoundException) 
+        {
+            try
+            {
+                DebugLog.LogEvent($"A Task is scheduled with a missing or invalid file:", DebugLog.Region.System, DebugLog.EventType.ERROR);
+                DebugLog.LogEvent($"{t.Name}", DebugLog.Region.System);
+                DebugLog.LogEvent($"{t.Path}", DebugLog.Region.System);
+                Name = t.Name;
+                Path = t.Path;
+                State = default;
+                IsActive = default;
+                Author = default;
+                TriggerTypes = default;
+            }
+            catch (Exception e)
+            {
+                DebugLog.LogEvent($"A ScheduledTask failed to enumerate. {e}", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            }
+        }
     }
 }
 

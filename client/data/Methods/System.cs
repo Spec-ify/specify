@@ -825,14 +825,18 @@ public static partial class Cache
         var scheduledTasks = new List<ScheduledTask>();
         using var ts = new TaskService();
         var rawTaskList = EnumScheduledTasks(ts.RootFolder);
-
         WinScheduledTasks = new List<ScheduledTask>();
         foreach (Task task in rawTaskList)
+        {
             if (task.Path.StartsWith("\\Microsoft"))
+            {
                 WinScheduledTasks.Add(new ScheduledTask(task));
+            }
             else
+            {
                 scheduledTasks.Add(new ScheduledTask(task));
-
+            }
+        }
         return scheduledTasks;
     }
 
