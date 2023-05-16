@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -187,65 +188,69 @@ public static partial class Cache
     }
     private static void GetLinkSpeeds()
     {
-        //[CLEANUP]: This is inefficient. How do we make it better?
-        var NICs = NetworkInterface.GetAllNetworkInterfaces();
-        foreach (var NIC in NICs)
+        var NICs = Utils.GetWmi("Win32_NetworkAdapter");
+        foreach(var adapter in NetAdapters)
         {
-            foreach(var adapter in NetAdapters)
+            var matchingAdapter = GetMatchingAdapter(adapter, NICs);
+            if (matchingAdapter.Count == 0)
             {
-                string desc;
-                if(adapter.TryWmiRead("Description", out desc))
-                {
-                    if(NIC.Description.Equals(desc))
-                    {
-                        try
-                        {
-                            // TryAdd is not used as it is not available in .NET Framework 4.7.2
-                            adapter.Add("LinkSpeed", NIC.Speed);
-                        }
-                        catch (ArgumentException)
-                        {
-                            DebugLog.LogEvent($"Duplicate LinkSpeed Key found for {desc} - This should only occur if two adapters have the same name", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
-                            continue;
-                        }
-                        break;
-                    }
-                }
+                // No matching adapter found. This is fine, NetAdapters doesn't contain all of the adapters Win32_NetworkAdapter contains.
+                continue;
             }
+            if (!matchingAdapter.TryWmiRead("Speed", out ulong LinkSpeed))
+            {
+                // This is fine. Not all adapters have a reported speed.
+                continue;
+            }
+            if(LinkSpeed == long.MaxValue)
+            {
+                // Unconnected adapters report their link speed as the max value of a signed Int64 despite being an unsigned Int64 in WMI.
+                LinkSpeed = 0;
+            }
+            adapter.Add("LinkSpeed", LinkSpeed);
         }
     }
     private static void CombineAdapterInformation()
     {
-        foreach(var adapter2 in NetAdapters2)
+        foreach(var adapter in NetAdapters)
         {
-            string desc2;
-            if(!adapter2.TryWmiRead("DriverDescription", out desc2))
+            try
             {
-                DebugLog.LogEvent("NetAdapter2 contains corrupted adapter information.", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
-                continue;
-            }
-            foreach(var adapter in NetAdapters)
-            {
-                string desc;
-                if (!adapter.TryWmiRead("Description", out desc))
+                var matchingAdapter = GetMatchingAdapter(adapter, NetAdapters2);
+                if (matchingAdapter.Count == 0)
                 {
-                    DebugLog.LogEvent("NetAdapter2 contains corrupted adapter information.", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
                     continue;
                 }
-                if(desc.Equals(desc2))
-                {
-                    try
-                    {
-                        CombineAdapterInformation(adapter, adapter2);
-                    }
-                    catch (ArgumentException)
-                    {
-                        DebugLog.LogEvent($"Duplicate entries found for {desc} - This should only occur if two adapters have the same name.", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
-                        continue;
-                    }
-                }
+                CombineAdapterInformation(adapter, matchingAdapter);
+            }
+            catch (ArgumentException)
+            {
+                DebugLog.LogEvent($"Duplicate entries found for {adapter["Description"]} - This should never happen and implicates duplicated Interface indices in the WMI.", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
             }
         }
+    }
+    private static Dictionary<string, object> GetMatchingAdapter(Dictionary<string, object> adapter1, List<Dictionary<string, object>> adapters2)
+    {
+        if (!adapter1.TryWmiRead("InterfaceIndex", out uint adapter1Index))
+        {
+            DebugLog.LogEvent($"Invalid or nonexistent InterfaceIndex in {adapter1["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
+            return new Dictionary<string, object>(); 
+        }
+        foreach (var adapter2 in adapters2)
+        {
+            if (!adapter2.TryWmiRead("InterfaceIndex", out uint adapter2Index))
+            {
+                // If this error is present, it will occur multiple times and clog the debug log. Possible to fix?
+                // Should an integrity check on these dictionaries be run prior to iterating through them?
+                DebugLog.LogEvent($"Invalid or nonexistent InterfaceIndex in {adapter2["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
+                continue;
+            }
+            if(adapter1Index == adapter2Index)
+            {
+                return adapter2;
+            }            
+        }
+        return new Dictionary<string, object>();
     }
     private static void CombineAdapterInformation(Dictionary<string, object> adapter, Dictionary<string, object> adapter2)
     {
