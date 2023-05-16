@@ -113,8 +113,6 @@ public static class Utils
 
     public static Browser.Extension ParseChromiumExtension(string path)
     {
-        // THIS METHOD IS BROKEN - We had a catch for an NRE which was removed and it now hits the generic catch.
-        // I will look in to this later when I'm on a pc with chrome - Jim
         try
         {
             string ldir = string.Concat(Directory.GetDirectories(path).Last(), "\\_locales\\");
@@ -129,19 +127,23 @@ public static class Utils
             {
                 localeData = JObject.Parse("{}"); //Prevents NullReferenceException when locale does not exist
             }
-           
-            var fallbackName = (string)localeData[manifest.name.Substring(6, manifest.name.Length - 8)]["message"];
-            if(string.IsNullOrEmpty(fallbackName))
+            string fallbackName = "";
+            string fallbackDescription = "";
+            var jObj = localeData[manifest.name.Substring(6, manifest.name.Length - 8)];
+            if (!(jObj is null))
             {
-                fallbackName = (string)localeData[manifest.name.Substring(6, manifest.name.Length - 8).ToLower()]["message"];
-            }
+                fallbackName = (string)jObj["message"];
+                if (string.IsNullOrEmpty(fallbackName))
+                {
+                    fallbackName = (string)jObj["message"];
+                }
 
-            var fallbackDescription = (string)localeData[manifest.description.Substring(6, manifest.description.Length - 8)]["message"];
-            if (string.IsNullOrEmpty(fallbackDescription))
-            {
-                fallbackDescription = (string)localeData[manifest.description.Substring(6, manifest.description.Length - 8).ToLower()]["message"];
+                fallbackDescription = (string?)localeData[manifest.description.Substring(6, manifest.description.Length - 8)]["message"];
+                if (string.IsNullOrEmpty(fallbackDescription))
+                {
+                    fallbackDescription = (string)localeData[manifest.description.Substring(6, manifest.description.Length - 8).ToLower()]["message"];
+                }
             }
-
             return new Browser.Extension()
             {
                 name = (Regex.IsMatch(manifest.name, "MSG_(.+)"))
