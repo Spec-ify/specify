@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System;
 
 namespace specify_client;
 
@@ -55,7 +56,15 @@ public partial class StartButtons : Page
 
     private async void StartAction(object sender, RoutedEventArgs e)
     {
-        var main = App.Current.MainWindow as Landing;
-        await main.RunApp();
+        try
+        {
+            var main = App.Current.MainWindow as Landing;
+            await main.RunApp();
+        }
+        catch (Exception ex)
+        {
+            System.IO.File.WriteAllText(@"specify_hardfail.log", $"{ex}");
+            System.Environment.Exit(-1);
+        }
     }
 }

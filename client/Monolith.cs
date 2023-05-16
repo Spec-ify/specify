@@ -64,9 +64,17 @@ public class Monolith
     public static async Task Specificialize()
     {
         await DebugLog.LogEventAsync("Serialization starts");
-
+        Monolith m;
+        try 
+        { 
+            m = new Monolith();
+        }
+        catch (Exception e)
+        {
+            await DebugLog.LogFatalError($"Monolith creation failure during serialization. Specify cannot continue. {e}", DebugLog.Region.Misc);
+            return;
+        }
         Program.Time.Stop();
-        var m = new Monolith();
         await DebugLog.LogEventAsync("Monolith created");
         m.Meta.GenerationDate = DateTime.Now;
         m.DebugLogText = DebugLog.LogText;
@@ -274,7 +282,14 @@ public class Monolith
                 "DisplayVersion") ?? Utils.GetRegistryValue<string>(Registry.LocalMachine,
                 @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
                 "ReleaseId");
-            InstallDate = Utils.CimToIsoDate((string)os["InstallDate"]);
+            try
+            {
+                InstallDate = Utils.CimToIsoDate((string)os["InstallDate"]);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                DebugLog.LogEvent($"Windows Install Date conversion failed : Date in WMI: {os["InstallDate"]}", DebugLog.Region.Misc, DebugLog.EventType.ERROR);
+            }
             Uptime = DateTimeOffset.Now.ToUnixTimeSeconds() - new DateTimeOffset(ManagementDateTimeConverter.ToDateTime((string)os["LastBootUpTime"])).ToUnixTimeSeconds();
             Hostname = Dns.GetHostName();
             Username = Cache.Username;
