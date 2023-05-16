@@ -120,16 +120,28 @@ public static class Utils
             ChromiumManifest manifest = JsonConvert.DeserializeObject<ChromiumManifest>(
                 File.ReadAllText(string.Concat(Directory.GetDirectories(path).Last(), "\\manifest.json")));
 
-            if (Regex.IsMatch(manifest.name, "MSG_(.+)") || Regex.IsMatch(manifest.description, "MSG_(.+)"))
-                localeData = JObject.Parse(File.ReadAllText(string.Concat(ldir, manifest.default_locale, "\\messages.json")));
+            bool manifestName = false;
+            bool manifestDescription = false;
 
+            if(!string.IsNullOrEmpty(manifest.name) && !string.IsNullOrEmpty(manifest.description))
+            {
+                if (Regex.IsMatch(manifest.name, "MSG_(.+)") || Regex.IsMatch(manifest.description, "MSG_(.+)"))
+                {
+                    localeData = JObject.Parse(File.ReadAllText(string.Concat(ldir, manifest.default_locale, "\\messages.json")));
+                    manifestName = Regex.IsMatch(manifest.name, "MSG_(.+)");
+                    manifestDescription = Regex.IsMatch(manifest.description, "MSG_(.+)");
+                }
+            }
             if(localeData is null)
             {
                 localeData = JObject.Parse("{}"); //Prevents NullReferenceException when locale does not exist
             }
             string fallbackName = "";
             string fallbackDescription = "";
+
+            // I think there's an issue with this substring command, more testing will be required.
             var jObj = localeData[manifest.name.Substring(6, manifest.name.Length - 8)];
+
             if (!(jObj is null))
             {
                 fallbackName = (string)jObj["message"];
@@ -138,7 +150,7 @@ public static class Utils
                     fallbackName = (string)jObj["message"];
                 }
 
-                fallbackDescription = (string?)localeData[manifest.description.Substring(6, manifest.description.Length - 8)]["message"];
+                fallbackDescription = (string)localeData[manifest.description.Substring(6, manifest.description.Length - 8)]["message"];
                 if (string.IsNullOrEmpty(fallbackDescription))
                 {
                     fallbackDescription = (string)localeData[manifest.description.Substring(6, manifest.description.Length - 8).ToLower()]["message"];
@@ -146,9 +158,9 @@ public static class Utils
             }
             return new Browser.Extension()
             {
-                name = (Regex.IsMatch(manifest.name, "MSG_(.+)"))
+                name = manifestName
                 ? fallbackName : manifest.name,
-                description = (Regex.IsMatch(manifest.description, "MSG_(.+)"))
+                description = manifestDescription
                 ? fallbackDescription : manifest.description,
                 version = manifest.version
             };

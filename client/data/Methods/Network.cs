@@ -30,7 +30,7 @@ public static partial class Cache
                 "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
             await DebugLog.LogEventAsync("Networking WMI Information Retrieved.", region);
 
-            GetLinkSpeeds();
+            GetAdapterProperties();
             CombineAdapterInformation();
 
             HostsFile = GetHostsFile();
@@ -186,7 +186,7 @@ public static partial class Cache
         DebugLog.LogEvent($"GetNetworkConnections() completed. Total Runtime {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Networking);
         return connectionsList;
     }
-    private static void GetLinkSpeeds()
+    private static void GetAdapterProperties()
     {
         var NICs = Utils.GetWmi("Win32_NetworkAdapter");
         foreach(var adapter in NetAdapters)
@@ -197,17 +197,19 @@ public static partial class Cache
                 // No matching adapter found. This is fine, NetAdapters doesn't contain all of the adapters Win32_NetworkAdapter contains.
                 continue;
             }
-            if (!matchingAdapter.TryWmiRead("Speed", out ulong LinkSpeed))
+            if (matchingAdapter.TryWmiRead("Speed", out ulong LinkSpeed))
             {
-                // This is fine. Not all adapters have a reported speed.
-                continue;
+                if (LinkSpeed == long.MaxValue)
+                {
+                    // Unconnected adapters report their link speed as the max value of a signed Int64 despite being an unsigned Int64 in WMI.
+                    LinkSpeed = 0;
+                }
+                adapter.Add("LinkSpeed", LinkSpeed);
             }
-            if(LinkSpeed == long.MaxValue)
+            if (matchingAdapter.TryWmiRead("PhysicalAdapter", out bool physicalAdapter))
             {
-                // Unconnected adapters report their link speed as the max value of a signed Int64 despite being an unsigned Int64 in WMI.
-                LinkSpeed = 0;
+                adapter.Add("PhysicalAdapter", physicalAdapter);
             }
-            adapter.Add("LinkSpeed", LinkSpeed);
         }
     }
     private static void CombineAdapterInformation()
