@@ -72,7 +72,7 @@ public class Monolith
         catch (Exception e)
         {
             await DebugLog.LogFatalError($"Monolith creation failure during serialization. Specify cannot continue. {e}", DebugLog.Region.Misc);
-            return;
+            ProgramDone(1);
         }
         Program.Time.Stop();
         await DebugLog.LogEventAsync("Monolith created");
