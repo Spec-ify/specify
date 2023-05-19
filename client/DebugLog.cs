@@ -8,11 +8,12 @@ namespace specify_client;
 
 public static class DebugLog
 {
-    public const string LogFilePath = "specify_debug.log";
+    
     public static string LogText;
+    public static readonly int[] ErrorCount = new int[6];
     private static bool Started = false;
     private static DateTime LogStartTime { get; set; }
-    private static readonly int[] ErrorCount = new int[6];
+    private const string LogFilePath = "specify_debug.log";
     private static readonly bool[] RegionStarted = new bool[5];
     private static readonly bool[] RegionCompleted = new bool[5];
     private static readonly DateTime[] RegionStartTime = new DateTime[5];

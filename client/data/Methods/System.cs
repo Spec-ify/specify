@@ -80,6 +80,7 @@ public static partial class Cache
         {
             await DebugLog.LogFatalError($"{ex}", DebugLog.Region.System);
         }
+        SystemWriteSuccess = true;
     }
 
     private static List<OutputProcess> GetProcesses()

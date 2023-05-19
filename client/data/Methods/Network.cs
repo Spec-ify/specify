@@ -55,7 +55,7 @@ public static partial class Cache
             Environment.Exit(-1);*/
             await DebugLog.LogFatalError($"{ex}", DebugLog.Region.Networking);
         }
-        
+        NetworkWriteSuccess = true;
     }
 
     private static IEnumerable<IPAddress> GetTraceroute(string ipAddress, int timeout = 10000, int maxTTL = 30, int bufferSize = 100)

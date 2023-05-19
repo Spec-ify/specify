@@ -268,7 +268,8 @@ public class Monolith
         public string BootMode;
         public string BootState;
         public bool SMBiosRamInformation;
-
+        public bool WriteSuccess;
+        public int ErrorCount;
         public MonolithBasicInfo()
         {
             //win32 operating system class
@@ -298,6 +299,8 @@ public class Monolith
             BootMode = Environment.GetEnvironmentVariable("firmware_type");
             BootState = (string)cs["BootupState"];
             SMBiosRamInformation = Cache.SMBiosRamInfo;
+            WriteSuccess = Cache.MainDataWriteSuccess;
+            ErrorCount = DebugLog.ErrorCount[(int)DebugLog.Region.Main];
         }
     }
 
@@ -310,7 +313,8 @@ public class Monolith
         public bool? SecureBootEnabled;
         public int? UacLevel;
         public Dictionary<string, object> Tpm;
-
+        public bool WriteSuccess;
+        public int ErrorCount;
         public MonolithSecurity()
         {
             AvList = Cache.AvList;
@@ -319,6 +323,8 @@ public class Monolith
             SecureBootEnabled = Cache.SecureBootEnabled;
             Tpm = Cache.Tpm;
             UacLevel = Cache.UacLevel;
+            WriteSuccess = Cache.SecurityWriteSuccess;
+            ErrorCount = DebugLog.ErrorCount[(int)DebugLog.Region.Security];
         }
     }
 
@@ -337,7 +343,8 @@ public class Monolith
         public List<DiskDrive> Storage;
         public List<TempMeasurement> Temperatures;
         public List<BatteryData> Batteries;
-
+        public bool WriteSuccess;
+        public int ErrorCount;
         public MonolithHardware()
         {
             Ram = Cache.Ram;
@@ -352,6 +359,8 @@ public class Monolith
             Storage = Cache.Disks;
             Temperatures = Cache.Temperatures;
             Batteries = Cache.Batteries;
+            WriteSuccess = Cache.HardwareWriteSuccess;
+            ErrorCount = DebugLog.ErrorCount[(int)DebugLog.Region.Hardware];
         }
     }
 
@@ -379,7 +388,8 @@ public class Monolith
         public List<Browser> BrowserExtensions;
         public string DefaultBrowser;
         public IDictionary PageFile;
-
+        public bool WriteSuccess;
+        public int ErrorCount;
         public MonolithSystem()
         {
             UserVariables = Cache.UserVariables;
@@ -403,6 +413,8 @@ public class Monolith
             BrowserExtensions = Cache.BrowserExtensions;
             DefaultBrowser = Cache.DefaultBrowser;
             PageFile = Cache.PageFile;
+            WriteSuccess = Cache.SystemWriteSuccess;
+            ErrorCount = DebugLog.ErrorCount[(int)DebugLog.Region.System];
         }
     }
 
@@ -416,7 +428,8 @@ public class Monolith
         public string HostsFile;
         public string HostsFileHash;
         public NetworkInterface[] howdy;
-
+        public bool WriteSuccess;
+        public int ErrorCount;
         public MonolithNetwork()
         {
             Adapters = Cache.NetAdapters;
@@ -425,6 +438,8 @@ public class Monolith
             NetworkConnections = Cache.NetworkConnections;
             HostsFile = Cache.HostsFile;
             HostsFileHash = Cache.HostsFileHash;
+            WriteSuccess = Cache.NetworkWriteSuccess;
+            ErrorCount = DebugLog.ErrorCount[(int)DebugLog.Region.Networking];
         }
     }
 

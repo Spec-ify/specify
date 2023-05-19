@@ -76,4 +76,11 @@ public static partial class Cache
         "Secure System"
     };
     public static Dictionary<string, object> PageFile { get; private set; }
+
+    // The WriteSuccess flags allow Specified to easily ignore incomplete sections, avoiding fatal parsing issues.
+    public static bool MainDataWriteSuccess { get; private set; } = false;
+    public static bool SystemWriteSuccess { get; private set; } = false;
+    public static bool HardwareWriteSuccess { get; private set; } = false; 
+    public static bool SecurityWriteSuccess { get; private set; } = false;
+    public static bool NetworkWriteSuccess { get; private set; } = false;
 }

@@ -65,6 +65,7 @@ public static partial class Cache
             Environment.Exit(-1);*/
             await DebugLog.LogFatalError($"{ex}", DebugLog.Region.Security);
         }
+        SecurityWriteSuccess = true;
     }
 
     public static List<string> AVList()

@@ -74,6 +74,7 @@ public static partial class Cache
         {
             await DebugLog.LogFatalError($"{ex}", DebugLog.Region.Hardware);
         }
+        HardwareWriteSuccess = true;
     }
 
     // RAM
@@ -672,13 +673,6 @@ public static partial class Cache
             }
             if (found && unique)
             {
-                // These should never be -1, however they seem to happen occasionally.
-                // Prevent the exception by continuing the loop.
-                if (dIndex == -1 || pIndex == -1)
-                {
-                    Issues.Add($"di/pi = -1 for partition {partitionSize} - this is a Specify error.");
-                    continue;
-                }
                 var matchingPartition = drives[dIndex].Partitions[pIndex];
                 var driveLetter = partition["Label"];
                 if (driveLetter != null)
@@ -1267,7 +1261,13 @@ public static partial class Cache
 
             if (errorReader != null && errorReader != "")
             {
-                DebugLog.LogEvent($"PowerCfg reported an error: {errorReader}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                DebugLog.EventType severity = DebugLog.EventType.ERROR;
+                // 0x10d2 is an extremely common error code on desktops with no batteries. It should not be marked as an error.
+                if(errorReader.Contains("(0x10d2)"))
+                {
+                    severity = DebugLog.EventType.INFORMATION;
+                }
+                DebugLog.LogEvent($"PowerCfg reported an error: {errorReader}", DebugLog.Region.Hardware, severity);
                 break;
             }
         }

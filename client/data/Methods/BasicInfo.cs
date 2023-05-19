@@ -23,5 +23,6 @@ public static partial class Cache
             Environment.Exit(-1);*/
             await DebugLog.LogFatalError($"{ex}", DebugLog.Region.Main);
         }
+        MainDataWriteSuccess = true;
     }
 }
