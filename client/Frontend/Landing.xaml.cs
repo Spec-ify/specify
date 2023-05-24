@@ -84,11 +84,11 @@ public partial class Landing : Window
         this.Focus();
     }
 
-    public void ProgramFail()
+    public void ProgramFailed()
     {
         if (!Dispatcher.CheckAccess())
         {
-            Dispatcher.BeginInvoke(new Action(ProgramFail));
+            Dispatcher.BeginInvoke(new Action(ProgramFailed));
             return;
         }
 

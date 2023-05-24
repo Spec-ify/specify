@@ -282,6 +282,6 @@ public static class DebugLog
             }
         }
 
-        Monolith.ProgramDone(3);
+        Monolith.ProgramDone(ProgramDoneState.ProgramFailed);
     }
 }

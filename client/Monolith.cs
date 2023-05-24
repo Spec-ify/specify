@@ -71,8 +71,9 @@ public class Monolith
         }
         catch (Exception e)
         {
-            await DebugLog.LogFatalError($"Monolith creation failure during serialization. Specify cannot continue. {e}", DebugLog.Region.Misc);
-            ProgramDone(1);
+            await DebugLog.LogFatalError(
+                $"Monolith creation failure during serialization. Specify cannot continue. {e}", DebugLog.Region.Misc);
+            ProgramDone(ProgramDoneState.NoUpload); // this is intentional because it is neither a program fail nor an upload fail
             return;
         }
         Program.Time.Stop();
@@ -128,7 +129,7 @@ public class Monolith
             File.WriteAllText(filename, serialized);
             await DebugLog.LogEventAsync($"Report saved to {filename}");
             await DebugLog.StopDebugLog();
-            ProgramDone(1);
+            ProgramDone(ProgramDoneState.NoUpload);
             return;
         }
         String url = null;
@@ -139,7 +140,7 @@ public class Monolith
             url = requestTask.Result;
             if (url == null)
             {
-                ProgramDone(2);
+                ProgramDone(ProgramDoneState.UploadFailed);
                 throw new HttpRequestException("Upload failed. See previous log for details");
             }
         }
@@ -161,7 +162,7 @@ public class Monolith
 
         t.Join();
 
-        ProgramDone(0);
+        ProgramDone(ProgramDoneState.Normal);
 
         // Program ends here.
         await DebugLog.StopDebugLog();
@@ -210,11 +211,11 @@ public class Monolith
         throw new Exception("MonolithCache item doesn't exist: " + nameof(thing));
     }
 
-    public static void ProgramDone(int noUpload)
+    public static void ProgramDone(ProgramDoneState state)
     {
-        switch (noUpload)
+        switch (state)
         {
-            case 0:
+            case ProgramDoneState.Normal:
                 App.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     var main = App.Current.MainWindow as Landing;
@@ -222,7 +223,7 @@ public class Monolith
                 }));
                 break;
 
-            case 1:
+            case ProgramDoneState.NoUpload:
                 App.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     var main = App.Current.MainWindow as Landing;
@@ -230,7 +231,7 @@ public class Monolith
                 }));
                 break;
 
-            case 2:
+            case ProgramDoneState.UploadFailed:
                 App.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     var main = App.Current.MainWindow as Landing;
@@ -238,11 +239,11 @@ public class Monolith
                 }));
                 break;
 
-            case 3:
+            case ProgramDoneState.ProgramFailed:
                 App.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     var main = App.Current.MainWindow as Landing;
-                    main.ProgramFail();
+                    main.ProgramFailed();
                 }));
                 break;
         }
@@ -452,4 +453,15 @@ public class Monolith
             Monolith = new Monolith();
         }
     }
+}
+
+/**
+ * This is used in Monolith.ProgramDone to represent the state when the program is done
+ */
+public enum ProgramDoneState
+{
+    Normal,
+    NoUpload,
+    UploadFailed,
+    ProgramFailed
 }
