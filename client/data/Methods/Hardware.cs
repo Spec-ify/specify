@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Text;
 using static specify_client.Interop;
+using System.Drawing;
 
 namespace specify_client.data;
 
@@ -418,12 +419,9 @@ public static partial class Cache
     }
 
     // STORAGE
-    private static List<DiskDrive> GetDiskDriveData()
+    private static List<DiskDrive> GetBasicDriveInfo()
     {
-        DateTime start = DateTime.Now;
-        DebugLog.LogEvent("GetDiskDriveData() started", DebugLog.Region.Hardware);
-        List<DiskDrive> drives = new List<DiskDrive>();
-
+        List<DiskDrive> drives = new();
         var driveWmiInfo = GetWmi("Win32_DiskDrive");
 
         // This assumes the WMI info reports disks in order by drive number. I'm not certain this is a safe assumption.
@@ -448,7 +446,6 @@ public static partial class Cache
                 drive.SerialNumber = drive.SerialNumber.Trim();
             }
 
-            //[CLEANUP] Why isn't this checked? What's it used for?
             drive.DiskNumber = (uint)driveWmi["Index"];
 
             if (!driveWmi.TryWmiRead("Size", out drive.DiskCapacity))
@@ -465,7 +462,10 @@ public static partial class Cache
             diskNumber++;
             drives.Add(drive);
         }
-
+        return drives;
+    }
+    private static List<DiskDrive> GetBasicPartitionInfo(List<DiskDrive> drives)
+    {
         var partitionWmiInfo = GetWmi("Win32_DiskPartition");
         foreach (var partitionWmi in partitionWmiInfo)
         {
@@ -485,70 +485,65 @@ public static partial class Cache
                 }
             }
         }
-        try
+        return drives;
+    }
+    private static List<DiskDrive> GetNonNvmeSmartData(List<DiskDrive> drives, Dictionary<string, object> m) 
+    {
+
+        // The following lines up the attribute list creationlink smart data to its corresponding drive.
+        // It makes the assumption that the PNPDeviceID in Wmi32_DiskDrive has a matching identification code to MSStorageDriver_FailurePredictData's InstanceID, and that these identification codes are unique.
+        // This is not a safe assumption, testing will be required.
+        var instanceId = (string)m["InstanceName"];
+        instanceId = instanceId.Substring(0, instanceId.Length - 2);
+        var splitID = instanceId.Split('\\');
+        instanceId = splitID[splitID.Count() - 1];
+
+        var driveIndex = -1;
+        for (var i = 0; i < drives.Count; i++)
         {
-            var queryCollection = GetWmi("MSStorageDriver_FailurePredictData", "*", "\\\\.\\root\\wmi");
-            foreach (var m in queryCollection)
+            var drive = drives[i];
+            if (!drive.InstanceId.ToLower().Contains(instanceId.ToLower())) continue;
+            driveIndex = i;
+            break;
+        }
+
+        if (driveIndex == -1)
+        {
+            DebugLog.LogEvent($"Smart Data found for {instanceId} with no matching drive.", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            Issues.Add($"Smart Data found for {instanceId} with no matching drive.");
+            return drives;
+        }
+
+        var diskAttributes = new List<SmartAttribute>();
+
+        var vs = (byte[])m["VendorSpecific"];
+        // Every 12th byte starting at byte index 2 is a smart identifier.
+        for (var i = 2; i < vs.Length; i += 12)
+        {
+            var c = new byte[12];
+            // Copy 12 bytes into a new array.
+            Array.Copy(vs, i, c, 0, 12);
+
+            // Once we reach the zeroes, we're past the smart attributes.
+            if (c[0] == 0)
             {
-                // The following lines up the attribute list creationlink smart data to its corresponding drive.
-                // It makes the assumption that the PNPDeviceID in Wmi32_DiskDrive has a matching identification code to MSStorageDriver_FailurePredictData's InstanceID, and that these identification codes are unique.
-                // This is not a safe assumption, testing will be required.
-                var instanceId = (string)m["InstanceName"];
-                instanceId = instanceId.Substring(0, instanceId.Length - 2);
-                var splitID = instanceId.Split('\\');
-                instanceId = splitID[splitID.Count() - 1];
-
-                var driveIndex = -1;
-                for (var i = 0; i < drives.Count; i++)
-                {
-                    var drive = drives[i];
-                    if (!drive.InstanceId.ToLower().Contains(instanceId.ToLower())) continue;
-                    driveIndex = i;
-                    break;
-                }
-
-                if (driveIndex == -1)
-                {
-                    Issues.Add($"Smart Data found for {instanceId} with no matching drive. This is a Specify error");
-                    break;
-                }
-
-                var diskAttributes = new List<SmartAttribute>();
-
-                var vs = (byte[])m["VendorSpecific"];
-                // Every 12th byte starting at byte index 2 is a smart identifier.
-                for (var i = 2; i < vs.Length; i += 12)
-                {
-                    var c = new byte[12];
-                    // Copy 12 bytes into a new array.
-                    Array.Copy(vs, i, c, 0, 12);
-
-                    // Once we reach the zeroes, we're past the smart attributes.
-                    if (c[0] == 0)
-                    {
-                        break;
-                    }
-                    diskAttributes.Add(GetAttribute(c));
-                }
-                drives[driveIndex].SmartData = diskAttributes;
+                break;
             }
+            diskAttributes.Add(GetAttribute(c));
         }
-        catch (ManagementException e)
-        {
-            Issues.Add("Error retrieving SMART Utils." + e.Message);
-        }
-        catch (Exception e)
-        {
-            DebugLog.LogEvent("Unexpected exception thrown during SMART Data Retrieval.", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
-            DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
-        }
+        drives[driveIndex].SmartData = diskAttributes;
 
+        return drives;
+    }
+    private static List<DiskDrive> LinkLogicalPartitions(List<DiskDrive> drives)
+    {
         var LDtoP = GetWmi("Win32_LogicalDiskToPartition");
-        for (var di = 0; di < drives.Count(); di++)
+        foreach (var logicalDisk in LDtoP)
         {
-            for (var pi = 0; pi < drives[di].Partitions.Count(); pi++)
+            bool found = false;
+            for (var di = 0; di < drives.Count(); di++)
             {
-                foreach (var logicalDisk in LDtoP)
+                for (var pi = 0; pi < drives[di].Partitions.Count(); pi++)
                 {
                     try
                     {
@@ -565,35 +560,32 @@ public static partial class Cache
                                     drives[di].Partitions[pi].PartitionLetter = trimmedDependent;
                                     drives[di].Partitions[pi].PartitionFree = (ulong)letteredDrive["FreeSpace"];
                                     drives[di].Partitions[pi].Filesystem = (string)letteredDrive["FileSystem"];
+                                    found = true;
                                     break;
                                 }
                             }
+
                         }
                     }
                     catch (Exception ex)
                     {
                         DebugLog.LogEvent("Unexpected exception thrown during paritition linking", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
                         DebugLog.LogEvent($"{ex}", DebugLog.Region.Hardware);
+                        continue;
                     }
                 }
             }
-        }
-        for (int i = 0; i < drives.Count; i++)
-        {
-            var drive = drives[i];
-            if (drive.SmartData == null)
+            if (!found)
             {
-                try
-                {
-                    drive = GetNvmeSmart(drive);
-                }
-                catch (Exception e)
-                {
-                    DebugLog.LogEvent($"Exception during NVMe Smart Data retrieval on drive {drive.DeviceName}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
-                    DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
-                }
+                DebugLog.LogEvent($"Logical disk exists without a valid partition link:", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                DebugLog.LogEvent($"Antecedent: {(string)logicalDisk["Antecedent"]}", DebugLog.Region.Hardware);
+                DebugLog.LogEvent($"Dependent: {(string)logicalDisk["Dependent"]}", DebugLog.Region.Hardware);
             }
         }
+        return drives;
+    }
+    private static List<DiskDrive> LinkNonLogicalPartitions(List<DiskDrive> drives)
+    {
         var partitionInfo = GetWmi("Win32_Volume");
         foreach (var partition in partitionInfo)
         {
@@ -616,7 +608,6 @@ public static partial class Cache
             // Otherwise, store into non-specific partition list.
             var found = false;
             var unique = true;
-            //var LDtoP = Utils.GetWmiObj("Win32_LogicalDiskToPartition");
             for (var di = 0; di < drives.Count(); di++)
             {
                 for (var pi = 0; pi < drives[di].Partitions.Count(); pi++)
@@ -667,9 +658,9 @@ public static partial class Cache
                 // If it is not unique, no drive or partition index is valid. Stop checking.
                 if (unique)
                     continue;
-                dIndex = -1;
+                /*dIndex = -1;
                 pIndex = -1;
-                break;
+                break;*/
             }
             if (found && unique)
             {
@@ -740,6 +731,54 @@ public static partial class Cache
                 }
             }
         }
+        return drives;
+    }
+    private static List<DiskDrive> GetDiskDriveData()
+    {
+        DateTime start = DateTime.Now;
+        DebugLog.LogEvent("GetDiskDriveData() started", DebugLog.Region.Hardware);
+
+        // "Basic" in this context refers to data we can retrieve directly from WMI without much processing. Model names, partition labels, etc.
+        List<DiskDrive> drives = GetBasicDriveInfo();
+        drives = GetBasicPartitionInfo(drives);
+        drives = LinkLogicalPartitions(drives);
+        drives = LinkNonLogicalPartitions(drives);
+
+        try
+        {
+            var queryCollection = GetWmi("MSStorageDriver_FailurePredictData", "*", "\\\\.\\root\\wmi");
+            foreach (var m in queryCollection)
+            {
+                drives = GetNonNvmeSmartData(drives, m);
+            }
+        }
+        catch (ManagementException e)
+        {
+            DebugLog.LogEvent($"Non-NVMe SMART data could not be retrieved. This usually occurs when no non-NVMe drive exists. Error: {e.Message}", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+        }
+        catch (Exception e)
+        {
+            DebugLog.LogEvent("Unexpected exception thrown during non-NVMe SMART Data Retrieval.", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
+        }
+
+        for (int i = 0; i < drives.Count; i++)
+        {
+            var drive = drives[i];
+            if (drive.SmartData == null)
+            {
+                try
+                {
+                    drive = GetNvmeSmart(drive);
+                }
+                catch (Exception e)
+                {
+                    DebugLog.LogEvent($"Exception during NVMe Smart Data retrieval on drive {drive.DeviceName}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                    DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
+                }
+            }
+        }
+        
         foreach (var d in drives)
         {
             bool complete = true;
