@@ -24,7 +24,14 @@ public static class Utils
      * </summary>
      * <seealso cref="GetWmiObj"/>
      */
-
+    public enum AutoTuningLevels
+    {
+        Disabled,
+        HighlyRestricted,
+        Restricted,
+        Normal,
+        Experimental
+    }
     public static List<Dictionary<string, object>> GetWmi(string cls, string selected = "*", string ns = @"root\cimv2")
     {
         var collection = GetWmiObj(cls, selected, ns);
