@@ -426,9 +426,10 @@ public class Monolith
         //public List<Dictionary<string, object>> Adapters2;
         public List<Dictionary<string, object>> Routes;
         public List<NetworkConnection> NetworkConnections;
+        public bool ReceiveSideScaling;
+        public Dictionary<string, string> AutoTuningLevelLocal;
         public string HostsFile;
         public string HostsFileHash;
-        public NetworkInterface[] howdy;
         public bool WriteSuccess;
         public int ErrorCount;
         public MonolithNetwork()
@@ -441,6 +442,8 @@ public class Monolith
             HostsFileHash = Cache.HostsFileHash;
             WriteSuccess = Cache.NetworkWriteSuccess;
             ErrorCount = DebugLog.ErrorCount[(int)DebugLog.Region.Networking];
+            ReceiveSideScaling = Cache.ReceiveSideScaling;
+            AutoTuningLevelLocal = Cache.AutoTuningLevelLocal;
         }
     }
 

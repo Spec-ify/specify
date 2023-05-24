@@ -28,10 +28,20 @@ public static partial class Cache
                 @"root\standardcimv2");
             IPRoutes = Utils.GetWmi("Win32_IP4RouteTable",
                 "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
+
             await DebugLog.LogEventAsync("Networking WMI Information Retrieved.", region);
 
             GetAdapterProperties();
             CombineAdapterInformation();
+
+            var rssWmi = Utils.GetWmi("MSFT_NetOffloadGlobalSetting", "ReceiveSideScaling", "root\\standardcimv2");
+            rssWmi[0].TryWmiRead("ReceiveSideScaling", out byte? rcvSideScaling);
+
+            // ReceiveSideScaling is false if the WMI value is zero and true if the WMI value is 1, however the data is stored in WMI as a byte, allowing numbers above 1.
+            // This statement will avoid errors if the WMI value is not valid.
+            ReceiveSideScaling = rcvSideScaling is not null && rcvSideScaling != 0;
+
+            AutoTuningLevelLocal = GetAutoTuningLevels();
 
             HostsFile = GetHostsFile();
             HostsFileHash = GetHostsFileHash();
@@ -189,7 +199,7 @@ public static partial class Cache
     private static void GetAdapterProperties()
     {
         var NICs = Utils.GetWmi("Win32_NetworkAdapter");
-        foreach(var adapter in NetAdapters)
+        foreach (var adapter in NetAdapters)
         {
             var matchingAdapter = GetMatchingAdapter(adapter, NICs);
             if (matchingAdapter.Count == 0)
@@ -214,7 +224,7 @@ public static partial class Cache
     }
     private static void CombineAdapterInformation()
     {
-        foreach(var adapter in NetAdapters)
+        foreach (var adapter in NetAdapters)
         {
             try
             {
@@ -236,7 +246,7 @@ public static partial class Cache
         if (!adapter1.TryWmiRead("InterfaceIndex", out uint adapter1Index))
         {
             DebugLog.LogEvent($"Invalid or nonexistent InterfaceIndex in {adapter1["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
-            return new Dictionary<string, object>(); 
+            return new Dictionary<string, object>();
         }
         foreach (var adapter2 in adapters2)
         {
@@ -247,10 +257,10 @@ public static partial class Cache
                 DebugLog.LogEvent($"Invalid or nonexistent InterfaceIndex in {adapter2["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
                 continue;
             }
-            if(adapter1Index == adapter2Index)
+            if (adapter1Index == adapter2Index)
             {
                 return adapter2;
-            }            
+            }
         }
         return new Dictionary<string, object>();
     }
@@ -278,7 +288,7 @@ public static partial class Cache
             adapter2.TryWmiRead("PromiscuousMode", out PromiscuousMode),
             adapter2.TryWmiRead("State", out State)
         };
-        if(NetAdapter2Integrity.Contains(false))
+        if (NetAdapter2Integrity.Contains(false))
         {
             DebugLog.LogEvent($"{adapter["Description"]} information incomplete. MSFT_NetAdapter missing data.", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
         }
@@ -292,6 +302,22 @@ public static partial class Cache
         adapter.Add("PromiscuousMode", PromiscuousMode);
         adapter.Add("State", State);
 
+    }
+    private static Dictionary<string, string> GetAutoTuningLevels()
+    {
+        var autotuningLevels = new Dictionary<string, string>();
+        var autotuningLevelsWmi = Utils.GetWmi("MSFT_NetTCPSetting", "AutoTuningLevelLocal, PolicyRuleName", "root\\standardcimv2");
+        foreach(var levelDict in autotuningLevelsWmi)
+        {
+            string policyName = (string)levelDict["PolicyRuleName"];
+            if(!levelDict.TryWmiRead("AutoTuningLevelLocal", out byte level))
+            {
+                autotuningLevels.Add(policyName, "");
+                continue;
+            }
+            autotuningLevels.Add(policyName, ((Utils.AutoTuningLevels)level).ToString());
+        }
+        return autotuningLevels;
     }
     private static List<Interop.MIB_TCPROW_OWNER_PID> GetAllTCPv4Connections()
     {
