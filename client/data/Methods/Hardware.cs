@@ -472,7 +472,8 @@ public static partial class Cache
             var partition = new Partition()
             {
                 PartitionCapacity = (ulong)partitionWmi["Size"],
-                Caption = (string)partitionWmi["Caption"]
+                // DeviceID is used here instead of Caption as Caption is localized and non-english systems will fail to link Logical Partitions correctly.
+                Caption = (string)partitionWmi["DeviceID"]
             };
             var diskIndex = (uint)partitionWmi["DiskIndex"];
 
@@ -547,25 +548,30 @@ public static partial class Cache
                 {
                     try
                     {
-                        if (((string)logicalDisk["Antecedent"]).Contains(drives[di].Partitions[pi].Caption))
+                        if (!((string)logicalDisk["Antecedent"]).Contains(drives[di].Partitions[pi].Caption))
                         {
-                            var dependent = (string)logicalDisk["Dependent"];
-                            var trimmedDependent = dependent.Split('"')[1].Replace("\\", string.Empty);
-                            var dependentLogicalDisk = GetWmi("Win32_LogicalDisk");
-                            foreach (var letteredDrive in dependentLogicalDisk)
-                            {
-                                if (trimmedDependent == (string)letteredDrive["DeviceID"])
-                                {
-                                    drives[di].Partitions[pi].PartitionLabel = trimmedDependent;
-                                    drives[di].Partitions[pi].PartitionLetter = trimmedDependent;
-                                    drives[di].Partitions[pi].PartitionFree = (ulong)letteredDrive["FreeSpace"];
-                                    drives[di].Partitions[pi].Filesystem = (string)letteredDrive["FileSystem"];
-                                    found = true;
-                                    break;
-                                }
-                            }
-
+                            DebugLog.LogEvent($"LLP: Antecedent match failure: Antecedent: {logicalDisk["Antecedent"]} - Caption: {drives[di].Partitions[pi].Caption}");
+                            continue;
                         }
+
+                        var dependent = (string)logicalDisk["Dependent"];
+                        var trimmedDependent = dependent.Split('"')[1].Replace("\\", string.Empty);
+                        var dependentLogicalDisk = GetWmi("Win32_LogicalDisk");
+                        foreach (var letteredDrive in dependentLogicalDisk)
+                        {
+                            if (trimmedDependent == (string)letteredDrive["DeviceID"])
+                            {
+                                DebugLog.LogEvent($"LLP Linkage Success: {trimmedDependent}");
+                                drives[di].Partitions[pi].PartitionLabel = trimmedDependent;
+                                drives[di].Partitions[pi].PartitionLetter = trimmedDependent;
+                                drives[di].Partitions[pi].PartitionFree = (ulong)letteredDrive["FreeSpace"];
+                                drives[di].Partitions[pi].Filesystem = (string)letteredDrive["FileSystem"];
+                                found = true;
+                                break;
+                            }
+                            DebugLog.LogEvent($"LLP Linkage Failure: Dependent: {trimmedDependent} - LDDiD: {letteredDrive["DeviceID"]}", DebugLog.Region.Hardware);
+                        }
+                        if(found) break;
                     }
                     catch (Exception ex)
                     {
@@ -574,6 +580,7 @@ public static partial class Cache
                         continue;
                     }
                 }
+                if (found) break;
             }
             if (!found)
             {
