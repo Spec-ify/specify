@@ -550,7 +550,6 @@ public static partial class Cache
                     {
                         if (!((string)logicalDisk["Antecedent"]).Contains(drives[di].Partitions[pi].Caption))
                         {
-                            DebugLog.LogEvent($"LLP: Antecedent match failure: Antecedent: {logicalDisk["Antecedent"]} - Caption: {drives[di].Partitions[pi].Caption}");
                             continue;
                         }
 
@@ -561,7 +560,6 @@ public static partial class Cache
                         {
                             if (trimmedDependent == (string)letteredDrive["DeviceID"])
                             {
-                                DebugLog.LogEvent($"LLP Linkage Success: {trimmedDependent}");
                                 drives[di].Partitions[pi].PartitionLabel = trimmedDependent;
                                 drives[di].Partitions[pi].PartitionLetter = trimmedDependent;
                                 drives[di].Partitions[pi].PartitionFree = (ulong)letteredDrive["FreeSpace"];
@@ -569,7 +567,6 @@ public static partial class Cache
                                 found = true;
                                 break;
                             }
-                            DebugLog.LogEvent($"LLP Linkage Failure: Dependent: {trimmedDependent} - LDDiD: {letteredDrive["DeviceID"]}", DebugLog.Region.Hardware);
                         }
                         if(found) break;
                     }
