@@ -407,7 +407,7 @@ public static partial class Cache
             foreach (string dump in dumps)
             {
 
-                if (new FileInfo(dump).CreationTime < DateTime.Now.AddMonths(-1))
+                if (new FileInfo(dump).LastWriteTime < DateTime.Now.AddMonths(-1))
                 {
                     var fileName = string.Concat(TempFolder + @"/", Regex.Match(dump, "[^\\\\]*$").Value);
                     File.Copy(dump, fileName);
