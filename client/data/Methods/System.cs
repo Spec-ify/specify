@@ -406,19 +406,15 @@ public static partial class Cache
             //Any dump older than a month is not included in the zip.
             foreach (string dump in dumps)
             {
-
-                if (new FileInfo(dump).CreationTime < DateTime.Now.AddMonths(-1))
+                var fileName = string.Concat(TempFolder + @"/", Regex.Match(dump, "[^\\\\]*$").Value);
+                File.Copy(dump, fileName);
+                if (!File.Exists(fileName))
                 {
-                    var fileName = string.Concat(TempFolder + @"/", Regex.Match(dump, "[^\\\\]*$").Value);
-                    File.Copy(dump, fileName);
-                    if (!File.Exists(fileName))
-                    {
-                        await DebugLog.LogEventAsync($"Failed to copy {Regex.Match(dump, "[^\\\\]*$").Value} to dump folder.", DebugLog.Region.System, DebugLog.EventType.ERROR);
-                    }
-                    else
-                    {
-                        copied = true;
-                    }
+                    await DebugLog.LogEventAsync($"Failed to copy {Regex.Match(dump, "[^\\\\]*$").Value} to dump folder.", DebugLog.Region.System, DebugLog.EventType.ERROR);
+                }
+                else
+                {
+                    copied = true;
                 }
             }
             // If at least one dump was successfully copied, create the directory and return success.
