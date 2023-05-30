@@ -126,7 +126,11 @@ public class Monolith
         if (Settings.DontUpload)
         {
             var filename = "specify_specs.json";
-            File.WriteAllText(filename, serialized, Encoding.UTF8);
+
+            // The encoding is specified due to json decoding failures on the default UTF-8 w/ BOM encoder.
+            var utf8WithoutBom = new UTF8Encoding(false);
+            File.WriteAllText(filename, serialized, utf8WithoutBom);
+
             await DebugLog.LogEventAsync($"Report saved to {filename}");
             await DebugLog.StopDebugLog();
             ProgramDone(ProgramDoneState.NoUpload);
