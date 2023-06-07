@@ -476,7 +476,16 @@ public static partial class Cache
                 Caption = (string)partitionWmi["DeviceID"]
             };
             var diskIndex = (uint)partitionWmi["DiskIndex"];
-
+            partitionWmi.TryWmiRead("ConfigManagerErrorCode", out partition.CfgMgrErrorCode);
+            partitionWmi.TryWmiRead("LastErrorCode", out partition.LastErrorCode);
+            if(partition.CfgMgrErrorCode != 0 || partition.LastErrorCode != 0) 
+            {
+                //[CLEANUP]: This is Logged in DebugLog until Specified has a clean way of displaying these errors.
+                DebugLog.LogEvent(
+                    $"Partition @ {partition.Caption} Reported an error: CMEC: {partition.CfgMgrErrorCode} - LEC: {partition.LastErrorCode}", 
+                    DebugLog.Region.Hardware,
+                    DebugLog.EventType.ERROR);
+            }
             foreach (var disk in drives)
             {
                 if (disk.DiskNumber == diskIndex)

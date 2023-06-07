@@ -84,6 +84,8 @@ public class Partition
     public string PartitionLabel;
     public string PartitionLetter;
     public string Filesystem;
+    public uint CfgMgrErrorCode;
+    public uint LastErrorCode;
     [NonSerialized()] public string Caption; // Only used to link partitions, do not serialize.
 }
 
