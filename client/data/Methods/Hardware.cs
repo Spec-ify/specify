@@ -1151,7 +1151,7 @@ public static partial class Cache
             0xC4 => "Reallocation Event Count(!)",
             0xC5 => "Current Pending Sector Count(!)",
             0xC6 => "Uncorrectable Sector Count(!)",
-            0xC7 => "UltraDMA CRC Error Count",
+            0xC7 => "UltraDMA CRC Error Count(!)",
             0xC8 => "Multi-Zone Error Rate(!)(Unless Fujitsu)",
             0xC9 => "Soft Read Error Rate(!)",
             0xCA => "Data Address Mark Errors",
