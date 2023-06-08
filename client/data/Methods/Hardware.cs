@@ -38,7 +38,7 @@ public static partial class Cache
             Motherboard = GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").FirstOrDefault();
             AudioDevices = GetWmi("Win32_SoundDevice", "Name, Manufacturer, Status, DeviceID");
             Drivers = GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
-            Devices = GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
+            Devices = GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status,Service,PNPClass");
             BiosInfo = GetWmi("Win32_bios");
             await DebugLog.LogEventAsync("Hardware WMI Information Retrieved.", region);
 
