@@ -38,7 +38,7 @@ public static partial class Cache
             Motherboard = GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").FirstOrDefault();
             AudioDevices = GetWmi("Win32_SoundDevice", "Name, Manufacturer, Status, DeviceID");
             Drivers = GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
-            Devices = GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status,Service,PNPClass");
+            Devices = GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
             BiosInfo = GetWmi("Win32_bios");
             await DebugLog.LogEventAsync("Hardware WMI Information Retrieved.", region);
 
@@ -261,8 +261,7 @@ public static partial class Cache
         {
             if (DisplayModes[i].infoType == DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET)
             {
-                // unique 
-                display adapter UID, the LUID struct contains a low part and a high part, these are already combined in the registry so we do so here for ease of use - arc
+                // unique display adapter UID, the LUID struct contains a low part and a high part, these are already combined in the registry so we do so here for ease of use - arc
                 Int64 luid = (long)DisplayModes[i].adapterId.LowPart + (long)DisplayModes[i].adapterId.HighPart;
                 RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\DirectX\\");
                 if (key != null)
