@@ -17,6 +17,7 @@ using System.Drawing;
 
 namespace specify_client.data;
 
+using static specify_client.DebugLog;
 using static Utils;
 
 public static partial class Cache
@@ -26,48 +27,17 @@ public static partial class Cache
         try
         {
             DebugLog.Region region = DebugLog.Region.Hardware;
+            List<Task> hardwareTaskList = new();
             await DebugLog.StartRegion(region);
 
-            var TemperatureTask = GetTemps();
+            hardwareTaskList.Add(GetTemps());
+            hardwareTaskList.Add(GetHardwareWmiData());
+            hardwareTaskList.Add(GetMonitorInfo());
+            hardwareTaskList.Add(GetSMBiosMemoryInfo());
+            hardwareTaskList.Add(GetDiskDriveData());
+            hardwareTaskList.Add(GetBatteryData());
 
-            Cpu = GetWmi("Win32_Processor",
-                "CurrentClockSpeed, Manufacturer, Name, SocketDesignation, NumberOfEnabledCore, ThreadCount").First();
-            Gpu = GetWmi("Win32_VideoController",
-                "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
-                + "CurrentRefreshRate, CurrentBitsPerPixel, DriverVersion");
-            Motherboard = GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").FirstOrDefault();
-            AudioDevices = GetWmi("Win32_SoundDevice", "Name, Manufacturer, Status, DeviceID");
-            Drivers = GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
-            Devices = GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status,Service,PNPClass");
-            BiosInfo = GetWmi("Win32_bios");
-            await DebugLog.LogEventAsync("Hardware WMI Information Retrieved.", region);
-
-            MonitorInfo = GetMonitorInfo();
-            await DebugLog.LogEventAsync("Monitor Information Retrieved.", region);
-
-            try
-            {
-                Ram = GetSMBiosMemoryInfo();
-                SMBiosRamInfo = true;
-                await DebugLog.LogEventAsync("SMBios Information Retrieved.", region);
-            }
-            catch (Exception e)
-            {
-                await DebugLog.LogEventAsync("SMBios retrieval failed.", region, DebugLog.EventType.ERROR);
-                await DebugLog.LogEventAsync($"{e}");
-                Ram = GetWmiMemoryInfo();
-                SMBiosRamInfo = false;
-                await DebugLog.LogEventAsync("WMI Ram Info Retrieved.", region);
-            }
-
-            Disks = GetDiskDriveData();
-            await DebugLog.LogEventAsync("Drive Data Retrieved.", region);
-
-            Batteries = GetBatteryData();
-            await DebugLog.LogEventAsync("Battery Data Retrieved.", region);
-
-            Temperatures = await TemperatureTask;
-            await DebugLog.LogEventAsync("Temperature Data Retrieved.", region);
+            await Task.WhenAll(hardwareTaskList);
 
             await DebugLog.EndRegion(DebugLog.Region.Hardware);
         }
@@ -77,114 +47,143 @@ public static partial class Cache
         }
         HardwareWriteSuccess = true;
     }
-
-    // RAM
-    private static List<RamStick> GetSMBiosMemoryInfo()
+    private static async Task GetHardwareWmiData()
     {
-        DateTime start = DateTime.Now;
-        DebugLog.LogEvent("GetSMBiosMemoryInfo() started.", DebugLog.Region.Hardware);
+        var taskName = "GetHardwareWmiData";
+        await DebugLog.OpenTask(DebugLog.Region.Hardware, taskName);
 
-        var SMBiosObj = GetWmi("MSSMBios_RawSMBiosTables", "*", "root\\WMI").FirstOrDefault();
+        Cpu = GetWmi("Win32_Processor",
+                "CurrentClockSpeed, Manufacturer, Name, SocketDesignation, NumberOfEnabledCore, ThreadCount").First();
+        Gpu = GetWmi("Win32_VideoController",
+            "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
+            + "CurrentRefreshRate, CurrentBitsPerPixel");
+        Motherboard = GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").FirstOrDefault();
+        AudioDevices = GetWmi("Win32_SoundDevice", "Name, Manufacturer, Status, DeviceID");
+        Drivers = GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
+        Devices = GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
+        BiosInfo = GetWmi("Win32_bios");
 
-        // If no data is received, stop before it excepts. Add error message?
-        byte[] SMBios;
-        if (!SMBiosObj.TryWmiRead("SMBiosData", out SMBios))
+        await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
+    }
+    // RAM
+    private static async Task GetSMBiosMemoryInfo()
+    {
+        // taskName deliberately omits "SMBios" - This method can fail.
+        // It may be confusing to see a task for SMBios data being closed out when WMI data was gathered instead.
+        var taskName = "GetMemoryInfo";
+        await DebugLog.OpenTask(DebugLog.Region.Hardware, taskName);
+        try
         {
-            DebugLog.LogEvent($"SMBios information not retrieved.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
-            Issues.Add("Hardware Data: Could not get SMBios info for RAM.");
-            throw new ManagementException("MSSMBios_RawSMBiosTables returned null.");
-        }
+            var SMBiosObj = GetWmi("MSSMBios_RawSMBiosTables", "*", "root\\WMI").FirstOrDefault();
 
-        var offset = 0;
-        var type = SMBios[offset];
-
-        var SMBiosMemoryInfo = new List<RamStick>();
-
-        while (offset + 4 < SMBios.Length && type != 127)
-        {
-            type = SMBios[offset];
-            var dataLength = SMBios[offset + 1];
-
-            // If the data extends the bounds of the SMBios Data array, stop.
-            if (offset + dataLength > SMBios.Length)
+            // If no data is received, stop before it excepts. Add error message?
+            byte[] SMBios;
+            if (!SMBiosObj.TryWmiRead("SMBiosData", out SMBios))
             {
-                break;
+                DebugLog.LogEvent($"SMBios information not retrieved.", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                Issues.Add("Hardware Data: Could not get SMBios info for RAM.");
+                throw new ManagementException("MSSMBios_RawSMBiosTables returned null.");
             }
 
-            var data = new byte[dataLength];
-            Array.Copy(SMBios, offset, data, 0, dataLength);
-            offset += dataLength;
+            var offset = 0;
+            var type = SMBios[offset];
 
-            var smbStringsList = new List<string>();
+            var SMBiosMemoryInfo = new List<RamStick>();
 
-            if (offset < SMBios.Length && SMBios[offset] == 0)
-                offset++;
-
-            // Iterate the byte array to build a list of SMBios structures.
-            var smbDataString = new StringBuilder();
-            while (offset < SMBios.Length && SMBios[offset] != 0)
+            while (offset + 4 < SMBios.Length && type != 127)
             {
-                smbDataString.Clear();
+                type = SMBios[offset];
+                var dataLength = SMBios[offset + 1];
+
+                // If the data extends the bounds of the SMBios Data array, stop.
+                if (offset + dataLength > SMBios.Length)
+                {
+                    break;
+                }
+
+                var data = new byte[dataLength];
+                Array.Copy(SMBios, offset, data, 0, dataLength);
+                offset += dataLength;
+
+                var smbStringsList = new List<string>();
+
+                if (offset < SMBios.Length && SMBios[offset] == 0)
+                    offset++;
+
+                // Iterate the byte array to build a list of SMBios structures.
+                var smbDataString = new StringBuilder();
                 while (offset < SMBios.Length && SMBios[offset] != 0)
                 {
-                    smbDataString.Append((char)SMBios[offset]);
+                    smbDataString.Clear();
+                    while (offset < SMBios.Length && SMBios[offset] != 0)
+                    {
+                        smbDataString.Append((char)SMBios[offset]);
+                        offset++;
+                    }
                     offset++;
+                    smbStringsList.Add(smbDataString.ToString());
                 }
                 offset++;
-                smbStringsList.Add(smbDataString.ToString());
-            }
-            offset++;
 
-            // This is the only type we care about; Type 17. If the type is anything else, it simply loops again.
-            if (type != 0x11) continue;
+                // This is the only type we care about; Type 17. If the type is anything else, it simply loops again.
+                if (type != 0x11) continue;
 
-            var stick = new RamStick();
-            // These if statements confirm the data received is valid data.
-            if (0x10 < data.Length && data[0x10] > 0 && data[0x10] <= smbStringsList.Count)
-            {
-                stick.DeviceLocation = smbStringsList[data[0x10] - 1].Trim();
-            }
+                var stick = new RamStick();
+                // These if statements confirm the data received is valid data.
+                if (0x10 < data.Length && data[0x10] > 0 && data[0x10] <= smbStringsList.Count)
+                {
+                    stick.DeviceLocation = smbStringsList[data[0x10] - 1].Trim();
+                }
 
-            if (0x11 < data.Length && data[0x11] > 0 && data[0x11] <= smbStringsList.Count)
-            {
-                stick.BankLocator = smbStringsList[data[0x11] - 1].Trim();
-            }
+                if (0x11 < data.Length && data[0x11] > 0 && data[0x11] <= smbStringsList.Count)
+                {
+                    stick.BankLocator = smbStringsList[data[0x11] - 1].Trim();
+                }
 
-            if (0x17 < data.Length && data[0x17] > 0 && data[0x17] <= smbStringsList.Count)
-            {
-                stick.Manufacturer = smbStringsList[data[0x17] - 1].Trim();
-            }
+                if (0x17 < data.Length && data[0x17] > 0 && data[0x17] <= smbStringsList.Count)
+                {
+                    stick.Manufacturer = smbStringsList[data[0x17] - 1].Trim();
+                }
 
-            if (0x18 < data.Length && data[0x18] > 0 && data[0x18] <= smbStringsList.Count)
-            {
-                stick.SerialNumber = smbStringsList[data[0x18] - 1].Trim();
-            }
+                if (0x18 < data.Length && data[0x18] > 0 && data[0x18] <= smbStringsList.Count)
+                {
+                    stick.SerialNumber = smbStringsList[data[0x18] - 1].Trim();
+                }
 
-            if (0x1A < data.Length && data[0x1A] > 0 && data[0x1A] <= smbStringsList.Count)
-            {
-                stick.PartNumber = smbStringsList[data[0x1A] - 1].Trim();
-            }
+                if (0x1A < data.Length && data[0x1A] > 0 && data[0x1A] <= smbStringsList.Count)
+                {
+                    stick.PartNumber = smbStringsList[data[0x1A] - 1].Trim();
+                }
 
-            if (0x15 + 1 < data.Length)
-            {
-                stick.ConfiguredSpeed = (uint?)(data[0x15 + 1] << 8) | data[0x15];
-            }
+                if (0x15 + 1 < data.Length)
+                {
+                    stick.ConfiguredSpeed = (uint?)(data[0x15 + 1] << 8) | data[0x15];
+                }
 
-            if (0xC + 1 < data.Length)
-            {
-                stick.Capacity = (ulong?)(data[0xC + 1] << 8) | data[0xC];
+                if (0xC + 1 < data.Length)
+                {
+                    stick.Capacity = (ulong?)(data[0xC + 1] << 8) | data[0xC];
+                }
+                SMBiosMemoryInfo.Add(stick);
             }
-            SMBiosMemoryInfo.Add(stick);
+            SMBiosRamInfo = true;
+            Ram = SMBiosMemoryInfo;
+            await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
         }
-        DebugLog.LogEvent($"GetSMBiosMemoryInfo() completed - Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
-        return SMBiosMemoryInfo;
+        catch (Exception e)
+        {
+            await DebugLog.LogEventAsync("SMBios retrieval failed.", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            await DebugLog.LogEventAsync($"{e}");
+            await GetWmiMemoryInfo(taskName);
+        }
     }
 
     // This is used as a backup in case SMBios memory info retrieval fails.
-    private static List<RamStick> GetWmiMemoryInfo()
+    private static async Task GetWmiMemoryInfo(string taskName)
     {
+        SMBiosRamInfo = false;
         List<RamStick> RamInfo = new();
-        var WmiRamData = Utils.GetWmi("Win32_PhysicalMemory");
+        var WmiRamData = GetWmi("Win32_PhysicalMemory");
         foreach (var wmiStick in WmiRamData)
         {
             RamStick stick = new();
@@ -214,7 +213,8 @@ public static partial class Cache
             }
             RamInfo.Add(stick);
         }
-        return RamInfo;
+        Ram = RamInfo;
+        await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
     }
 
     //MONITORS
@@ -234,10 +234,10 @@ public static partial class Cache
         return deviceName;
     }
 
-    private static List<Monitor> GetMonitorInfo()
+    private static async Task GetMonitorInfo()
     {
-        DateTime start = DateTime.Now;
-        DebugLog.LogEvent("GetMonitorInfo() started", DebugLog.Region.Hardware);
+        var taskName = "GetMonitorInfo";
+        await DebugLog.OpenTask(DebugLog.Region.Hardware, taskName);
         List<Monitor> monitors = new();
         uint PathCount, ModeCount;
         int error = GetDisplayConfigBufferSizes(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
@@ -321,8 +321,8 @@ public static partial class Cache
                 }
             }
         }
-        DebugLog.LogEvent($"GetMonitorInfo() completed - Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
-        return monitors;
+        await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
+        MonitorInfo =  monitors;
     }
 
     private static List<Monitor> GetMonitorInfoDXDiag()
@@ -746,8 +746,10 @@ public static partial class Cache
         }
         return drives;
     }
-    private static List<DiskDrive> GetDiskDriveData()
+    private static async Task GetDiskDriveData()
     {
+        var taskName = "GetDiskDriveData";
+        await DebugLog.OpenTask(DebugLog.Region.Hardware, taskName);
         DateTime start = DateTime.Now;
         DebugLog.LogEvent("GetDiskDriveData() started", DebugLog.Region.Hardware);
 
@@ -833,8 +835,8 @@ public static partial class Cache
                 d.DiskFree = free;
             }
         }
-        DebugLog.LogEvent($"GetDiskDriveInfo() completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
-        return drives;
+        Disks = drives;
+        await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
     }
 
     private static DiskDrive GetNvmeSmart(DiskDrive drive)
@@ -1199,7 +1201,9 @@ public static partial class Cache
     private static async Task<List<TempMeasurement>> GetTemps()
     {
         DateTime start = DateTime.Now;
-        await DebugLog.LogEventAsync("GetTemps() Started", DebugLog.Region.Hardware);
+        var taskName = "GetTemps";
+        await DebugLog.OpenTask(DebugLog.Region.Hardware, taskName);
+
         //Any temp sensor reading below 24 will be filtered out
         //These sensors are either not reading in celsius, are in error, or we cannot interpret them properly here
         var Temps = new List<TempMeasurement>();
@@ -1245,18 +1249,20 @@ public static partial class Cache
         {
             computer.Close();
         }
-        await DebugLog.LogEventAsync($"GetTemps() Completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
+
+        await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
         return Temps;
     }
 
     // BATTERIES
-    private static List<BatteryData> GetBatteryData()
+    private static async Task GetBatteryData()
     {
-        DateTime start = DateTime.Now;
-        DebugLog.LogEvent("GetBatteryData() Started.", DebugLog.Region.Hardware);
+        var taskName = "GetBatteryData";
+        await DebugLog.OpenTask(DebugLog.Region.Hardware, taskName);
+
         List<BatteryData> BatteryInfo = new List<BatteryData>();
-        String path =
-            System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly()
+        string path =
+            Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly()
                 .Location); //Directory the .exe has been launched from
 
         Process cmd = new Process //Generate the XML report we'll be grabbing the data from
@@ -1329,7 +1335,7 @@ public static partial class Cache
 
         timer.Stop();
         cmd.Close();
-        DebugLog.LogEvent($"GetBatteryInfo() completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Hardware);
-        return BatteryInfo;
+        Batteries = BatteryInfo;
+        await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
     }
 }

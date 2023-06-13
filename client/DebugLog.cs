@@ -3,6 +3,8 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace specify_client;
 
@@ -17,6 +19,7 @@ public static class DebugLog
     private static readonly bool[] RegionStarted = new bool[5];
     private static readonly bool[] RegionCompleted = new bool[5];
     private static readonly DateTime[] RegionStartTime = new DateTime[5];
+    private static Dictionary<string, DateTime>[] OpenTasks = new Dictionary<string, DateTime>[5];
 
     public enum Region
     {
@@ -36,13 +39,55 @@ public static class DebugLog
         ERROR = 3,
         REGION_END = 4
     }
-
+    public static async Task OpenTask(Region region, string taskName)
+    {
+        if (!OpenTasks[(int)region].ContainsKey(taskName))
+        {
+            OpenTasks[(int)region].Add(taskName, DateTime.Now);
+            await LogEventAsync($"Task Started: {taskName}", region);
+        }
+        // Ensure OpenTask hasn't been called twice on the same task.
+        else
+        {
+            await LogEventAsync($"{taskName} has already been started. This is a specify-specific error.", region, EventType.ERROR);
+        }
+    }
+    public static async Task CloseTask(Region region, string taskName)
+    {
+        if (OpenTasks[(int)region].ContainsKey(taskName))
+        {
+            await LogEventAsync($"Task Completed: {taskName} - Runtime: {(DateTime.Now - OpenTasks[(int)region][taskName]).TotalMilliseconds}", region);
+            OpenTasks[(int)region].Remove(taskName);
+            
+        }
+        // Ensure CloseTask hasn't been called on a task that was never opened, or called twice on the same task.
+        else
+        {
+            await LogEventAsync($"DebugLog Task could not be closed. Task was not in list. {taskName}", region, EventType.ERROR);
+        }
+    }
+    /// <summary>
+    /// Verifies that no tasks remain open and will log errors for each open task. This method should only be run one time: Immediately prior to serialization.
+    /// </summary>
+    /// <returns></returns>
+    public static void CheckOpenTasks()
+    {
+        for(int i = 0; i < OpenTasks.Count(); i++)
+        {
+            Region region = (Region)i;
+            var section = OpenTasks[i];
+            if(section.Count > 0)
+            {
+                LogEvent($"{region} has outstanding tasks", region, EventType.ERROR);
+                foreach(var task in section)
+                {
+                    LogEvent(task.Key, region);
+                }
+            }
+        }
+    }
     public static async Task StartDebugLog()
     {
-        /*if(!Settings.EnableDebug)
-        {
-            return;
-        }*/
         LogText = "";
         LogStartTime = DateTime.Now;
         if (!File.Exists(LogFilePath) && Settings.EnableDebug)
@@ -61,6 +106,7 @@ public static class DebugLog
         {
             RegionStarted[i] = false;
             RegionCompleted[i] = false;
+            OpenTasks[i] = new();
         }
         Started = true;
         await LogEventAsync($"--- DEBUG LOG STARTED {LogStartTime.ToString("HH:mm:ss")} ---");

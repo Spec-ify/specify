@@ -24,57 +24,29 @@ public static partial class Cache
     {
         try
         {
-            List<System.Threading.Tasks.Task> DebugTasks = new();
+            List<System.Threading.Tasks.Task> systemTaskList = new();
             DebugLog.Region region = DebugLog.Region.System;
             await DebugLog.StartRegion(region);
 
-            //[CLEANUP] I think all of these should be async.
-
-            GetEnvironmentVariables();
-            DebugTasks.Add(DebugLog.LogEventAsync("Environment Variables retrieved.", region));
-
-            GetSystemWMIInfo();
-            DebugTasks.Add(DebugLog.LogEventAsync("System WMI Information retrieved.", region));
-
-            CheckCommercialOneDrive();
-
-            InstalledApps = GetInstalledApps();
-            DebugTasks.Add(DebugLog.LogEventAsync("InstalledApps Information retrieved.", region));
-
-            ScheduledTasks = GetScheduledTasks();
-            DebugTasks.Add(DebugLog.LogEventAsync("ScheduledTasks Information retrieved.", region));
-
-            StartupTasks = await GetStartupTasks();
-            DebugTasks.Add(DebugLog.LogEventAsync("StartupTasks Information retrieved.", region));
-
-            ChoiceRegistryValues = RegistryCheck();
-            DebugTasks.Add(DebugLog.LogEventAsync("ChoiceRegistryValues Information retrieved.", region));
-
-            MicroCodes = GetMicroCodes();
-            DebugTasks.Add(DebugLog.LogEventAsync("MicroCodes Information retrieved.", region));
-
-            RecentMinidumps = CountMinidumps();
-            DebugTasks.Add(DebugLog.LogEventAsync("Minidumps counted.", region));
-
-            StaticCoreCount = GetStaticCoreCount();
-            DebugTasks.Add(DebugLog.LogEventAsync("StaticCoreCount retrieved.", region));
-
-            BrowserExtensions = GetBrowserExtensions();
-            DebugTasks.Add(DebugLog.LogEventAsync("Browser Extension Information retrieved.", region));
-
-            DumpZip = await GetMiniDumps();
-            DebugTasks.Add(DebugLog.LogEventAsync("Minidump gathering complete", region));
-
-            DefaultBrowser = GetDefaultBrowser();
-            DebugTasks.Add(DebugLog.LogEventAsync("Default Browser Infomation retrieved.", region));
-
-            RunningProcesses = GetProcesses();
-            DebugTasks.Add(DebugLog.LogEventAsync("RunningProcess Information retrieved.", region));
+            systemTaskList.Add(GetEnvironmentVariables());
+            systemTaskList.Add(GetSystemWMIInfo());
+            systemTaskList.Add(CheckCommercialOneDrive());
+            systemTaskList.Add(GetInstalledApps());
+            systemTaskList.Add(GetScheduledTasks());
+            systemTaskList.Add(GetStartupTasks());
+            systemTaskList.Add(RegistryCheck());
+            systemTaskList.Add(GetMicroCodes());
+            systemTaskList.Add(GetStaticCoreCount());
+            systemTaskList.Add(GetBrowserExtensions());
+            systemTaskList.Add(GetMiniDumps());
+            systemTaskList.Add(GetDefaultBrowser());
+            systemTaskList.Add(GetProcesses());
 
             // Check if username contains non-alphanumeric characters
             UsernameSpecialCharacters = !Regex.IsMatch(Environment.UserName, @"^[a-zA-Z0-9]+$");
-            await System.Threading.Tasks.Task.WhenAll(DebugTasks);
-            await DebugLog.EndRegion(DebugLog.Region.System);
+
+            await System.Threading.Tasks.Task.WhenAll(systemTaskList);
+            await DebugLog.EndRegion(region);
         }
         catch (Exception ex)
         {
@@ -83,14 +55,11 @@ public static partial class Cache
         SystemWriteSuccess = true;
     }
 
-    private static List<OutputProcess> GetProcesses()
+    private static async System.Threading.Tasks.Task GetProcesses()
     {
-        DateTime start = DateTime.Now;
-        DebugLog.LogEvent("GetProcesses() started", DebugLog.Region.System);
+        await DebugLog.OpenTask(DebugLog.Region.System, "GetProcesses");
         var outputProcesses = new List<OutputProcess>();
-        var rawProcesses = Process.GetProcesses();
-
-        
+        var rawProcesses = Process.GetProcesses();        
 
         foreach (var rawProcess in rawProcesses)
         {
@@ -143,13 +112,15 @@ public static partial class Cache
                 CpuPercent = cpuPercent
             });
         }
-
-        DebugLog.LogEvent($"GetProcesses() completed. Total runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
-        return outputProcesses;
+        RunningProcesses = outputProcesses;
+        await DebugLog.CloseTask(DebugLog.Region.System, "GetProcesses");
     }
 
-    private static List<InstalledApp> GetInstalledApps()
+    private static async System.Threading.Tasks.Task GetInstalledApps()
     {
+        var taskName = "GetInstalledApps";
+        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+
         // Code Adapted from https://social.msdn.microsoft.com/Forums/en-US/94c2f14d-c45e-4b55-9ba0-eb091bac1035/c-get-installed-programs, thanks Rajasekhar.R! - K97i
         // Currently throws a hissy fit, NullReferenceException when actually adding to the Class
 
@@ -162,7 +133,9 @@ public static partial class Cache
         apps.AddRange(lm32List);
         apps.AddRange(lm64List);
 
-        return apps;
+        InstalledApps = apps;
+
+        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
     }
 
     private static List<InstalledApp> GetInstalledAppsAtKey(string keyLocation, RegistryKey reg)
@@ -175,7 +148,7 @@ public static partial class Cache
             DebugLog.LogEvent($"Registry Read Error @ {keyLocation}", DebugLog.Region.System, DebugLog.EventType.ERROR);
             return InstalledApps;
         }
-        foreach (String keyName in key.GetSubKeyNames())
+        foreach (string keyName in key.GetSubKeyNames())
         {
             RegistryKey subkey = key.OpenSubKey(keyName);
             var appName = subkey.GetValue("DisplayName") as string;
@@ -244,10 +217,11 @@ public static partial class Cache
     // Group 2: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
     // Group 3: HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run
     // Group 4: %AppData%\Microsoft\Windows\Start Menu\Programs\Startup
-    public static async System.Threading.Tasks.Task<List<StartupTask>> GetStartupTasks()
+    public static async System.Threading.Tasks.Task GetStartupTasks()
     {
-        DateTime start = DateTime.Now;
-        await DebugLog.LogEventAsync("GetStartupTasks() Started", DebugLog.Region.System);
+        var taskName = "GetStartupTasks";
+        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+
         List<StartupTask> startupTasks = new();
 
         var group1TaskList = await GetStartupTasksAtKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", Registry.CurrentUser);
@@ -260,8 +234,8 @@ public static partial class Cache
         startupTasks.AddRange(group3TaskList);
         startupTasks.AddRange(group4TaskList);
 
-        await DebugLog.LogEventAsync($"GetStartupTasks() Completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
-        return startupTasks;
+        StartupTasks = startupTasks;
+        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
     }
 
     private static async System.Threading.Tasks.Task<List<StartupTask>> GetStartupTasksAtKey(string keyLocation, RegistryKey reg)
@@ -330,33 +304,36 @@ public static partial class Cache
         return startupTask;
     }
 
-    public static async System.Threading.Tasks.Task<string> GetMiniDumps()
+    public static async System.Threading.Tasks.Task GetMiniDumps()
     {
-        DateTime start = DateTime.Now;
+        await DebugLog.OpenTask(DebugLog.Region.System, "GetMiniDumps");
         string result = null;
         const string specifiedDumpDestination = "https://dumpload.spec-ify.com/";
         const string dumpDir = @"C:\Windows\Minidump";
         string TempFolder = Path.GetTempPath() + @"specify-dumps";
         string TempZip = Path.GetTempPath() + @"specify-dumps.zip";
 
-        if (!MinidumpsExist(dumpDir))
+        if (CountMinidumps() <= 0)
         {
             await DebugLog.LogEventAsync("No current dumps found.", DebugLog.Region.System);
-            return result;
+            await DebugLog.CloseTask(DebugLog.Region.System, "GetMiniDumps");
+            return;
         }
 
         string[] dumps = Directory.GetFiles(dumpDir);
         if (dumps.Length == 0)
         {
             await DebugLog.LogEventAsync($"Dumps could not be retrieved from {dumpDir}", DebugLog.Region.System, DebugLog.EventType.ERROR);
-            return result;
+            await DebugLog.CloseTask(DebugLog.Region.System, "GetMiniDumps");
+            return;
         }
 
         await DebugLog.LogEventAsync("Dump Upload Requested.", DebugLog.Region.System);
         if (MessageBox.Show("Would you like to upload your BSOD minidumps with your specs report?", "Minidumps detected", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
         {
             await DebugLog.LogEventAsync("Dump Upload Request Refused.", DebugLog.Region.System);
-            return result;
+            await DebugLog.CloseTask(DebugLog.Region.System, "GetMiniDumps");
+            return;
         }
 
         await DebugLog.LogEventAsync("Dump Upload Request Approved.", DebugLog.Region.System);
@@ -366,7 +343,8 @@ public static partial class Cache
         if (!await CreateMinidumpZipFile(dumps, TempFolder, TempZip))
         {
             await DebugLog.LogEventAsync("Dump zip file creation failure.", DebugLog.Region.System, DebugLog.EventType.ERROR);
-            return result;
+            await DebugLog.CloseTask(DebugLog.Region.System, "GetMiniDumps");
+            return;
         }
 
         await DebugLog.LogEventAsync("Dump zip file built. Attempting upload.", DebugLog.Region.System);
@@ -375,29 +353,17 @@ public static partial class Cache
         if (string.IsNullOrEmpty(result))
         {
             await DebugLog.LogEventAsync($"Dump upload failure. {result}", DebugLog.Region.System, DebugLog.EventType.ERROR);
-            return result;
+            await DebugLog.CloseTask(DebugLog.Region.System, "GetMiniDumps");
+            return;
         }
 
         await DebugLog.LogEventAsync($"Dump file upload result: {result}", DebugLog.Region.System);
         File.Delete(TempZip);
         new DirectoryInfo(TempFolder).Delete(true);
 
-        await DebugLog.LogEventAsync($"GetMiniDumps() Completed. Total Runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
-
-        return result;
+        DumpZip = result;
+        await DebugLog.CloseTask(DebugLog.Region.System, "GetMiniDumps");
     }
-
-    private static bool MinidumpsExist(string dumpDir)
-    {
-        if (!Directory.Exists(dumpDir)) return false;
-
-        //If Minidumps hasn't been written to in a month, it's not going to have a dump newer than a month inside of it.
-        if (new DirectoryInfo(dumpDir).LastWriteTime < DateTime.Now.AddMonths(-1))
-            return false;
-
-        return true;
-    }
-
     private static async System.Threading.Tasks.Task<bool> CreateMinidumpZipFile(string[] dumps, string TempFolder, string TempZip)
     {
         try
@@ -463,8 +429,11 @@ public static partial class Cache
         return result;
     }
 
-    private static List<string> GetMicroCodes()
+    private static async System.Threading.Tasks.Task GetMicroCodes()
     {
+        var taskName = "GetMicroCodes";
+        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+
         const string intelPath = @"C:\Windows\System32\mcupdate_genuineintel.dll";
         const string amdPath = @"C:\Windows\System32\mcupdate_authenticamd.dll";
 
@@ -472,11 +441,15 @@ public static partial class Cache
         if (File.Exists(intelPath)) res.Add(intelPath);
         if (File.Exists(amdPath)) res.Add(amdPath);
 
-        return res;
+        MicroCodes = res;
+        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
     }
 
-    private static bool? GetStaticCoreCount()
+    private static async System.Threading.Tasks.Task GetStaticCoreCount()
     {
+        var taskName = "GetStaticCoreCount";
+        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+
         string output = string.Empty;
 
         var procStartInfo = new ProcessStartInfo("bcdedit", "/enum")
@@ -494,10 +467,11 @@ public static partial class Cache
             if (output.Contains("The boot configuration data store could not be opened"))
             {
                 Issues.Add("Could not check whether there is a static core count");
-                return null;
+                StaticCoreCount = null;
             }
-            return output.Contains("numproc");
+            StaticCoreCount = output.Contains("numproc");
         }
+        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
     }
 
     private static int CountMinidumps()
@@ -521,8 +495,10 @@ public static partial class Cache
         return count;
     }
 
-    private static List<IRegistryValue> RegistryCheck()
+    private static async System.Threading.Tasks.Task RegistryCheck()
     {
+        var taskName = "RegistryCheck";
+        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
         try
         {
             var tdrLevel = new RegistryValue<int?>
@@ -579,7 +555,7 @@ public static partial class Cache
             var hwNotificationCache = new RegistryValue<int?>(Registry.CurrentUser, @"Control Panel\UnsupportedHardwareNotificationCache", "SV2");
             var prioritySeparation = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\PriorityControl", "Win32PrioritySeparation");
 
-            return new List<IRegistryValue>()
+            ChoiceRegistryValues = new List<IRegistryValue>()
             {
                 tdrLevel, nbFLimit, throttlingIndex, superFetch, disableAv, disableAs, puaProtection, passiveMode, disableAvpolicy, disableAspolicy,
                 puaProtectionpolicy, passiveModepolicy, drii, disableWer,unsupportedTpmOrCpu, hwSchMode, WUServer, noAutoUpdate, fastBoot, auditBoot,
@@ -590,14 +566,14 @@ public static partial class Cache
         {
             DebugLog.LogEvent("Registry Read Error in RegistryCheck()", DebugLog.Region.System, DebugLog.EventType.ERROR);
             DebugLog.LogEvent($"{ex}");
-            return new List<IRegistryValue>();
+            ChoiceRegistryValues = new List<IRegistryValue>();
         }
+        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
     }
 
-    private static List<Browser> GetBrowserExtensions()
+    private static async System.Threading.Tasks.Task GetBrowserExtensions()
     {
-        DateTime start = DateTime.Now;
-        DebugLog.LogEvent("GetBrowserExtensions() started.", DebugLog.Region.System);
+        await DebugLog.OpenTask(DebugLog.Region.System, "GetBrowserExtensions");
         List<Browser> Browsers = new List<Browser>();
         string UserPath = string.Concat("C:\\Users\\", Username, "\\Appdata\\");
         Dictionary<string, string> BrowserPaths = new Dictionary<string, string>()
@@ -782,16 +758,20 @@ public static partial class Cache
                 }
             }
         }
-        DebugLog.LogEvent($"GetBrowserExtensions() completed. Total runtime: {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.System);
-        return Browsers;
+        BrowserExtensions = Browsers;
+        await DebugLog.CloseTask(DebugLog.Region.System, "GetBrowserExtensions");
     }
 
-    private static void CheckCommercialOneDrive()
+    private static async System.Threading.Tasks.Task CheckCommercialOneDrive()
     {
+        var taskName = "CheckCommercialOneDrive";
+        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+
         bool ODFound = false;
         try
         {
-            if (UserVariables["OneDriveCommercial"] is string pathOneDriveCommercial)
+            var uv = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
+            if (uv["OneDriveCommercial"] is string pathOneDriveCommercial)
             {
                 var actualOneDriveCommercial =
                     pathOneDriveCommercial.Split(new string[] { "OneDrive - " }, StringSplitOptions.None)[1];
@@ -816,10 +796,14 @@ public static partial class Cache
                 }
             }
         }
+        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
     }
 
-    private static List<ScheduledTask> GetScheduledTasks()
+    private static async System.Threading.Tasks.Task GetScheduledTasks()
     {
+        var taskName = "GetScheduledTasks";
+        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+
         var scheduledTasks = new List<ScheduledTask>();
         using var ts = new TaskService();
         var rawTaskList = EnumScheduledTasks(ts.RootFolder);
@@ -835,14 +819,18 @@ public static partial class Cache
                 scheduledTasks.Add(new ScheduledTask(task));
             }
         }
-        return scheduledTasks;
+        ScheduledTasks = scheduledTasks;
+
+        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
     }
 
-    private static string GetDefaultBrowser()
+    private static async System.Threading.Tasks.Task GetDefaultBrowser()
     {
+        await DebugLog.OpenTask(DebugLog.Region.System, "GetDefaultBrowser");
         string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser,
             "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
-        return (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
+        DefaultBrowser = (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
+        await DebugLog.CloseTask(DebugLog.Region.System, "GetDefaultBrowser");
     }
 
     private static List<Dictionary<string, object>> GetPowerProfiles()
@@ -859,19 +847,28 @@ public static partial class Cache
         }
     }
 
-    private static void GetEnvironmentVariables()
+    private static async System.Threading.Tasks.Task GetEnvironmentVariables()
     {
+        var taskName = "GetEnvironmentVariables";
+        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+
         SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
         UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
+
+        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
     }
 
-    private static void GetSystemWMIInfo()
+    private static async System.Threading.Tasks.Task GetSystemWMIInfo()
     {
+        var taskName = "GetSystemWMIInfo";
+        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+
         Services = Utils.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
         InstalledHotfixes = Utils.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
         // As far as I can tell, Size is the size of the file on the filesystem and Usage is the amount actually used
         PageFile = Utils.GetWmi("Win32_PageFileUsage", "AllocatedBaseSize, Caption, CurrentUsage, PeakUsage").FirstOrDefault();
 
         PowerProfiles = GetPowerProfiles();
+        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
     }
 }

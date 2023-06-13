@@ -64,6 +64,7 @@ public class Monolith
 
     public static async Task Specificialize()
     {
+        DebugLog.CheckOpenTasks();
         await DebugLog.LogEventAsync("Serialization starts");
         Monolith m;
         try 
