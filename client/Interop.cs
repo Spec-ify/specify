@@ -12,6 +12,8 @@ public static class Interop
     {
         QueryLimitedInformation = 0x00001000
     }
+    [DllImport("user32.dll")]
+    internal static extern int GetSystemMetrics(int smIndex);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     internal static extern bool QueryFullProcessImageName(
