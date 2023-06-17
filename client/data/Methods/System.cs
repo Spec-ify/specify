@@ -1,5 +1,4 @@
 using Microsoft.Win32;
-using Microsoft.Win32.TaskScheduler;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -14,19 +13,26 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Threading.Tasks;
 
 namespace specify_client.data;
 
+using static specify_client.DebugLog;
+using static Utils;
+
+using Win32Task = Microsoft.Win32.TaskScheduler.Task;
+using TaskFolder = Microsoft.Win32.TaskScheduler.TaskFolder;
+
+
 public static partial class Cache
 {
-    //[CLEANUP] add using statement to simplify System.Threading.Tasks.Task to something easier to read.
-    public static async System.Threading.Tasks.Task MakeSystemData()
+    public static async Task MakeSystemData()
     {
         try
         {
-            List<System.Threading.Tasks.Task> systemTaskList = new();
-            DebugLog.Region region = DebugLog.Region.System;
-            await DebugLog.StartRegion(region);
+            List<Task> systemTaskList = new();
+            Region region = Region.System;
+            await StartRegion(region);
 
             systemTaskList.Add(GetEnvironmentVariables());
             systemTaskList.Add(GetSystemWMIInfo());
@@ -45,19 +51,19 @@ public static partial class Cache
             // Check if username contains non-alphanumeric characters
             UsernameSpecialCharacters = !Regex.IsMatch(Environment.UserName, @"^[a-zA-Z0-9]+$");
 
-            await System.Threading.Tasks.Task.WhenAll(systemTaskList);
-            await DebugLog.EndRegion(region);
+            await Task.WhenAll(systemTaskList);
+            await EndRegion(region);
         }
         catch (Exception ex)
         {
-            await DebugLog.LogFatalError($"{ex}", DebugLog.Region.System);
+            await LogFatalError($"{ex}", Region.System);
         }
         SystemWriteSuccess = true;
     }
 
-    private static async System.Threading.Tasks.Task GetProcesses()
+    private static async Task GetProcesses()
     {
-        await DebugLog.OpenTask(DebugLog.Region.System, "GetProcesses");
+        await OpenTask(Region.System, "GetProcesses");
         var outputProcesses = new List<OutputProcess>();
         var rawProcesses = Process.GetProcesses();        
 
@@ -90,7 +96,7 @@ public static partial class Cache
                     if (!SystemProcesses.Contains(rawProcess.ProcessName))
                     {
                         exePath = "Not Found";
-                        DebugLog.LogEvent($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})", DebugLog.Region.System, DebugLog.EventType.WARNING);
+                        await LogEventAsync($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})", Region.System, EventType.WARNING);
                     }
                     else exePath = "SYSTEM";
                 }
@@ -99,8 +105,8 @@ public static partial class Cache
             catch (Win32Exception e)
             {
                 exePath = "null - See Debug Log.";
-                DebugLog.LogEvent($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})", DebugLog.Region.System, DebugLog.EventType.ERROR);
-                DebugLog.LogEvent($"{e}", DebugLog.Region.System);
+                await LogEventAsync($"System Data: Could not get the EXE path of {rawProcess.ProcessName} ({rawProcess.Id})", Region.System, EventType.ERROR);
+                await LogEventAsync($"{e}", Region.System);
             }
 
             outputProcesses.Add(new OutputProcess
@@ -113,13 +119,13 @@ public static partial class Cache
             });
         }
         RunningProcesses = outputProcesses;
-        await DebugLog.CloseTask(DebugLog.Region.System, "GetProcesses");
+        await CloseTask(Region.System, "GetProcesses");
     }
 
-    private static async System.Threading.Tasks.Task GetInstalledApps()
+    private static async Task GetInstalledApps()
     {
         var taskName = "GetInstalledApps";
-        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+        await OpenTask(Region.System, taskName);
 
         // Code Adapted from https://social.msdn.microsoft.com/Forums/en-US/94c2f14d-c45e-4b55-9ba0-eb091bac1035/c-get-installed-programs, thanks Rajasekhar.R! - K97i
         // Currently throws a hissy fit, NullReferenceException when actually adding to the Class
@@ -135,7 +141,7 @@ public static partial class Cache
 
         InstalledApps = apps;
 
-        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
+        await CloseTask(Region.System, taskName);
     }
 
     private static List<InstalledApp> GetInstalledAppsAtKey(string keyLocation, RegistryKey reg)
@@ -145,7 +151,7 @@ public static partial class Cache
         var key = reg.OpenSubKey(keyLocation);
         if (key is null)
         {
-            DebugLog.LogEvent($"Registry Read Error @ {keyLocation}", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            LogEvent($"Registry Read Error @ {keyLocation}", Region.System, EventType.ERROR);
             return InstalledApps;
         }
         foreach (string keyName in key.GetSubKeyNames())
@@ -157,7 +163,7 @@ public static partial class Cache
 
             if (appName == null)
             {
-                //DebugLog.LogEvent($"null app name found @ {keyLocation}", DebugLog.Region.System, DebugLog.EventType.ERROR);
+                //LogEvent($"null app name found @ {keyLocation}", Region.System, EventType.ERROR);
                 continue;
             }
 
@@ -185,14 +191,14 @@ public static partial class Cache
         return InstalledApps;
     }
 
-    public static async System.Threading.Tasks.Task<StartupTask> CreateStartupTask(string appName, string imagePath)
+    public static async Task<StartupTask> CreateStartupTask(string appName, string imagePath)
     {
         StartupTask startupTask = new();
         startupTask.AppName = appName;
         if (string.IsNullOrEmpty(imagePath))
         {
             startupTask.ImagePath = "Image Path not found";
-            await DebugLog.LogEventAsync($"No ImagePath data found for {appName}", DebugLog.Region.System, DebugLog.EventType.WARNING);
+            await LogEventAsync($"No ImagePath data found for {appName}", Region.System, EventType.WARNING);
             return startupTask;
         }
         else
@@ -203,7 +209,7 @@ public static partial class Cache
         return startupTask;
     }
 
-    private static List<Task> EnumScheduledTasks(TaskFolder fld)
+    private static List<Win32Task> EnumScheduledTasks(TaskFolder fld)
     {
         var res = fld.Tasks.ToList();
         foreach (var sfld in fld.SubFolders)
@@ -217,10 +223,10 @@ public static partial class Cache
     // Group 2: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
     // Group 3: HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run
     // Group 4: %AppData%\Microsoft\Windows\Start Menu\Programs\Startup
-    public static async System.Threading.Tasks.Task GetStartupTasks()
+    public static async Task GetStartupTasks()
     {
         var taskName = "GetStartupTasks";
-        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+        await OpenTask(Region.System, taskName);
 
         List<StartupTask> startupTasks = new();
 
@@ -235,10 +241,10 @@ public static partial class Cache
         startupTasks.AddRange(group4TaskList);
 
         StartupTasks = startupTasks;
-        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
+        await CloseTask(Region.System, taskName);
     }
 
-    private static async System.Threading.Tasks.Task<List<StartupTask>> GetStartupTasksAtKey(string keyLocation, RegistryKey reg)
+    private static async Task<List<StartupTask>> GetStartupTasksAtKey(string keyLocation, RegistryKey reg)
     {
         List<StartupTask> startupTasks = new();
         var key = reg.OpenSubKey(keyLocation);
@@ -250,7 +256,7 @@ public static partial class Cache
         return startupTasks;
     }
 
-    private static async System.Threading.Tasks.Task<List<StartupTask>> GetStartupTasksAtAppData()
+    private static async Task<List<StartupTask>> GetStartupTasksAtAppData()
     {
         List<StartupTask> startupTasks = new();
         try
@@ -265,21 +271,21 @@ public static partial class Cache
         }
         catch (Exception ex)
         {
-            await DebugLog.LogEventAsync($"File Read error in group 4 of GetStartupTasks", DebugLog.Region.System, DebugLog.EventType.ERROR);
-            await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.System);
+            await LogEventAsync($"File Read error in GetStartupTasksAtAppData", Region.System, EventType.ERROR);
+            await LogEventAsync($"{ex}", Region.System);
         }
         return startupTasks;
     }
 
-    public static async System.Threading.Tasks.Task<StartupTask> StartupTaskFileError(StartupTask startupTask, Exception ex)
+    public static async Task<StartupTask> StartupTaskFileError(StartupTask startupTask, Exception ex)
     {
         Issues.Add($"{startupTask.ImagePath} file not found for startup app {startupTask.AppName}");
-        await DebugLog.LogEventAsync($"{startupTask.ImagePath} file not found for startup app {startupTask.AppName} - {ex}", DebugLog.Region.System, DebugLog.EventType.WARNING);
+        await LogEventAsync($"{startupTask.ImagePath} file not found for startup app {startupTask.AppName} - {ex}", Region.System, EventType.WARNING);
         startupTask.ImagePath += " - FILE NOT FOUND";
         return startupTask;
     }
 
-    public static async System.Threading.Tasks.Task<StartupTask> GetFileInformation(StartupTask startupTask)
+    public static async Task<StartupTask> GetFileInformation(StartupTask startupTask)
     {
         //get information about an executable file
         var filePath = startupTask.ImagePath.Trim('\"');
@@ -304,9 +310,9 @@ public static partial class Cache
         return startupTask;
     }
 
-    public static async System.Threading.Tasks.Task GetMiniDumps()
+    public static async Task GetMiniDumps()
     {
-        await DebugLog.OpenTask(DebugLog.Region.System, "GetMiniDumps");
+        await OpenTask(Region.System, "GetMiniDumps");
         string result = null;
         const string specifiedDumpDestination = "https://dumpload.spec-ify.com/";
         const string dumpDir = @"C:\Windows\Minidump";
@@ -315,56 +321,56 @@ public static partial class Cache
 
         if (CountMinidumps() <= 0)
         {
-            await DebugLog.LogEventAsync("No current dumps found.", DebugLog.Region.System);
-            await DebugLog.CloseTask(DebugLog.Region.System, "GetMiniDumps");
+            await LogEventAsync("No current dumps found.", Region.System);
+            await CloseTask(Region.System, "GetMiniDumps");
             return;
         }
 
         string[] dumps = Directory.GetFiles(dumpDir);
         if (dumps.Length == 0)
         {
-            await DebugLog.LogEventAsync($"Dumps could not be retrieved from {dumpDir}", DebugLog.Region.System, DebugLog.EventType.ERROR);
-            await DebugLog.CloseTask(DebugLog.Region.System, "GetMiniDumps");
+            await LogEventAsync($"Dumps could not be retrieved from {dumpDir}", Region.System, EventType.ERROR);
+            await CloseTask(Region.System, "GetMiniDumps");
             return;
         }
 
-        await DebugLog.LogEventAsync("Dump Upload Requested.", DebugLog.Region.System);
+        await LogEventAsync("Dump Upload Requested.", Region.System);
         if (MessageBox.Show("Would you like to upload your BSOD minidumps with your specs report?", "Minidumps detected", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
         {
-            await DebugLog.LogEventAsync("Dump Upload Request Refused.", DebugLog.Region.System);
-            await DebugLog.CloseTask(DebugLog.Region.System, "GetMiniDumps");
+            await LogEventAsync("Dump Upload Request Refused.", Region.System);
+            await CloseTask(Region.System, "GetMiniDumps");
             return;
         }
 
-        await DebugLog.LogEventAsync("Dump Upload Request Approved.", DebugLog.Region.System);
+        await LogEventAsync("Dump Upload Request Approved.", Region.System);
 
         Directory.CreateDirectory(TempFolder);
 
         if (!await CreateMinidumpZipFile(dumps, TempFolder, TempZip))
         {
-            await DebugLog.LogEventAsync("Dump zip file creation failure.", DebugLog.Region.System, DebugLog.EventType.ERROR);
-            await DebugLog.CloseTask(DebugLog.Region.System, "GetMiniDumps");
+            await LogEventAsync("Dump zip file creation failure.", Region.System, EventType.ERROR);
+            await CloseTask(Region.System, "GetMiniDumps");
             return;
         }
 
-        await DebugLog.LogEventAsync("Dump zip file built. Attempting upload.", DebugLog.Region.System);
+        await LogEventAsync("Dump zip file built. Attempting upload.", Region.System);
 
         result = await UploadMinidumps(TempZip, specifiedDumpDestination);
         if (string.IsNullOrEmpty(result))
         {
-            await DebugLog.LogEventAsync($"Dump upload failure. {result}", DebugLog.Region.System, DebugLog.EventType.ERROR);
-            await DebugLog.CloseTask(DebugLog.Region.System, "GetMiniDumps");
+            await LogEventAsync($"Dump upload failure. {result}", Region.System, EventType.ERROR);
+            await CloseTask(Region.System, "GetMiniDumps");
             return;
         }
 
-        await DebugLog.LogEventAsync($"Dump file upload result: {result}", DebugLog.Region.System);
+        await LogEventAsync($"Dump file upload result: {result}", Region.System);
         File.Delete(TempZip);
         new DirectoryInfo(TempFolder).Delete(true);
 
         DumpZip = result;
-        await DebugLog.CloseTask(DebugLog.Region.System, "GetMiniDumps");
+        await CloseTask(Region.System, "GetMiniDumps");
     }
-    private static async System.Threading.Tasks.Task<bool> CreateMinidumpZipFile(string[] dumps, string TempFolder, string TempZip)
+    private static async Task<bool> CreateMinidumpZipFile(string[] dumps, string TempFolder, string TempZip)
     {
         try
         {
@@ -376,7 +382,7 @@ public static partial class Cache
                 File.Copy(dump, fileName);
                 if (!File.Exists(fileName))
                 {
-                    await DebugLog.LogEventAsync($"Failed to copy {Regex.Match(dump, "[^\\\\]*$").Value} to dump folder.", DebugLog.Region.System, DebugLog.EventType.ERROR);
+                    await LogEventAsync($"Failed to copy {Regex.Match(dump, "[^\\\\]*$").Value} to dump folder.", Region.System, EventType.ERROR);
                 }
                 else
                 {
@@ -393,14 +399,14 @@ public static partial class Cache
         }
         catch (Exception e)
         {
-            await DebugLog.LogEventAsync($"Error occured manipulating dump files! Is this running as admin?", DebugLog.Region.System, DebugLog.EventType.ERROR);
-            await DebugLog.LogEventAsync($"{e}", DebugLog.Region.System);
+            await LogEventAsync($"Error occured manipulating dump files! Is this running as admin?", Region.System, EventType.ERROR);
+            await LogEventAsync($"{e}", Region.System);
 
             return false; //If this failed, there's nothing more that can be done here.
         }
     }
 
-    private static async System.Threading.Tasks.Task<string> UploadMinidumps(string TempZip, string specifiedDumpDestination)
+    private static async Task<string> UploadMinidumps(string TempZip, string specifiedDumpDestination)
     {
         string result = string.Empty;
         using (HttpClient client = new HttpClient())
@@ -420,8 +426,8 @@ public static partial class Cache
             }
             catch (Exception e)
             {
-                await DebugLog.LogEventAsync($"Error occured when uploading dumps.zip to Specified!", DebugLog.Region.System, DebugLog.EventType.ERROR);
-                await DebugLog.LogEventAsync($"{e}", DebugLog.Region.System);
+                await LogEventAsync($"Error occured when uploading dumps.zip to Specified!", Region.System, EventType.ERROR);
+                await LogEventAsync($"{e}", Region.System);
             }
 
             client.Dispose();
@@ -429,10 +435,10 @@ public static partial class Cache
         return result;
     }
 
-    private static async System.Threading.Tasks.Task GetMicroCodes()
+    private static async Task GetMicroCodes()
     {
         var taskName = "GetMicroCodes";
-        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+        await OpenTask(Region.System, taskName);
 
         const string intelPath = @"C:\Windows\System32\mcupdate_genuineintel.dll";
         const string amdPath = @"C:\Windows\System32\mcupdate_authenticamd.dll";
@@ -442,13 +448,13 @@ public static partial class Cache
         if (File.Exists(amdPath)) res.Add(amdPath);
 
         MicroCodes = res;
-        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
+        await CloseTask(Region.System, taskName);
     }
 
-    private static async System.Threading.Tasks.Task GetStaticCoreCount()
+    private static async Task GetStaticCoreCount()
     {
         var taskName = "GetStaticCoreCount";
-        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+        await OpenTask(Region.System, taskName);
 
         string output = string.Empty;
 
@@ -471,7 +477,7 @@ public static partial class Cache
             }
             StaticCoreCount = output.Contains("numproc");
         }
-        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
+        await CloseTask(Region.System, taskName);
     }
 
     private static int CountMinidumps()
@@ -495,10 +501,10 @@ public static partial class Cache
         return count;
     }
 
-    private static async System.Threading.Tasks.Task RegistryCheck()
+    private static async Task RegistryCheck()
     {
         var taskName = "RegistryCheck";
-        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+        await OpenTask(Region.System, taskName);
         try
         {
             var tdrLevel = new RegistryValue<int?>
@@ -564,16 +570,16 @@ public static partial class Cache
         }
         catch (Exception ex)
         {
-            DebugLog.LogEvent("Registry Read Error in RegistryCheck()", DebugLog.Region.System, DebugLog.EventType.ERROR);
-            DebugLog.LogEvent($"{ex}");
+            await LogEventAsync("Registry Read Error in RegistryCheck()", Region.System, EventType.ERROR);
+            await LogEventAsync($"{ex}");
             ChoiceRegistryValues = new List<IRegistryValue>();
         }
-        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
+        await CloseTask(Region.System, taskName);
     }
 
-    private static async System.Threading.Tasks.Task GetBrowserExtensions()
+    private static async Task GetBrowserExtensions()
     {
-        await DebugLog.OpenTask(DebugLog.Region.System, "GetBrowserExtensions");
+        await OpenTask(Region.System, "GetBrowserExtensions");
         List<Browser> Browsers = new List<Browser>();
         string UserPath = string.Concat("C:\\Users\\", Username, "\\Appdata\\");
         Dictionary<string, string> BrowserPaths = new Dictionary<string, string>()
@@ -623,8 +629,8 @@ public static partial class Cache
                         }
                         catch (Exception e)
                         {
-                            DebugLog.LogEvent($"Exception occurred in GetBrowserExtensions() during browser enumeration.", DebugLog.Region.System, DebugLog.EventType.ERROR);
-                            DebugLog.LogEvent($"{e}");
+                            await LogEventAsync($"Exception occurred in GetBrowserExtensions() during browser enumeration.", Region.System, EventType.ERROR);
+                            await LogEventAsync($"{e}");
                         }
                     }
 
@@ -662,7 +668,7 @@ public static partial class Cache
 
                                 try
                                 {
-                                    profile.Extensions.Add(Utils.ParseChromiumExtension(edir));
+                                    profile.Extensions.Add(ParseChromiumExtension(edir));
                                 }
                                 catch (Exception e)
                                 {
@@ -694,7 +700,7 @@ public static partial class Cache
 
                                     try
                                     {
-                                        profile.Extensions.Add(Utils.ParseChromiumExtension(edir));
+                                        profile.Extensions.Add(ParseChromiumExtension(edir));
                                     }
                                     catch (Exception e)
                                     {
@@ -736,7 +742,7 @@ public static partial class Cache
 
                                 try
                                 {
-                                    profile.Extensions.Add(Utils.ParseChromiumExtension(edir));
+                                    profile.Extensions.Add(ParseChromiumExtension(edir));
                                 }
                                 catch (Exception e)
                                 {
@@ -759,13 +765,13 @@ public static partial class Cache
             }
         }
         BrowserExtensions = Browsers;
-        await DebugLog.CloseTask(DebugLog.Region.System, "GetBrowserExtensions");
+        await CloseTask(Region.System, "GetBrowserExtensions");
     }
 
-    private static async System.Threading.Tasks.Task CheckCommercialOneDrive()
+    private static async Task CheckCommercialOneDrive()
     {
         var taskName = "CheckCommercialOneDrive";
-        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+        await OpenTask(Region.System, taskName);
 
         bool ODFound = false;
         try
@@ -777,7 +783,7 @@ public static partial class Cache
                     pathOneDriveCommercial.Split(new string[] { "OneDrive - " }, StringSplitOptions.None)[1];
                 OneDriveCommercialPathLength = pathOneDriveCommercial.Length;
                 OneDriveCommercialNameLength = actualOneDriveCommercial.Length;
-                DebugLog.LogEvent("OneDriveCommercial information retrieved.", DebugLog.Region.System);
+                await LogEventAsync("OneDriveCommercial information retrieved.", Region.System);
                 ODFound = true;
             }
         }
@@ -788,27 +794,27 @@ public static partial class Cache
                 if (Settings.RedactOneDriveCommercial)
                 {
                     Settings.RedactOneDriveCommercial = false;
-                    DebugLog.LogEvent("RedactOneDriveCommercial setting disabled. OneDriveCommercial variable not found.", DebugLog.Region.System, DebugLog.EventType.WARNING);
+                    await LogEventAsync("RedactOneDriveCommercial setting disabled. OneDriveCommercial variable not found.", Region.System, EventType.WARNING);
                 }
                 else
                 {
-                    DebugLog.LogEvent("OneDriveCommercial variable not found.", DebugLog.Region.System);
+                    await LogEventAsync("OneDriveCommercial variable not found.", Region.System);
                 }
             }
         }
-        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
+        await CloseTask(Region.System, taskName);
     }
 
-    private static async System.Threading.Tasks.Task GetScheduledTasks()
+    private static async Task GetScheduledTasks()
     {
         var taskName = "GetScheduledTasks";
-        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+        await OpenTask(Region.System, taskName);
 
         var scheduledTasks = new List<ScheduledTask>();
-        using var ts = new TaskService();
+        using var ts = new Microsoft.Win32.TaskScheduler.TaskService();
         var rawTaskList = EnumScheduledTasks(ts.RootFolder);
         WinScheduledTasks = new List<ScheduledTask>();
-        foreach (Task task in rawTaskList)
+        foreach (Win32Task task in rawTaskList)
         {
             if (task.Path.StartsWith("\\Microsoft"))
             {
@@ -821,23 +827,23 @@ public static partial class Cache
         }
         ScheduledTasks = scheduledTasks;
 
-        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
+        await CloseTask(Region.System, taskName);
     }
 
-    private static async System.Threading.Tasks.Task GetDefaultBrowser()
+    private static async Task GetDefaultBrowser()
     {
-        await DebugLog.OpenTask(DebugLog.Region.System, "GetDefaultBrowser");
-        string defaultBrowserProcess = Regex.Match(Utils.GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(Utils.GetRegistryValue<string>(Registry.CurrentUser,
+        await OpenTask(Region.System, "GetDefaultBrowser");
+        string defaultBrowserProcess = Regex.Match(GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(GetRegistryValue<string>(Registry.CurrentUser,
             "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
         DefaultBrowser = (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
-        await DebugLog.CloseTask(DebugLog.Region.System, "GetDefaultBrowser");
+        await CloseTask(Region.System, "GetDefaultBrowser");
     }
 
     private static List<Dictionary<string, object>> GetPowerProfiles()
     {
         try
         {
-            return Utils.GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
+            return GetWmi("Win32_PowerPlan", "*", @"root\cimv2\power");
         }
         catch (COMException)
         {
@@ -847,28 +853,28 @@ public static partial class Cache
         }
     }
 
-    private static async System.Threading.Tasks.Task GetEnvironmentVariables()
+    private static async Task GetEnvironmentVariables()
     {
         var taskName = "GetEnvironmentVariables";
-        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+        await OpenTask(Region.System, taskName);
 
         SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
         UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
 
-        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
+        await CloseTask(Region.System, taskName);
     }
 
-    private static async System.Threading.Tasks.Task GetSystemWMIInfo()
+    private static async Task GetSystemWMIInfo()
     {
         var taskName = "GetSystemWMIInfo";
-        await DebugLog.OpenTask(DebugLog.Region.System, taskName);
+        await OpenTask(Region.System, taskName);
 
-        Services = Utils.GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
-        InstalledHotfixes = Utils.GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
+        Services = GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
+        InstalledHotfixes = GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
         // As far as I can tell, Size is the size of the file on the filesystem and Usage is the amount actually used
-        PageFile = Utils.GetWmi("Win32_PageFileUsage", "AllocatedBaseSize, Caption, CurrentUsage, PeakUsage").FirstOrDefault();
+        PageFile = GetWmi("Win32_PageFileUsage", "AllocatedBaseSize, Caption, CurrentUsage, PeakUsage").FirstOrDefault();
 
         PowerProfiles = GetPowerProfiles();
-        await DebugLog.CloseTask(DebugLog.Region.System, taskName);
+        await CloseTask(Region.System, taskName);
     }
 }

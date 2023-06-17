@@ -26,9 +26,9 @@ public static partial class Cache
     {
         try
         {
-            DebugLog.Region region = DebugLog.Region.Hardware;
+            Region region = Region.Hardware;
             List<Task> hardwareTaskList = new();
-            await DebugLog.StartRegion(region);
+            await StartRegion(region);
 
             hardwareTaskList.Add(GetTemps());
             hardwareTaskList.Add(GetHardwareWmiData());
@@ -39,18 +39,18 @@ public static partial class Cache
 
             await Task.WhenAll(hardwareTaskList);
 
-            await DebugLog.EndRegion(DebugLog.Region.Hardware);
+            await EndRegion(Region.Hardware);
         }
         catch (Exception ex)
         {
-            await DebugLog.LogFatalError($"{ex}", DebugLog.Region.Hardware);
+            await LogFatalError($"{ex}", Region.Hardware);
         }
         HardwareWriteSuccess = true;
     }
     private static async Task GetHardwareWmiData()
     {
         var taskName = "GetHardwareWmiData";
-        await DebugLog.OpenTask(DebugLog.Region.Hardware, taskName);
+        await OpenTask(Region.Hardware, taskName);
 
         Cpu = GetWmi("Win32_Processor",
                 "CurrentClockSpeed, Manufacturer, Name, SocketDesignation, NumberOfEnabledCore, ThreadCount").First();
@@ -63,7 +63,7 @@ public static partial class Cache
         Devices = GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status");
         BiosInfo = GetWmi("Win32_bios");
 
-        await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
+        await CloseTask(Region.Hardware, taskName);
     }
     // RAM
     private static async Task GetSMBiosMemoryInfo()
@@ -71,7 +71,7 @@ public static partial class Cache
         // taskName deliberately omits "SMBios" - This method can fail.
         // It may be confusing to see a task for SMBios data being closed out when WMI data was gathered instead.
         var taskName = "GetMemoryInfo";
-        await DebugLog.OpenTask(DebugLog.Region.Hardware, taskName);
+        await OpenTask(Region.Hardware, taskName);
         try
         {
             var SMBiosObj = GetWmi("MSSMBios_RawSMBiosTables", "*", "root\\WMI").FirstOrDefault();
@@ -80,7 +80,7 @@ public static partial class Cache
             byte[] SMBios;
             if (!SMBiosObj.TryWmiRead("SMBiosData", out SMBios))
             {
-                DebugLog.LogEvent($"SMBios information not retrieved.", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                LogEvent($"SMBios information not retrieved.", Region.Hardware, EventType.ERROR);
                 Issues.Add("Hardware Data: Could not get SMBios info for RAM.");
                 throw new ManagementException("MSSMBios_RawSMBiosTables returned null.");
             }
@@ -168,12 +168,12 @@ public static partial class Cache
             }
             SMBiosRamInfo = true;
             Ram = SMBiosMemoryInfo;
-            await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
+            await CloseTask(Region.Hardware, taskName);
         }
         catch (Exception e)
         {
-            await DebugLog.LogEventAsync("SMBios retrieval failed.", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
-            await DebugLog.LogEventAsync($"{e}");
+            await LogEventAsync("SMBios retrieval failed.", Region.Hardware, EventType.ERROR);
+            await LogEventAsync($"{e}");
             await GetWmiMemoryInfo(taskName);
         }
     }
@@ -189,32 +189,32 @@ public static partial class Cache
             RamStick stick = new();
             if (!wmiStick.TryWmiRead("Manufacturer", out stick.Manufacturer))
             {
-                DebugLog.LogEvent($"RAM Manufacturer could not be read.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+                LogEvent($"RAM Manufacturer could not be read.", Region.Hardware, EventType.WARNING);
             }
             if (!wmiStick.TryWmiRead("ConfiguredClockSpeed", out stick.ConfiguredSpeed))
             {
-                DebugLog.LogEvent($"RAM Clock Speed could not be read.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+                LogEvent($"RAM Clock Speed could not be read.", Region.Hardware, EventType.WARNING);
             }
             if (!wmiStick.TryWmiRead("DeviceLocator", out stick.DeviceLocation))
             {
-                DebugLog.LogEvent($"RAM Device Locator could not be read.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+                LogEvent($"RAM Device Locator could not be read.", Region.Hardware, EventType.WARNING);
             }
             if (!wmiStick.TryWmiRead("Capacity", out stick.Capacity))
             {
-                DebugLog.LogEvent($"RAM Capacity could not be read.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+                LogEvent($"RAM Capacity could not be read.", Region.Hardware, EventType.WARNING);
             }
             if (!wmiStick.TryWmiRead("SerialNumber", out stick.SerialNumber))
             {
-                DebugLog.LogEvent($"RAM Serial Number could not be read.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+                LogEvent($"RAM Serial Number could not be read.", Region.Hardware, EventType.WARNING);
             }
             if (!wmiStick.TryWmiRead("PartNumber", out stick.PartNumber))
             {
-                DebugLog.LogEvent($"RAM Part Number could not be read.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+                LogEvent($"RAM Part Number could not be read.", Region.Hardware, EventType.WARNING);
             }
             RamInfo.Add(stick);
         }
         Ram = RamInfo;
-        await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
+        await CloseTask(Region.Hardware, taskName);
     }
 
     //MONITORS
@@ -228,7 +228,7 @@ public static partial class Cache
         int error = DisplayConfigGetDeviceInfo(ref deviceName);
         if (error != ERROR_SUCCESS)
         {
-            DebugLog.LogEvent($"Interop Failure in MonitorFriendlyName() {error}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            LogEvent($"Interop Failure in MonitorFriendlyName() {error}", Region.Hardware, EventType.ERROR);
             Issues.Add($"Interop failure during monitor data collection {error}");
         }
         return deviceName;
@@ -237,14 +237,14 @@ public static partial class Cache
     private static async Task GetMonitorInfo()
     {
         var taskName = "GetMonitorInfo";
-        await DebugLog.OpenTask(DebugLog.Region.Hardware, taskName);
+        await OpenTask(Region.Hardware, taskName);
         List<Monitor> monitors = new();
         uint PathCount, ModeCount;
         int error = GetDisplayConfigBufferSizes(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
             out PathCount, out ModeCount);
         if (error != ERROR_SUCCESS)
         {
-            DebugLog.LogEvent($"Interop Failure in MonitorFriendlyName() {error}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            LogEvent($"Interop Failure in MonitorFriendlyName() {error}", Region.Hardware, EventType.ERROR);
             Issues.Add($"Interop failure during monitor data collection {error}");
         }
         DISPLAYCONFIG_PATH_INFO[] DisplayPaths = new DISPLAYCONFIG_PATH_INFO[PathCount];
@@ -253,7 +253,7 @@ public static partial class Cache
             ref PathCount, DisplayPaths, ref ModeCount, DisplayModes, IntPtr.Zero);
         if (error != ERROR_SUCCESS)
         {
-            DebugLog.LogEvent($"Interop Failure in GetMonitorInfo() {error}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            LogEvent($"Interop Failure in GetMonitorInfo() {error}", Region.Hardware, EventType.ERROR);
             Issues.Add($"Interop failure during monitor data collection {error}");
         }
 
@@ -312,8 +312,8 @@ public static partial class Cache
                             }
                             catch (Exception e)
                             {
-                                DebugLog.LogEvent("Registry Read Error in GetMonitorInfo()", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
-                                DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
+                                LogEvent("Registry Read Error in GetMonitorInfo()", Region.Hardware, EventType.ERROR);
+                                LogEvent($"{e}", Region.Hardware);
                                 Issues.Add("Registry read error during monitor data collection.");
                             }
                         }
@@ -321,7 +321,7 @@ public static partial class Cache
                 }
             }
         }
-        await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
+        await CloseTask(Region.Hardware, taskName);
         MonitorInfo =  monitors;
     }
 
@@ -481,10 +481,10 @@ public static partial class Cache
             if(partition.CfgMgrErrorCode != 0 || partition.LastErrorCode != 0) 
             {
                 //[CLEANUP]: This is Logged in DebugLog until Specified has a clean way of displaying these errors.
-                DebugLog.LogEvent(
+                LogEvent(
                     $"Partition @ {partition.Caption} Reported an error: CMEC: {partition.CfgMgrErrorCode} - LEC: {partition.LastErrorCode}", 
-                    DebugLog.Region.Hardware,
-                    DebugLog.EventType.ERROR);
+                    Region.Hardware,
+                    EventType.ERROR);
             }
             foreach (var disk in drives)
             {
@@ -519,7 +519,7 @@ public static partial class Cache
 
         if (driveIndex == -1)
         {
-            DebugLog.LogEvent($"Smart Data found for {instanceId} with no matching drive.", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            LogEvent($"Smart Data found for {instanceId} with no matching drive.", Region.Hardware, EventType.ERROR);
             Issues.Add($"Smart Data found for {instanceId} with no matching drive.");
             return drives;
         }
@@ -581,8 +581,8 @@ public static partial class Cache
                     }
                     catch (Exception ex)
                     {
-                        DebugLog.LogEvent("Unexpected exception thrown during paritition linking", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
-                        DebugLog.LogEvent($"{ex}", DebugLog.Region.Hardware);
+                        LogEvent("Unexpected exception thrown during paritition linking", Region.Hardware, EventType.ERROR);
+                        LogEvent($"{ex}", Region.Hardware);
                         continue;
                     }
                 }
@@ -590,9 +590,9 @@ public static partial class Cache
             }
             if (!found)
             {
-                DebugLog.LogEvent($"Logical disk exists without a valid partition link:", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
-                DebugLog.LogEvent($"Antecedent: {(string)logicalDisk["Antecedent"]}", DebugLog.Region.Hardware);
-                DebugLog.LogEvent($"Dependent: {(string)logicalDisk["Dependent"]}", DebugLog.Region.Hardware);
+                LogEvent($"Logical disk exists without a valid partition link:", Region.Hardware, EventType.ERROR);
+                LogEvent($"Antecedent: {(string)logicalDisk["Antecedent"]}", Region.Hardware);
+                LogEvent($"Dependent: {(string)logicalDisk["Dependent"]}", Region.Hardware);
             }
         }
         return drives;
@@ -608,7 +608,7 @@ public static partial class Cache
             partition.TryWmiRead("Capacity", out partitionSize);
             if (partitionSize == default)
             {
-                DebugLog.LogEvent("Failure to parse partition information - No capacity found. This is likely a virtual or unallocated drive.", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+                LogEvent("Failure to parse partition information - No capacity found. This is likely a virtual or unallocated drive.", Region.Hardware, EventType.WARNING);
                 Issues.Add("Failure to parse partition information - No capacity found. This is likely a virtual or unallocated drive.");
                 continue;
             }
@@ -708,14 +708,14 @@ public static partial class Cache
                 }
                 catch
                 { 
-                    DebugLog.LogEvent()
+                    LogEvent()
                 }*/
 
                 if (driveLetter == "")
                 {
-                    DebugLog.LogEvent("Partition Link could not be established. Detailed Information follows:", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
-                    DebugLog.LogEvent($"Failing Partion: Size: {partitionSize} - Label: {driveLetter} - File System: {fileSystem}", DebugLog.Region.Hardware);
-                    DebugLog.LogEvent("Drive Info:", DebugLog.Region.Hardware);
+                    LogEvent("Partition Link could not be established. Detailed Information follows:", Region.Hardware, EventType.ERROR);
+                    LogEvent($"Failing Partion: Size: {partitionSize} - Label: {driveLetter} - File System: {fileSystem}", Region.Hardware);
+                    LogEvent("Drive Info:", Region.Hardware);
                     StringBuilder errorPartitionInfo = new();
                     foreach (var drive in drives)
                     {
@@ -738,7 +738,7 @@ public static partial class Cache
                             //errorPartitionInfo += $"Size: {eSize} - FS: {eFS} - Difference: {Math.Abs((float)partitionSize - eSize)} - Possible: {eFS.Equals(fileSystem)}\n";
                         }
 
-                        DebugLog.LogEvent($"{drive.DeviceName}\n{errorPartitionInfo}", DebugLog.Region.Hardware);
+                        LogEvent($"{drive.DeviceName}\n{errorPartitionInfo}", Region.Hardware);
                     }
                     Issues.Add($"Partition link could not be established for {partitionSize} byte partition - Drive Label: {driveLetter} -  File System: {fileSystem}");
                 }
@@ -749,9 +749,7 @@ public static partial class Cache
     private static async Task GetDiskDriveData()
     {
         var taskName = "GetDiskDriveData";
-        await DebugLog.OpenTask(DebugLog.Region.Hardware, taskName);
-        DateTime start = DateTime.Now;
-        DebugLog.LogEvent("GetDiskDriveData() started", DebugLog.Region.Hardware);
+        await OpenTask(Region.Hardware, taskName);
 
         // "Basic" in this context refers to data we can retrieve directly from WMI without much processing. Model names, partition labels, etc.
         List<DiskDrive> drives = GetBasicDriveInfo();
@@ -769,12 +767,12 @@ public static partial class Cache
         }
         catch (ManagementException e)
         {
-            DebugLog.LogEvent($"Non-NVMe SMART data could not be retrieved. This usually occurs when no non-NVMe drive exists. Error: {e.Message}", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+            LogEvent($"Non-NVMe SMART data could not be retrieved. This usually occurs when no non-NVMe drive exists. Error: {e.Message}", Region.Hardware, EventType.WARNING);
         }
         catch (Exception e)
         {
-            DebugLog.LogEvent("Unexpected exception thrown during non-NVMe SMART Data Retrieval.", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
-            DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
+            LogEvent("Unexpected exception thrown during non-NVMe SMART Data Retrieval.", Region.Hardware, EventType.ERROR);
+            LogEvent($"{e}", Region.Hardware);
         }
 
         for (int i = 0; i < drives.Count; i++)
@@ -788,8 +786,8 @@ public static partial class Cache
                 }
                 catch (Exception e)
                 {
-                    DebugLog.LogEvent($"Exception during NVMe Smart Data retrieval on drive {drive.DeviceName}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
-                    DebugLog.LogEvent($"{e}", DebugLog.Region.Hardware);
+                    LogEvent($"Exception during NVMe Smart Data retrieval on drive {drive.DeviceName}", Region.Hardware, EventType.ERROR);
+                    LogEvent($"{e}", Region.Hardware);
                 }
             }
         }
@@ -836,7 +834,7 @@ public static partial class Cache
             }
         }
         Disks = drives;
-        await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
+        await CloseTask(Region.Hardware, taskName);
     }
 
     private static DiskDrive GetNvmeSmart(DiskDrive drive)
@@ -855,7 +853,7 @@ public static partial class Cache
         // If no drive letter was found, it is impossible to obtain a valid handle.
         if (string.IsNullOrEmpty(driveLetter))
         {
-            DebugLog.LogEvent($"Attempted to gather smart data from unlettered drive. {drive.DeviceName}", DebugLog.Region.Hardware, DebugLog.EventType.WARNING);
+            LogEvent($"Attempted to gather smart data from unlettered drive. {drive.DeviceName}", Region.Hardware, EventType.WARNING);
             return drive;
         }
 
@@ -866,7 +864,7 @@ public static partial class Cache
         // Verify the handle.
         if (handle == new IntPtr(-1))
         {
-            DebugLog.LogEvent($"NVMe Smart Data could not be retrieved. Invalid Handle. {driveLetter}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+            LogEvent($"NVMe Smart Data could not be retrieved. Invalid Handle. {driveLetter}", Region.Hardware, EventType.ERROR);
             return drive;
         }
 
@@ -922,7 +920,7 @@ public static partial class Cache
             // Verify the command was successful and report any errors.
             if (!result)
             {
-                DebugLog.LogEvent($"Interop failure during NVMe SMART data retrieval. {Marshal.GetLastWin32Error()} on drive {driveLetter}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                LogEvent($"Interop failure during NVMe SMART data retrieval. {Marshal.GetLastWin32Error()} on drive {driveLetter}", Region.Hardware, EventType.ERROR);
                 Marshal.FreeHGlobal(buffer);
                 return drive;
             }
@@ -935,7 +933,7 @@ public static partial class Cache
             var driveTemperature = ((uint)smartInfo->Temperature[1] << 8 | smartInfo->Temperature[0]) - 273;
             if (driveTemperature > 100)
             {
-                DebugLog.LogEvent($"SMART data retrieval error - Data not valid on drive {driveLetter}", DebugLog.Region.Hardware, DebugLog.EventType.ERROR);
+                LogEvent($"SMART data retrieval error - Data not valid on drive {driveLetter}", Region.Hardware, EventType.ERROR);
                 Marshal.FreeHGlobal(buffer);
                 return drive;
             }
@@ -1200,9 +1198,8 @@ public static partial class Cache
     // TEMPERATURES
     private static async Task<List<TempMeasurement>> GetTemps()
     {
-        DateTime start = DateTime.Now;
         var taskName = "GetTemps";
-        await DebugLog.OpenTask(DebugLog.Region.Hardware, taskName);
+        await OpenTask(Region.Hardware, taskName);
 
         //Any temp sensor reading below 24 will be filtered out
         //These sensors are either not reading in celsius, are in error, or we cannot interpret them properly here
@@ -1243,14 +1240,14 @@ public static partial class Cache
         }
         catch (Exception ex)
         {
-            await DebugLog.LogEventAsync($"Exception during temperature measurement: " + ex, DebugLog.Region.Hardware);
+            await LogEventAsync($"Exception during temperature measurement: " + ex, Region.Hardware);
         }
         finally
         {
             computer.Close();
         }
 
-        await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
+        await CloseTask(Region.Hardware, taskName);
         return Temps;
     }
 
@@ -1258,7 +1255,7 @@ public static partial class Cache
     private static async Task GetBatteryData()
     {
         var taskName = "GetBatteryData";
-        await DebugLog.OpenTask(DebugLog.Region.Hardware, taskName);
+        await OpenTask(Region.Hardware, taskName);
 
         List<BatteryData> BatteryInfo = new List<BatteryData>();
         string path =
@@ -1319,13 +1316,13 @@ public static partial class Cache
 
             if (errorReader != null && errorReader != "")
             {
-                DebugLog.EventType severity = DebugLog.EventType.ERROR;
+                EventType severity = EventType.ERROR;
                 // 0x10d2 is an extremely common error code on desktops with no batteries. It should not be marked as an error.
                 if(errorReader.Contains("(0x10d2)"))
                 {
-                    severity = DebugLog.EventType.INFORMATION;
+                    severity = EventType.INFORMATION;
                 }
-                DebugLog.LogEvent($"PowerCfg reported an error: {errorReader}", DebugLog.Region.Hardware, severity);
+                LogEvent($"PowerCfg reported an error: {errorReader}", Region.Hardware, severity);
                 break;
             }
         }
@@ -1336,6 +1333,6 @@ public static partial class Cache
         timer.Stop();
         cmd.Close();
         Batteries = BatteryInfo;
-        await DebugLog.CloseTask(DebugLog.Region.Hardware, taskName);
+        await CloseTask(Region.Hardware, taskName);
     }
 }
