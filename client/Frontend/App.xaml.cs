@@ -20,6 +20,9 @@ public partial class App : Application
             MessageBox.Show("Specify cannot be run in Safe Mode.", "Specify", MessageBoxButton.OK, MessageBoxImage.Error);
             Environment.Exit(-1);
         }
+
+        // Check that the WMI is functioning prior to loading the app.
+        // Specify is critically dependent on a functioning WMI Service. If it cannot talk to the WMI for whatever reason, Specify cannot run.
         try
         {
             Utils.GetWmi("Win32_OperatingSystem");

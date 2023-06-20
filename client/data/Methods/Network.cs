@@ -448,7 +448,7 @@ public static partial class Cache
         }
         catch (FileNotFoundException)
         {
-            Issues.Add("Hosts file not found.");
+            DebugLog.LogEvent("Hosts file not found.", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
             return "";
         }
         return hostsFile.ToString();

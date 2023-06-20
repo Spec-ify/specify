@@ -25,7 +25,7 @@ public static partial class Cache
                     Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\SecureBoot\State",
                     "UEFISecureBootEnabled");
 
-                if (secBootEnabled == null) Issues.Add($"Security data: could not get UEFISecureBootEnabled value");
+                if (secBootEnabled == null) await DebugLog.LogEventAsync($"Could not get UEFISecureBootEnabled value", region, DebugLog.EventType.ERROR);
                 else SecureBootEnabled = secBootEnabled == 1;
             }
             await DebugLog.LogEventAsync("SecureBoot Information Retrieved.", region);
@@ -43,7 +43,7 @@ public static partial class Cache
             catch (ManagementException)
             {
                 Tpm = null;
-                Issues.Add("Security Data: could not get TPM. This is probably because specify was not run as administrator.");
+                await DebugLog.LogEventAsync("Security Data: could not get TPM. This is probably because specify was not run as administrator.", region, DebugLog.EventType.WARNING);
             }
             await DebugLog.LogEventAsync("TPM Information Retrieved.", region);
 
@@ -52,7 +52,7 @@ public static partial class Cache
                 "ConsentPromptBehaviorUser");
             var enableLua = Utils.GetRegistryValue<int?>(Registry.LocalMachine,
                 @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "EnableLUA");
-            if (enableLua == null) Issues.Add($"Security data: could not get EnableLUA value");
+            if (enableLua == null) await DebugLog.LogEventAsync($"Security data: could not get EnableLUA value", region, DebugLog.EventType.ERROR);
             else UacEnabled = enableLua == 1;
             await DebugLog.LogEventAsync("UAC Information retrieved.", region);
 

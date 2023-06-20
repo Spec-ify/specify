@@ -279,7 +279,6 @@ public static partial class Cache
 
     public static async Task<StartupTask> StartupTaskFileError(StartupTask startupTask, Exception ex)
     {
-        Issues.Add($"{startupTask.ImagePath} file not found for startup app {startupTask.AppName}");
         await LogEventAsync($"{startupTask.ImagePath} file not found for startup app {startupTask.AppName} - {ex}", Region.System, EventType.WARNING);
         startupTask.ImagePath += " - FILE NOT FOUND";
         return startupTask;
@@ -472,7 +471,7 @@ public static partial class Cache
             output = proc.StandardOutput.ReadToEnd();
             if (output.Contains("The boot configuration data store could not be opened"))
             {
-                Issues.Add("Could not check whether there is a static core count");
+                await LogEventAsync("Could not check whether there is a static core count", Region.System, EventType.ERROR);
                 StaticCoreCount = null;
             }
             StaticCoreCount = output.Contains("numproc");
@@ -673,7 +672,7 @@ public static partial class Cache
                                 catch (Exception e)
                                 {
                                     if (e is FileNotFoundException || e is JsonException)
-                                        Issues.Add(string.Concat("Malformed or missing manifest or locale data for extension at ", edir));
+                                        await LogEventAsync(string.Concat("Malformed or missing manifest or locale data for extension at ", edir), Region.System, EventType.WARNING);
                                     //DirectoryNotFoundException can occur with certain browsers when a profile exists but no extensions are installed
                                 }
                             }
@@ -705,7 +704,7 @@ public static partial class Cache
                                     catch (Exception e)
                                     {
                                         if (e is FileNotFoundException || e is JsonException)
-                                            Issues.Add(string.Concat("Malformed or missing manifest or locale data for extension at ", edir));
+                                            await LogEventAsync(string.Concat("Malformed or missing manifest or locale data for extension at ", edir), Region.System, EventType.WARNING);
                                     }
                                 }
                             }
@@ -747,7 +746,7 @@ public static partial class Cache
                                 catch (Exception e)
                                 {
                                     if (e is FileNotFoundException || e is JsonException)
-                                        Issues.Add(string.Concat("Malformed or missing manifest or locale data for extension at ", edir));
+                                        await LogEventAsync(string.Concat("Malformed or missing manifest or locale data for extension at ", edir), Region.System, EventType.WARNING);
                                     //DirectoryNotFoundException can occur with certain browsers when a profile exists but no extensions are installed
                                 }
                             }
@@ -847,8 +846,7 @@ public static partial class Cache
         }
         catch (COMException)
         {
-            Issues.Add("Could not get power profiles");
-            //[CLEANUP] Will an empty list break something or should it return null?
+            LogEvent("Could not get power profiles", Region.System, EventType.ERROR);
             return new();
         }
     }

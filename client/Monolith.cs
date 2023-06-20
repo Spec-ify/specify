@@ -95,7 +95,6 @@ public class Monolith
             }
             catch (Exception e)
             {
-                m.Issues.Add("Commercial OneDrive redaction failed. This usually happens when Commerical OneDrive is not installed.");
                 await DebugLog.LogEventAsync("Commercial OneDrive redaction failed. Serialization restarts." + e, DebugLog.Region.Misc, DebugLog.EventType.ERROR);
                 Settings.RedactOneDriveCommercial = false;
                 await Specificialize();

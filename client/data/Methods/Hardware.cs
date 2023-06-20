@@ -80,8 +80,7 @@ public static partial class Cache
             byte[] SMBios;
             if (!SMBiosObj.TryWmiRead("SMBiosData", out SMBios))
             {
-                LogEvent($"SMBios information not retrieved.", Region.Hardware, EventType.ERROR);
-                Issues.Add("Hardware Data: Could not get SMBios info for RAM.");
+                await LogEventAsync($"SMBios information not retrieved.", Region.Hardware, EventType.ERROR);
                 throw new ManagementException("MSSMBios_RawSMBiosTables returned null.");
             }
 
@@ -229,7 +228,6 @@ public static partial class Cache
         if (error != ERROR_SUCCESS)
         {
             LogEvent($"Interop Failure in MonitorFriendlyName() {error}", Region.Hardware, EventType.ERROR);
-            Issues.Add($"Interop failure during monitor data collection {error}");
         }
         return deviceName;
     }
@@ -245,7 +243,6 @@ public static partial class Cache
         if (error != ERROR_SUCCESS)
         {
             LogEvent($"Interop Failure in MonitorFriendlyName() {error}", Region.Hardware, EventType.ERROR);
-            Issues.Add($"Interop failure during monitor data collection {error}");
         }
         DISPLAYCONFIG_PATH_INFO[] DisplayPaths = new DISPLAYCONFIG_PATH_INFO[PathCount];
         DISPLAYCONFIG_MODE_INFO[] DisplayModes = new DISPLAYCONFIG_MODE_INFO[ModeCount];
@@ -254,7 +251,6 @@ public static partial class Cache
         if (error != ERROR_SUCCESS)
         {
             LogEvent($"Interop Failure in GetMonitorInfo() {error}", Region.Hardware, EventType.ERROR);
-            Issues.Add($"Interop failure during monitor data collection {error}");
         }
 
         for (int i = 0; i < ModeCount; i++)
@@ -314,7 +310,6 @@ public static partial class Cache
                             {
                                 LogEvent("Registry Read Error in GetMonitorInfo()", Region.Hardware, EventType.ERROR);
                                 LogEvent($"{e}", Region.Hardware);
-                                Issues.Add("Registry read error during monitor data collection.");
                             }
                         }
                     }
@@ -408,7 +403,7 @@ public static partial class Cache
         }
 
         if (timer.Elapsed > timeout)
-            Issues.Add("Monitor report was not generated before the timeout!");
+            LogEvent("Monitor report was not generated before the timeout!", Region.Hardware, EventType.ERROR);
 
         timer.Stop();
         cmd.Close();
@@ -431,7 +426,7 @@ public static partial class Cache
             DiskDrive drive = new();
             if (!driveWmi.TryWmiRead("Model", out drive.DeviceName))
             {
-                Issues.Add($"Could not retrieve device name of drive @ index {diskNumber}");
+                LogEvent($"Could not retrieve device name of drive @ index {diskNumber}", Region.Hardware, EventType.ERROR);
             }
             else
             {
@@ -439,7 +434,7 @@ public static partial class Cache
             }
             if (!driveWmi.TryWmiRead("SerialNumber", out drive.SerialNumber))
             {
-                Issues.Add($"Could not retrieve serial number of drive @ index {diskNumber}");
+                LogEvent($"Could not retrieve serial number of drive @ index {diskNumber}", Region.Hardware, EventType.ERROR);
             }
             else
             {
@@ -450,11 +445,11 @@ public static partial class Cache
 
             if (!driveWmi.TryWmiRead("Size", out drive.DiskCapacity))
             {
-                Issues.Add($"Could not retrieve capacity of drive @ index {diskNumber}");
+                LogEvent($"Could not retrieve capacity of drive @ index {diskNumber}", Region.Hardware, EventType.ERROR);
             }
             if (!driveWmi.TryWmiRead("PNPDeviceID", out drive.InstanceId))
             {
-                Issues.Add($"Could not retrieve Instance ID of drive @ index {diskNumber}");
+                LogEvent($"Could not retrieve Instance ID of drive @ index {diskNumber}", Region.Hardware, EventType.ERROR);
             }
 
             drive.Partitions = new List<Partition>();
@@ -520,7 +515,6 @@ public static partial class Cache
         if (driveIndex == -1)
         {
             LogEvent($"Smart Data found for {instanceId} with no matching drive.", Region.Hardware, EventType.ERROR);
-            Issues.Add($"Smart Data found for {instanceId} with no matching drive.");
             return drives;
         }
 
@@ -609,7 +603,6 @@ public static partial class Cache
             if (partitionSize == default)
             {
                 LogEvent("Failure to parse partition information - No capacity found. This is likely a virtual or unallocated drive.", Region.Hardware, EventType.WARNING);
-                Issues.Add("Failure to parse partition information - No capacity found. This is likely a virtual or unallocated drive.");
                 continue;
             }
 
@@ -740,7 +733,6 @@ public static partial class Cache
 
                         LogEvent($"{drive.DeviceName}\n{errorPartitionInfo}", Region.Hardware);
                     }
-                    Issues.Add($"Partition link could not be established for {partitionSize} byte partition - Drive Label: {driveLetter} -  File System: {fileSystem}");
                 }
             }
         }
@@ -1236,11 +1228,11 @@ public static partial class Cache
         }
         catch (OverflowException)
         {
-            Issues.Add("Absolute value overflow occured when fetching temperature data");
+            await LogEventAsync("Absolute value overflow occured when fetching temperature data", Region.Hardware, EventType.ERROR);
         }
         catch (Exception ex)
         {
-            await LogEventAsync($"Exception during temperature measurement: " + ex, Region.Hardware);
+            await LogEventAsync($"Exception during temperature measurement: " + ex, Region.Hardware, EventType.ERROR);
         }
         finally
         {
@@ -1328,7 +1320,7 @@ public static partial class Cache
         }
 
         if (timer.Elapsed > timeout)
-            Issues.Add("Battery report was not generated before the timeout!");
+            await LogEventAsync("Battery report was not generated before the timeout!", Region.Hardware, EventType.ERROR);
 
         timer.Stop();
         cmd.Close();
