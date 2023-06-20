@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using specify_client.data;
+using System.Windows;
+using System;
 
 namespace specify_client;
 
@@ -16,7 +18,16 @@ public partial class App : Application
         if(bootType != 0)
         {
             MessageBox.Show("Specify cannot be run in Safe Mode.", "Specify", MessageBoxButton.OK, MessageBoxImage.Error);
-            System.Environment.Exit(0);
+            Environment.Exit(-1);
+        }
+        try
+        {
+            Utils.GetWmi("Win32_OperatingSystem");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Specify is unable to communicate with the Windows Management Instrumentation.\n{ex}", "Specify", MessageBoxButton.OK, MessageBoxImage.Error);
+            Environment.Exit(-1);
         }
     }
 }
