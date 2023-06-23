@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace specify_client;
@@ -16,9 +18,17 @@ public class Program
     {
         try
         {
+            // Issues is no longer used anywhere, however it is assigned a list to prevent potential errors with Specified.
             data.Cache.Issues = new List<string>();
-            //var initialConsoleFg = Console.ForegroundColor;
-            //var initialConsoleBg = Console.BackgroundColor;
+            
+            // Set Specify to run in en-US so system messages are printed in English.
+            var culture = CultureInfo.CreateSpecificCulture("en-US");
+
+            Thread.CurrentThread.CurrentCulture = culture;
+            Thread.CurrentThread.CurrentUICulture = culture;
+
+            CultureInfo.DefaultThreadCurrentCulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
 
             Time = new Stopwatch();
             Time.Start();
@@ -37,27 +47,4 @@ public class Program
         }
 
     }
-
-    /*public static void PrettyPrintObject(object o)
-    {
-        var jsonString = JsonConvert.SerializeObject(o, Formatting.Indented);
-
-        Console.WriteLine(jsonString);
-    }
-
-    public static void PrettyPrintWmiResults(List<Dictionary<string, object>> wmi)
-    {
-        foreach (var instance in wmi)
-        {
-            foreach (var pair in instance)
-            {
-                Console.WriteLine("{0} = {1}", pair.Key, pair.Value);
-            }
-
-            if (!instance.Equals(wmi.Last()))
-            {
-                Console.WriteLine("---------------");
-            }
-        }
-    }*/
 }
