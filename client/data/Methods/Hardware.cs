@@ -12,8 +12,8 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Text;
+using System.ComponentModel;
 using static specify_client.Interop;
-using System.Drawing;
 
 namespace specify_client.data;
 
@@ -452,6 +452,11 @@ public static partial class Cache
                 LogEvent($"Could not retrieve Instance ID of drive @ index {diskNumber}", Region.Hardware, EventType.ERROR);
             }
 
+            if(!driveWmi.TryWmiRead("MediaType", out drive.MediaType))
+            {
+                drive.MediaType = "Unknown (WMI Failure)";
+            }
+
             drive.Partitions = new List<Partition>();
 
             diskNumber++;
@@ -857,6 +862,7 @@ public static partial class Cache
         if (handle == new IntPtr(-1))
         {
             LogEvent($"NVMe Smart Data could not be retrieved. Invalid Handle. {driveLetter}", Region.Hardware, EventType.ERROR);
+            LogEvent($"Interop Error: {new Win32Exception(Marshal.GetLastWin32Error()).Message}", Region.Hardware);
             return drive;
         }
 
