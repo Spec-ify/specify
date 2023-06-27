@@ -95,6 +95,12 @@ public class SmartAttribute
     public byte Id;
     public string Name;
     public string RawValue;
+    public SmartAttribute(byte id, string name, string rawValue)
+    {
+        Id = id;
+        Name = name;
+        RawValue = rawValue;
+    }   
 }
 
 public class TempMeasurement

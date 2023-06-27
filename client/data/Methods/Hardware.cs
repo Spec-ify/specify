@@ -876,7 +876,6 @@ public static partial class Cache
         {
             STORAGE_PROPERTY_QUERY* query = null;
             STORAGE_PROTOCOL_SPECIFIC_DATA* protocolData = null;
-            //STORAGE_PROTOCOL_DATA_DESCRIPTOR* protocolDataDescr = null;
 
             // Set the maximum memory the smart log can be.
             bufferLength = (uint)(Marshal.OffsetOf(typeof(STORAGE_PROPERTY_QUERY), "AdditionalParameters") + sizeof(STORAGE_PROTOCOL_SPECIFIC_DATA_EXT));
@@ -887,7 +886,6 @@ public static partial class Cache
 
             // Overlay the data structures on top of the allocated memory.
             query = (STORAGE_PROPERTY_QUERY*)buffer;
-            //protocolDataDescr = (STORAGE_PROTOCOL_DATA_DESCRIPTOR*)buffer;
             protocolData = (STORAGE_PROTOCOL_SPECIFIC_DATA*)query->AdditionalParameters;
 
             // Set up the Smart log query
@@ -946,117 +944,24 @@ public static partial class Cache
              * 6-7: Reserved
              */
             var criticalWarningValue = Convert.ToString(smartInfo->CriticalWarning.CriticalWarning, 2).PadLeft(8, '0');
-            SmartAttribute criticalWarning = new()
-            {
-                Id = 0x01,
-                Name = "Critical Warning(!)",
-                RawValue = criticalWarningValue
-            };
-            SmartAttribute compositeTemperature = new()
-            {
-                Id = 0x02,
-                Name = "Temperature",
-                RawValue = driveTemperature + " C"
-            };
-            SmartAttribute availableSpare = new()
-            {
-                Id = 0x03,
-                Name = "Available Spare",
-                RawValue = smartInfo->AvailableSpare.ToString()
-            };
-            SmartAttribute availableSpareThreshold = new()
-            {
-                Id = 0x04,
-                Name = "Available Spare Threshold",
-                RawValue = smartInfo->AvailableSpareThreshold.ToString()
-            };
-            SmartAttribute percentageUsed = new()
-            {
-                Id = 0x05,
-                Name = "Percentage Used",
-                RawValue = smartInfo->PercentageUsed.ToString()
-            };
-            // [CLEANUP]: This can be more readable.
-            System.Span<byte> dataUnitsReadSpan = new(smartInfo->DataUnitRead, 6);
-            byte[] dataUnitsReadArray = dataUnitsReadSpan.ToArray().Reverse().ToArray();
-            SmartAttribute dataUnitsRead = new()
-            {
-                Id = 0x06,
-                Name = "Data Units Read",
-                RawValue = BitConverter.ToString(dataUnitsReadArray).Replace("-", string.Empty)
-            };
-            Span<byte> dataUnitsWrittenSpan = new(smartInfo->DataUnitWritten, 6);
-            byte[] dataUnitsWrittenArray = dataUnitsWrittenSpan.ToArray().Reverse().ToArray();
-            SmartAttribute dataUnitsWritten = new()
-            {
-                Id = 0x07,
-                Name = "Data Units Written",
-                RawValue = BitConverter.ToString(dataUnitsWrittenArray).Replace("-", string.Empty)
-            };
-            Span<byte> hostReadSpan = new(smartInfo->HostReadCommands, 6);
-            byte[] hostReadArray = hostReadSpan.ToArray().Reverse().ToArray();
-            SmartAttribute hostReadCommands = new()
-            {
-                Id = 0x08,
-                Name = "Host Read Commands",
-                RawValue = BitConverter.ToString(hostReadArray).Replace("-", string.Empty)
-            };
-            Span<byte> hostWrittenSpan = new(smartInfo->HostWrittenCommands, 6);
-            byte[] hostWrittenArray = hostWrittenSpan.ToArray().Reverse().ToArray();
-            SmartAttribute hostWrittenCommands = new()
-            {
-                Id = 0x09,
-                Name = "Host Written Commands",
-                RawValue = BitConverter.ToString(hostWrittenArray).Replace("-", string.Empty)
-            };
-            Span<byte> controllerBusyTimeSpan = new(smartInfo->ControllerBusyTime, 6);
-            byte[] controllerBusyTimeArray = controllerBusyTimeSpan.ToArray().Reverse().ToArray();
-            SmartAttribute controllerBusyTime = new()
-            {
-                Id = 0x0A,
-                Name = "Controller Busy Time",
-                RawValue = BitConverter.ToString(controllerBusyTimeArray).Replace("-", string.Empty)
-            };
-            Span<byte> powerCycleSpan = new(smartInfo->PowerCycle, 6);
-            byte[] powerCycleArray = powerCycleSpan.ToArray().Reverse().ToArray();
-            SmartAttribute powerCycle = new()
-            {
-                Id = 0x0B,
-                Name = "Power Cycles",
-                RawValue = BitConverter.ToString(powerCycleArray).Replace("-", string.Empty)
-            };
-            Span<byte> powerOnHoursSpan = new(smartInfo->PowerOnHours, 6);
-            byte[] powerOnHoursArray = powerOnHoursSpan.ToArray().Reverse().ToArray();
-            SmartAttribute powerOnHours = new()
-            {
-                Id = 0x0C,
-                Name = "Power-On Hours",
-                RawValue = BitConverter.ToString(powerOnHoursArray).Replace("-", string.Empty)
-            };
-            Span<byte> unsafeShutdownsSpan = new(smartInfo->UnsafeShutdowns, 6);
-            byte[] unsafeShutdownsArray = unsafeShutdownsSpan.ToArray().Reverse().ToArray();
-            SmartAttribute unsafeShutdowns = new()
-            {
-                Id = 0x0D,
-                Name = "Unsafe Shutdowns",
-                RawValue = BitConverter.ToString(unsafeShutdownsArray).Replace("-", string.Empty)
-            };
-            Span<byte> mediaErrorsSpan = new(smartInfo->MediaErrors, 6);
-            byte[] mediaErrorsArray = mediaErrorsSpan.ToArray().Reverse().ToArray();
-            SmartAttribute mediaErrors = new()
-            {
-                Id = 0x0E,
-                Name = "Media and Integrity Errors",
-                RawValue = BitConverter.ToString(mediaErrorsArray).Replace("-", string.Empty)
-            };
-            Span<byte> errorLogEntriesSpan = new(smartInfo->ErrorInfoLogEntryCount, 6);
-            byte[] errorLogEntriesArray = errorLogEntriesSpan.ToArray().Reverse().ToArray();
-            SmartAttribute errorLogEntries = new()
-            {
-                Id = 0x0F,
-                Name = "Number of Error Information Log Entries",
-                RawValue = BitConverter.ToString(errorLogEntriesArray).Replace("-", string.Empty)
-            };
+
+            SmartAttribute criticalWarning =            new(0x01, "Critical Warning(!)", criticalWarningValue);
+            SmartAttribute compositeTemperature =       new(0x02, "Temperature", driveTemperature + " C");
+            SmartAttribute availableSpare =             new(0x03, "Available Spare", smartInfo->AvailableSpare.ToString());
+            SmartAttribute availableSpareThreshold =    new(0x04, "Available Spare Threshold", smartInfo->AvailableSpareThreshold.ToString());
+            SmartAttribute percentageUsed =             new(0x05, "Percentage Used", smartInfo->PercentageUsed.ToString());
+
+            SmartAttribute dataUnitsRead =              MakeNvmeAttribute(smartInfo->DataUnitRead, 0x06, "Data Units Read");
+            SmartAttribute dataUnitsWritten =           MakeNvmeAttribute(smartInfo->DataUnitWritten, 0x07, "Data Units Written");
+            SmartAttribute hostReadCommands =           MakeNvmeAttribute(smartInfo->HostReadCommands, 0x08, "Host Read Commands");
+            SmartAttribute hostWrittenCommands =        MakeNvmeAttribute(smartInfo->HostWrittenCommands, 0x09, "Host Written Commands");
+            SmartAttribute controllerBusyTime =         MakeNvmeAttribute(smartInfo->ControllerBusyTime, 0x0A, "Controller Busy Time");
+            SmartAttribute powerCycle =                 MakeNvmeAttribute(smartInfo->PowerCycle, 0x0B, "Power Cycles");
+            SmartAttribute powerOnHours =               MakeNvmeAttribute(smartInfo->PowerOnHours, 0x0C, "Power-On Hours");
+            SmartAttribute unsafeShutdowns =            MakeNvmeAttribute(smartInfo->UnsafeShutdowns, 0x0D, "Unsafe Shutdowns");
+            SmartAttribute mediaErrors =                MakeNvmeAttribute(smartInfo->MediaErrors, 0x0E, "Media and Integrity Errors");
+            SmartAttribute errorLogEntries =            MakeNvmeAttribute(smartInfo->ErrorInfoLogEntryCount, 0x0F, "Number of Error Information Log Entries");
+
             drive.SmartData = new()
             {
                 criticalWarning,
@@ -1079,27 +984,40 @@ public static partial class Cache
         Marshal.FreeHGlobal(buffer);
         return drive;
     }
+    private unsafe static SmartAttribute MakeNvmeAttribute(byte* attr, byte id, string name)
+    {
+        unsafe
+        {
+            // Convert a little endian fixed byte array into a readable string.
 
+            // fixed byte* to byte[] uses Span as a middleman
+            Span<byte> attrSpan = new(attr, 6);
+
+            // Span -> byte[] leaves us with a workable array in little endian.
+            byte[] attrReversedArray = attrSpan.ToArray();
+
+            // byte[].Reverse() returns and IEnumerable which must be further casted into an array, leaving us with a big endian byte array.
+            var attrArray = attrReversedArray.Reverse().ToArray();
+
+            // Convert the byte array to a string and remove the extraneous dashes.
+            var attrString = BitConverter.ToString(attrArray).Replace("-", string.Empty);
+
+            return new SmartAttribute(id, name, attrString);
+        }
+    }
     private static SmartAttribute GetAttribute(byte[] data)
     {
-        // Smart data is fed backwards, with byte 10 being the first byte for the attribute and byte 5 being the last.
+        // Smart data is in little endian, with byte 10 being the first byte for the attribute and byte 5 being the last.
         var values = new byte[6]
         {
             data[10], data[9], data[8], data[7], data[6], data[5]
         };
 
-        var attribute = new SmartAttribute()
-        {
-            Id = data[0],
-            Name = GetAttributeName(data[0]),
-        };
         var rawValue = BitConverter.ToString(values);
 
         rawValue = rawValue.Replace("-", string.Empty);
-        attribute.RawValue = rawValue;
-        return attribute;
+        return new SmartAttribute(data[0], GetAttributeName(data[0]), rawValue);
     }
-
     private static string GetAttributeName(byte id)
     {
         return id switch
