@@ -676,24 +676,15 @@ public static partial class Cache
             if (found && unique)
             {
                 var matchingPartition = drives[dIndex].Partitions[pIndex];
-                var driveLetter = partition["Label"];
-                if (driveLetter != null)
-                {
-                    matchingPartition.PartitionLabel = (string)driveLetter;
-                }
-                matchingPartition.PartitionFree = (ulong)partition["FreeSpace"];
-                var fileSystem = partition["FileSystem"];
-                if (fileSystem != null)
-                {
-                    matchingPartition.Filesystem = (string)fileSystem;
-                }
+                partition.TryWmiRead("Label", out matchingPartition.PartitionLabel);
+                partition.TryWmiRead("FreeSpace", out matchingPartition.PartitionFree);
+                partition.TryWmiRead("FileSystem", out matchingPartition.Filesystem);
+                partition.TryWmiRead("DirtyBitSet", out matchingPartition.DirtyBitSet);
             }
             else
             {
-                string driveLetter;
-                partition.TryWmiRead("DriveLetter", out driveLetter);
-                string fileSystem;
-                partition.TryWmiRead("FileSystem", out fileSystem);
+                partition.TryWmiRead("DriveLetter", out string driveLetter);
+                partition.TryWmiRead("FileSystem", out string fileSystem);
 
                 /*if (!string.IsNullOrEmpty((string)partition["DriveLetter"]))
                     driveLetter = (string)partition["DriveLetter"];

@@ -87,6 +87,7 @@ public class Partition
     public string Filesystem;
     public uint CfgMgrErrorCode;
     public uint LastErrorCode;
+    public bool DirtyBitSet;
     [NonSerialized()] public string Caption; // Only used to link partitions, do not serialize.
 }
 
