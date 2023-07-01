@@ -111,7 +111,7 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="XamlAnimatedGif, Version=2.0.0.0, Culture=neutral, PublicKeyToken=20a987d8023d9690, processorArchitecture=MSIL">
-      <HintPath>packages\XamlAnimatedGif.2.1.1\lib\net45\XamlAnimatedGif.dll</HintPath>
+      <HintPath>packages\XamlAnimatedGif.2.2.0\lib\net45\XamlAnimatedGif.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
