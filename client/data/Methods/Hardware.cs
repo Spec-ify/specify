@@ -669,9 +669,6 @@ public static partial class Cache
                 // If it is not unique, no drive or partition index is valid. Stop checking.
                 if (unique)
                     continue;
-                /*dIndex = -1;
-                pIndex = -1;
-                break;*/
             }
             if (found && unique)
             {
@@ -685,20 +682,6 @@ public static partial class Cache
             {
                 partition.TryWmiRead("DriveLetter", out string driveLetter);
                 partition.TryWmiRead("FileSystem", out string fileSystem);
-
-                /*if (!string.IsNullOrEmpty((string)partition["DriveLetter"]))
-                    driveLetter = (string)partition["DriveLetter"];
-                if (!string.IsNullOrEmpty((string)partition["FileSystem"]))
-
-                try
-                {
-                    driveLetter = (string)partition["DriveLetter"];
-                    fileSystem = (string)partition["FileSystem"];
-                }
-                catch
-                { 
-                    LogEvent()
-                }*/
 
                 if (driveLetter == "")
                 {
@@ -724,7 +707,6 @@ public static partial class Cache
                             {
                                 errorPartitionInfo.Append($"Possible: false\n");
                             }
-                            //errorPartitionInfo += $"Size: {eSize} - FS: {eFS} - Difference: {Math.Abs((float)partitionSize - eSize)} - Possible: {eFS.Equals(fileSystem)}\n";
                         }
 
                         LogEvent($"{drive.DeviceName}\n{errorPartitionInfo}", Region.Hardware);
