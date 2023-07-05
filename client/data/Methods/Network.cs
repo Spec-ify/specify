@@ -267,7 +267,7 @@ public static partial class Cache
     private static void CombineAdapterInformation(Dictionary<string, object> adapter, Dictionary<string, object> adapter2)
     {
         object FullDuplex;
-        object MediaConnectionState;
+        object MediaConnectState;
         object MediaDuplexState;
         object MtuSize;
         object Name;
@@ -279,7 +279,7 @@ public static partial class Cache
         List<bool> NetAdapter2Integrity = new()
         {
             adapter2.TryWmiRead("FullDuplex", out FullDuplex),
-            adapter2.TryWmiRead("MediaConnectState", out MediaConnectionState),
+            adapter2.TryWmiRead("MediaConnectState", out MediaConnectState),
             adapter2.TryWmiRead("MediaDuplexState", out MediaDuplexState),
             adapter2.TryWmiRead("MtuSize", out MtuSize),
             adapter2.TryWmiRead("Name", out Name),
@@ -293,7 +293,7 @@ public static partial class Cache
             DebugLog.LogEvent($"{adapter["Description"]} information incomplete. MSFT_NetAdapter missing data.", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
         }
         adapter.Add("FullDuplex", FullDuplex);
-        adapter.Add("MediaConnectionState", MediaConnectionState);
+        adapter.Add("MediaConnectState", MediaConnectState);
         adapter.Add("MediaDuplexState", MediaDuplexState);
         adapter.Add("MtuSize", MtuSize);
         adapter.Add("Name", Name);
