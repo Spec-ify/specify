@@ -472,8 +472,8 @@ public static partial class Cache
             var partition = new Partition()
             {
                 PartitionCapacity = (ulong)partitionWmi["Size"],
-                // DeviceID is used here instead of Caption as Caption is localized and non-english systems will fail to link Logical Partitions correctly.
-                Caption = (string)partitionWmi["DeviceID"]
+                DeviceId = (string)partitionWmi["DeviceID"],
+                PartitionFree = 0
             };
             var diskIndex = (uint)partitionWmi["DiskIndex"];
             partitionWmi.TryWmiRead("ConfigManagerErrorCode", out partition.CfgMgrErrorCode);
@@ -482,7 +482,7 @@ public static partial class Cache
             {
                 //[CLEANUP]: This is Logged in DebugLog until Specified has a clean way of displaying these errors.
                 LogEvent(
-                    $"Partition @ {partition.Caption} Reported an error: CMEC: {partition.CfgMgrErrorCode} - LEC: {partition.LastErrorCode}", 
+                    $"Partition @ {partition.DeviceId} Reported an error: CMEC: {partition.CfgMgrErrorCode} - LEC: {partition.LastErrorCode}", 
                     Region.Hardware,
                     EventType.ERROR);
             }
@@ -544,6 +544,16 @@ public static partial class Cache
 
         return drives;
     }
+
+    // [CLEANUP]: There is a known bug causing bad information when two LogicalDisks are linked to the same partition.
+    // This routine does not check if a link has already been found on a partition and will simply overwrite other LogicalDisk information.
+    // Example:
+    // Disk #1, Partition #0 is 1000GB and contains volumes D:, with 800GB capacity and 650GB free, and E: with 200GB capacity and 50GB free.
+    // LinkLogicalPartitions() matches D: to the partition and populates the information.
+    // The routine then matches E: to the same partition and overwrites D:'s information, leaving no trace of D: whatsoever.
+    // This leaves us with a drive showing a 1000GB total capacity with only 50GB free space,
+    // and other parts of Specify will refer to a D: partition that does not exist in the drive information readout.
+    // For now, the occurrence of this bug is logged but not prevented. The routine must be rewritten to handle the situation.
     private static List<DiskDrive> LinkLogicalPartitions(List<DiskDrive> drives)
     {
         var LDtoP = GetWmi("Win32_LogicalDiskToPartition");
@@ -556,22 +566,44 @@ public static partial class Cache
                 {
                     try
                     {
-                        if (!((string)logicalDisk["Antecedent"]).Contains(drives[di].Partitions[pi].Caption))
+                        // Each entry in Win32_LogicalDiskToPartition contains and Antecedent and Dependent to link the two classes together.
+                        // Example:
+                        // Antecedent: \\\\DESKTOP-UMCS1HM\\root\\cimv2:Win32_DiskPartition.DeviceID=\"Disk #0, Partition #1\"
+                        // Dependent: \\\\DESKTOP-UMCS1HM\\root\\cimv2:Win32_LogicalDisk.DeviceID=\"C:\"
+
+                        // Each partition in the list of drives has a caption which will match the DeviceID found in an Antecedent.
+                        // If this partition's caption does not match, we keep searching for one that does.
+                        if (!((string)logicalDisk["Antecedent"]).Contains(drives[di].Partitions[pi].DeviceId))
                         {
                             continue;
                         }
 
+                        // The dependent is trimmed down to just the DeviceID, usually a drive letter.
+                        // \\\\DESKTOP-UMCS1HM\\root\\cimv2:Win32_LogicalDisk.DeviceID=\"C:\" becomes `C:`
                         var dependent = (string)logicalDisk["Dependent"];
                         var trimmedDependent = dependent.Split('"')[1].Replace("\\", string.Empty);
+
                         var dependentLogicalDisk = GetWmi("Win32_LogicalDisk");
                         foreach (var letteredDrive in dependentLogicalDisk)
                         {
+                            // Search for the matching LogicalDisk by comparing the DeviceID from the Dependent to the DeviceID of the LogicalDisk
                             if (trimmedDependent == (string)letteredDrive["DeviceID"])
                             {
-                                drives[di].Partitions[pi].PartitionLabel = trimmedDependent;
+                                if (drives[di].Partitions[pi].PartitionFree == 0)
+                                {
+                                    // This is marked as an error to bring attention to the existence of two LogicalDisks on the same partition until the routine is written to better handle this situation.
+                                    LogEvent($"Multiple LogicalDisks are linked to the same partition: {drives[di].Partitions[pi].DeviceId} - Found: {trimmedDependent} - Exisiting: {drives[di].Partitions[pi].PartitionLetter}", Region.Hardware, EventType.ERROR);
+                                }
+                                // Add the information found in the matching LogicalDisk to the partition.
+                                if (!letteredDrive.TryWmiRead("VolumeName", out drives[di].Partitions[pi].PartitionLabel))
+                                {
+                                    drives[di].Partitions[pi].PartitionLabel = trimmedDependent;
+                                }
                                 drives[di].Partitions[pi].PartitionLetter = trimmedDependent;
                                 drives[di].Partitions[pi].PartitionFree = (ulong)letteredDrive["FreeSpace"];
                                 drives[di].Partitions[pi].Filesystem = (string)letteredDrive["FileSystem"];
+
+                                // A match has been found. Break out of the loop and move to the next LogicalDisk.
                                 found = true;
                                 break;
                             }
