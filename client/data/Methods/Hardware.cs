@@ -589,7 +589,7 @@ public static partial class Cache
                             // Search for the matching LogicalDisk by comparing the DeviceID from the Dependent to the DeviceID of the LogicalDisk
                             if (trimmedDependent == (string)letteredDrive["DeviceID"])
                             {
-                                if (drives[di].Partitions[pi].PartitionFree == 0)
+                                if (drives[di].Partitions[pi].PartitionFree != 0)
                                 {
                                     // This is marked as an error to bring attention to the existence of two LogicalDisks on the same partition until the routine is written to better handle this situation.
                                     LogEvent($"Multiple LogicalDisks are linked to the same partition: {drives[di].Partitions[pi].DeviceId} - Found: {trimmedDependent} - Exisiting: {drives[di].Partitions[pi].PartitionLetter}", Region.Hardware, EventType.ERROR);
