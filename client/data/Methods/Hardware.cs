@@ -847,7 +847,7 @@ public static partial class Cache
         {
             if (partition.PartitionLetter != null && partition.PartitionLetter.Length == 2)
             {
-                driveLetter = partition.PartitionLabel;
+                driveLetter = partition.PartitionLetter;
                 break;
             }
         }
