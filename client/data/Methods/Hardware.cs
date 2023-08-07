@@ -845,7 +845,7 @@ public static partial class Cache
         string driveLetter = "";
         foreach (var partition in drive.Partitions)
         {
-            if (partition.PartitionLabel != null && partition.PartitionLabel.Length == 2)
+            if (partition.PartitionLetter != null && partition.PartitionLetter.Length == 2)
             {
                 driveLetter = partition.PartitionLabel;
                 break;
