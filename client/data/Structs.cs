@@ -129,7 +129,34 @@ public class BatteryData
     public string Full_Charge_Capacity;
     public string Remaining_Life_Percentage;
 }
+public class EdidData
+{
+    // EDID Header Bytes 0-19
+    public string FixedHeaderPattern; // Bytes 0-7 - Should always be 0x00FFFFFFFFFFFF00
+    public string ManufacturerId; // Bytes 8-9
+    public string ProductCode; // Bytes 10-11
+    public string SerialNumber; // Bytes 12-15
+    public string ManufacturedDate; // Bytes 16-17
+    public string EdidVersion; // Byte 18
+    public string EdidRevision; // Byte 19
 
+    // Basic Display Parameters Bytes 20-24
+    public string VideoInputParametersBitmap; // Byte 20
+    public string HorizontalScreenSize; // Byte 21
+    public string VerticalScreenSize; // Byte 22
+    public string DisplayGamma; // Byte 23
+    public string SupportedFeaturesBitmap; // Byte 24
+
+    // Monitor Capabilites Bytes 25-125
+    public string ChromacityCoordinates; // Bytes 25-34 - 10-bit CIE 1931 xy coordinates for RGBW
+    public string EstablishedTimingBitmap; // Bytes 35-37
+    public string TimingInformation; // Bytes 38-53
+    public string TimingDescriptors; // Bytes 54-125
+
+    // EDID Footer Bytes 126-127
+    public string NumberOfExtensions; // Byte 126
+    public string Checksum; // Byte 127
+}
 public class SensorUpdateVisitor : IVisitor
 {
     public void VisitComputer(IComputer computer)

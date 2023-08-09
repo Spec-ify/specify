@@ -342,6 +342,7 @@ public class Monolith
         public Dictionary<string, object> Motherboard;
         public List<Dictionary<string, object>> AudioDevices;
         public List<data.Monitor> Monitors;
+        public List<EdidData> EdidData;
         public List<Dictionary<string, object>> Drivers;
         public List<Dictionary<string, object>> Devices;
         public List<Dictionary<string, object>> BiosInfo;
@@ -358,6 +359,7 @@ public class Monolith
             Motherboard = Cache.Motherboard;
             AudioDevices = Cache.AudioDevices;
             Monitors = Cache.MonitorInfo;
+            EdidData = Cache.EdidData;
             Drivers = Cache.Drivers;
             Devices = Cache.Devices;
             BiosInfo = Cache.BiosInfo;

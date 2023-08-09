@@ -66,6 +66,7 @@ public static partial class Cache
     public static string DumpZip { get; private set; }
     public static bool? StaticCoreCount { get; private set; }
     public static List<Monitor> MonitorInfo { get; private set; }
+    public static List<EdidData> EdidData { get; private set; }
     public static bool? UsernameSpecialCharacters { get; private set; }
     public static int? OneDriveCommercialPathLength { get; private set; }
     public static int? OneDriveCommercialNameLength { get; private set; }

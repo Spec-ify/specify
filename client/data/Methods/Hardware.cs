@@ -316,10 +316,83 @@ public static partial class Cache
                 }
             }
         }
+
+        // Gather Extended Display Identification Data
+        await GetEdidData();
+
         await CloseTask(Region.Hardware, taskName);
         MonitorInfo =  monitors;
     }
+    private static async Task GetEdidData()
+    {
+        // Initialize the list.
+        EdidData = new();
 
+        // Code taken directly from Microsoft sample code.
+        ManagementClass mc = new ManagementClass(string.Format(@"\\{0}\root\wmi:WmiMonitorDescriptorMethods", Environment.MachineName));
+
+        foreach (ManagementObject mo in mc.GetInstances()) //Do this for each connected monitor
+        {
+            for (int i = 0; i < 256; i++)
+            {
+                ManagementBaseObject inParams = mo.GetMethodParameters("WmiGetMonitorRawEEdidV1Block");
+                inParams["BlockId"] = i;
+
+                ManagementBaseObject outParams = null;
+                try
+                {
+                    outParams = mo.InvokeMethod("WmiGetMonitorRawEEdidV1Block", inParams, null);
+                    byte[] data = (byte[])outParams["BlockContent"];
+
+                    // If the EDID block is not 128 bytes, it does not match EDID specification 1.4 and should not be parsed.
+                    if(data.Length != 128)
+                    {
+                        await LogEventAsync($"Raw EDID block has invalid length: {data.Length}", Region.Hardware, EventType.ERROR);
+                        await LogEventAsync(BitConverter.ToString(data), Region.Hardware);
+                    }
+
+                    // Convert the raw byte array to an EDID information structure and add it to the list.
+                    await ParseEdid(data);
+                }
+                catch { break; } //No more EDID blocks
+            }
+        }
+    }
+    private static async Task ParseEdid(byte[] data)
+    {
+        EdidData edidData = new();
+        try
+        {
+            edidData.FixedHeaderPattern = BitConverter.ToString(data, 0, 8);
+            edidData.ManufacturerId = BitConverter.ToString(data, 8, 2);
+            edidData.ProductCode = BitConverter.ToString(data, 10, 2);
+            edidData.SerialNumber = BitConverter.ToString(data, 12, 4);
+            edidData.ManufacturedDate = BitConverter.ToString(data, 16, 2);
+            edidData.EdidVersion = BitConverter.ToString(data, 18, 1);
+            edidData.EdidRevision = BitConverter.ToString(data, 19, 1);
+
+            edidData.VideoInputParametersBitmap = BitConverter.ToString(data, 20, 1);
+            edidData.HorizontalScreenSize = BitConverter.ToString(data, 21, 1);
+            edidData.VerticalScreenSize = BitConverter.ToString(data, 22, 1);
+            edidData.DisplayGamma = BitConverter.ToString(data, 23, 1);
+            edidData.SupportedFeaturesBitmap = BitConverter.ToString(data, 24, 1);
+
+            edidData.ChromacityCoordinates = BitConverter.ToString(data, 25, 10);
+            edidData.EstablishedTimingBitmap = BitConverter.ToString(data, 35, 3);
+            edidData.TimingInformation = BitConverter.ToString(data, 38, 16);
+            edidData.TimingDescriptors = BitConverter.ToString(data, 54, 72);
+
+            edidData.NumberOfExtensions = BitConverter.ToString(data, 126, 1);
+            edidData.Checksum = BitConverter.ToString(data, 127, 1);
+        }
+        // An exception should not be possible here, but we catch it just in case.
+        catch (Exception e)
+        {
+            await LogEventAsync("Unexpected exception thrown when parsing EDID Information.", Region.Hardware, EventType.ERROR);
+            await LogEventAsync($"{e}", Region.Hardware);
+        }
+        EdidData.Add(edidData);
+    }
     private static List<Monitor> GetMonitorInfoDXDiag()
     {
         var monitorInfo = new List<Monitor>();
