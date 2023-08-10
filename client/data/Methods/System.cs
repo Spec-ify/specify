@@ -291,7 +291,7 @@ public static partial class Cache
         var filePath = startupTask.ImagePath.Trim('\"');
         
         //trim shortcut target information
-        var substringIndex = filePath.IndexOf(".exe");
+        var substringIndex = filePath.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
 
         if (substringIndex != -1)
         {
