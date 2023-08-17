@@ -16,10 +16,13 @@ public static class DebugLog
     private static bool Started = false;
     private static DateTime LogStartTime { get; set; }
     private const string LogFilePath = "specify_debug.log";
+    private const string LogFailureFilePath = "specify_log_failure.log";
     private static readonly bool[] RegionStarted = new bool[5];
     private static readonly bool[] RegionCompleted = new bool[5];
     private static readonly DateTime[] RegionStartTime = new DateTime[5];
     private static Dictionary<string, DateTime>[] OpenTasks = new Dictionary<string, DateTime>[5];
+
+    private static SemaphoreSlim logSemaphore = new(1, 1);
 
     public enum Region
     {
@@ -177,32 +180,34 @@ public static class DebugLog
         {
             debugString = CreateDebugString($"Logging attempted on uninitialized region - {message}", region, EventType.ERROR);
         }
-        var timeout = 5;
-        var currentTime = DateTime.Now;
-        while (true)
+
+        if (Settings.EnableDebug)
         {
-            if (Settings.EnableDebug)
+            await logSemaphore.WaitAsync();
+            int retryCount = 0;
+            while (true)
             {
                 try
                 {
-                    await Task.Run(() => File.AppendAllText(LogFilePath, debugString));
+                    var writer = new StreamWriter(LogFilePath, true);
+                    await writer.WriteAsync(debugString);
+                    writer.Close();
                     break;
                 }
-                catch
+                catch (Exception ex) 
                 {
-                    await Task.Delay(30);
-                    if ((DateTime.Now - currentTime).TotalSeconds > timeout)
+                    if(retryCount > 10)
                     {
+                        File.WriteAllText(LogFailureFilePath, ex.ToString());
                         Settings.EnableDebug = false;
                         break;
                     }
+                    await Task.Delay(30);
+                    retryCount++;
                     continue;
                 }
             }
-            else
-            {
-                break;
-            }
+            logSemaphore.Release();
         }
         LogText += debugString;
     }
@@ -218,32 +223,33 @@ public static class DebugLog
         {
             debugString = CreateDebugString($"Logging attempted on uninitialized region - {message}", region, EventType.ERROR);
         }
-        var timeout = 5;
-        var currentTime = DateTime.Now;
-        while (true)
+        if (Settings.EnableDebug)
         {
-            if (Settings.EnableDebug)
+            logSemaphore.Wait();
+            int retryCount = 0;
+            while (true)
             {
                 try
                 {
-                    File.AppendAllText(LogFilePath, debugString);
+                    var writer = new StreamWriter(LogFilePath, true);
+                    writer.Write(debugString);
+                    writer.Close();
                     break;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    Thread.Sleep(30);
-                    if ((DateTime.Now - currentTime).TotalSeconds > timeout)
+                    if (retryCount > 10)
                     {
+                        File.WriteAllText(LogFailureFilePath, ex.ToString());
                         Settings.EnableDebug = false;
                         break;
                     }
+                    Thread.Sleep(30);
+                    retryCount++;
                     continue;
                 }
             }
-            else
-            {
-                break;
-            }
+            logSemaphore.Release();
         }
         LogText += debugString;
     }

@@ -173,17 +173,17 @@ public static class Utils
         }
         catch (FileNotFoundException)
         {
-            DebugLog.LogEvent($"Chromium extension files could not be found.", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            DebugLog.LogEvent($"Chromium extension files could not be found.", DebugLog.Region.System, DebugLog.EventType.WARNING);
             return null;
         }
         catch (JsonException)
         {
-            DebugLog.LogEvent($"Chromium extension json files corrupt or invalid.", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            DebugLog.LogEvent($"Chromium extension json files corrupt or invalid.", DebugLog.Region.System, DebugLog.EventType.WARNING);
             return null;
         }
         catch (ArgumentOutOfRangeException)
         {
-            DebugLog.LogEvent($"Chromium extension path invalid: {path}", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            DebugLog.LogEvent($"Chromium extension path invalid: {path}", DebugLog.Region.System, DebugLog.EventType.WARNING);
             return null;
         }
         catch (Exception e)
