@@ -1,3 +1,4 @@
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,6 +24,7 @@ public static partial class Cache
                 "Description, DHCPEnabled, DHCPServer, DNSDomain, DNSDomainSuffixSearchOrder, DNSHostName, "
                 + "DNSServerSearchOrder, IPEnabled, IPAddress, IPSubnet, DHCPLeaseObtained, DHCPLeaseExpires, "
                 + "DefaultIPGateway, MACAddress, InterfaceIndex");
+
             NetAdapters2 = Utils.GetWmi("MSFT_NetAdapter",
                 "*",
                 @"root\standardcimv2");
@@ -275,6 +277,7 @@ public static partial class Cache
         object PermanentAddress;
         object PromiscuousMode;
         object State;
+        object InterfaceGuid;
 
         List<bool> NetAdapter2Integrity = new()
         {
@@ -286,7 +289,8 @@ public static partial class Cache
             adapter2.TryWmiRead("OperationalStatusDownMediaDisconnected", out OperationalStatusDownedMediaDisconnected),
             adapter2.TryWmiRead("PermanentAddress", out PermanentAddress),
             adapter2.TryWmiRead("PromiscuousMode", out PromiscuousMode),
-            adapter2.TryWmiRead("State", out State)
+            adapter2.TryWmiRead("State", out State),
+            adapter2.TryWmiRead("InterfaceGuid", out InterfaceGuid)
         };
         if (NetAdapter2Integrity.Contains(false))
         {
@@ -301,6 +305,7 @@ public static partial class Cache
         adapter.Add("PermanentAddress", PermanentAddress);
         adapter.Add("PromiscuousMode", PromiscuousMode);
         adapter.Add("State", State);
+        adapter.Add("DNSIsStatic", Utils.GetRegistryValue<string>(Registry.LocalMachine, "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\" + (string)InterfaceGuid, "NameServer") != "");
 
     }
     private static Dictionary<string, string> GetAutoTuningLevels()
