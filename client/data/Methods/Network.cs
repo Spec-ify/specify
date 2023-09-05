@@ -305,6 +305,7 @@ public static partial class Cache
         adapter.Add("PermanentAddress", PermanentAddress);
         adapter.Add("PromiscuousMode", PromiscuousMode);
         adapter.Add("State", State);
+        adapter.Add("DNSIPV6", Utils.GetRegistryValue<string>(Registry.LocalMachine, "SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters\\Interfaces\\" + (string)InterfaceGuid, "NameServer"));
         adapter.Add("DNSIsStatic", Utils.GetRegistryValue<string>(Registry.LocalMachine, "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\" + (string)InterfaceGuid, "NameServer") != "");
 
     }
