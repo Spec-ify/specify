@@ -833,10 +833,21 @@ public static partial class Cache
     private static async Task GetDefaultBrowser()
     {
         await OpenTask(Region.System, "GetDefaultBrowser");
-        string defaultBrowserProcess = Regex.Match(GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(GetRegistryValue<string>(Registry.CurrentUser,
-            "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
-        DefaultBrowser = (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
-        await CloseTask(Region.System, "GetDefaultBrowser");
+        try
+        {
+            string defaultBrowserProcess = Regex.Match(GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(GetRegistryValue<string>(Registry.CurrentUser,
+                "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice", "ProgID"), "\\shell\\open\\command"), ""), "\\w*.exe").Value;
+            DefaultBrowser = (defaultBrowserProcess.Equals("Launcher.exe")) ? "OperaGX" : defaultBrowserProcess;
+        }
+        catch (Exception e)
+        {
+            await LogEventAsync("Could not detect default browser", Region.System, EventType.ERROR);
+            await LogEventAsync($"{e}", Region.System);
+        }
+        finally
+        {
+            await CloseTask(Region.System, "GetDefaultBrowser");
+        }
     }
 
     private static List<Dictionary<string, object>> GetPowerProfiles()
