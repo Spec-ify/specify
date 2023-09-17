@@ -56,7 +56,7 @@ public static partial class Cache
                 "CurrentClockSpeed, Manufacturer, Name, SocketDesignation, NumberOfEnabledCore, ThreadCount").First();
         Gpu = GetWmi("Win32_VideoController",
             "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
-            + "CurrentRefreshRate, CurrentBitsPerPixel");
+            + "CurrentRefreshRate, CurrentBitsPerPixel, DriverVersion, DriverDate");
         Motherboard = GetWmi("Win32_BaseBoard", "Manufacturer, Product, SerialNumber").FirstOrDefault();
         AudioDevices = GetWmi("Win32_SoundDevice", "Name, Manufacturer, Status, DeviceID");
         Drivers = GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
