@@ -213,7 +213,6 @@ public class ScheduledTask
     public ScheduledTask(Task t)
     {
         // A try-catch in a constructor feels like bad form but I'd rather this than double up the error checking inside GetScheduledTasks()
-        // [CLEANUP] This can be written better to check the file exists first.
         try
         {
             Name = t.Name;

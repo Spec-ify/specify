@@ -168,16 +168,6 @@ public static partial class Cache
                 continue;
             }
 
-            //[CLEANUP]: I'm not sure these checks are necessary.
-            if (string.IsNullOrEmpty(appVersion))
-            {
-                appVersion = "";
-            }
-            if (string.IsNullOrEmpty (appDate))
-            {
-                appDate = "";
-            }
-
             if (appName != null)
             {
                 InstalledApps.Add(
