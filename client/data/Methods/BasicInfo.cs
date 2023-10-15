@@ -18,9 +18,6 @@ public static partial class Cache
         }
         catch (Exception ex)
         {
-            /*await DebugLog.LogEventAsync("UNEXPECTED FATAL EXCEPTION", DebugLog.Region.Main, DebugLog.EventType.ERROR);
-            await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.Main);
-            Environment.Exit(-1);*/
             await DebugLog.LogFatalError($"{ex}", DebugLog.Region.Main);
         }
         MainDataWriteSuccess = true;

@@ -364,6 +364,13 @@ public static partial class Cache
         try
         {
             edidData.FixedHeaderPattern = BitConverter.ToString(data, 0, 8);
+
+            // EDID blocks always begin with 0x00FFFFFFFFFFFF00. If the data is not a valid EDID block, ignore it.
+            if (edidData.FixedHeaderPattern != "00-FF-FF-FF-FF-FF-FF-00")
+            {
+                edidData.FixedHeaderPattern += " - INVALID. This is an extension block.";
+            }
+
             edidData.ManufacturerId = BitConverter.ToString(data, 8, 2);
             edidData.ProductCode = BitConverter.ToString(data, 10, 2);
             edidData.SerialNumber = BitConverter.ToString(data, 12, 4);

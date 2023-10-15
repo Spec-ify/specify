@@ -14,7 +14,7 @@ namespace specify_client.data;
 
 public static partial class Cache
 {
-    public static async System.Threading.Tasks.Task MakeNetworkData()
+    public static async Task MakeNetworkData()
     {
         try
         {
@@ -36,8 +36,8 @@ public static partial class Cache
             GetAdapterProperties();
             CombineAdapterInformation();
 
-            var rssWmi = Utils.GetWmi("MSFT_NetOffloadGlobalSetting", "ReceiveSideScaling", "root\\standardcimv2");
-            rssWmi[0].TryWmiRead("ReceiveSideScaling", out byte? rcvSideScaling);
+            var rssWmi = Utils.GetWmi("MSFT_NetOffloadGlobalSetting", "ReceiveSideScaling", "root\\standardcimv2").FirstOrDefault();
+            rssWmi.TryWmiRead("ReceiveSideScaling", out byte? rcvSideScaling);
 
             // ReceiveSideScaling is false if the WMI value is zero and true if the WMI value is 1, however the data is stored in WMI as a byte, allowing numbers above 1.
             // This statement will avoid errors if the WMI value is not valid.
@@ -53,50 +53,12 @@ public static partial class Cache
             await DebugLog.LogEventAsync("NetworkConnections Information retrieved.", region);
 
             await DebugLog.EndRegion(DebugLog.Region.Networking);
-            // Uncomment the block below to run a traceroute to Google's DNS
-            /*var NetStats = await GetNetworkRoutes("8.8.8.8", 1000);
-            for (int i = 0; i < NetStats.Address.Count; i++)
-            {
-                Console.WriteLine($"{i}: {NetStats.Address[i]} --- Lat: {NetStats.AverageLatency[i]} --- PL: {NetStats.PacketLoss[i]}");
-            }*/
         }
         catch (Exception ex)
         {
-            /*await DebugLog.LogEventAsync("UNEXPECTED FATAL EXCEPTION", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
-            await DebugLog.LogEventAsync($"{ex}", DebugLog.Region.Networking);
-            Environment.Exit(-1);*/
             await DebugLog.LogFatalError($"{ex}", DebugLog.Region.Networking);
         }
         NetworkWriteSuccess = true;
-    }
-
-    private static IEnumerable<IPAddress> GetTraceroute(string ipAddress, int timeout = 10000, int maxTTL = 30, int bufferSize = 100)
-    {
-        // Cap off the TTL to not overdo the basal traceroute.
-        if (maxTTL > 30)
-        {
-            maxTTL = 30;
-        }
-
-        var buffer = new byte[bufferSize];
-        new Random().NextBytes(buffer);
-
-        using var pingTool = new Ping();
-
-        foreach (var i in Enumerable.Range(1, maxTTL))
-        {
-            var pingOptions = new PingOptions(i, true);
-            var reply = pingTool.Send(ipAddress, timeout, buffer, pingOptions);
-
-            if (reply.Status is IPStatus.Success or IPStatus.TtlExpired)
-            {
-                yield return reply.Address;
-            }
-            if (reply.Status != IPStatus.TtlExpired && reply.Status != IPStatus.TimedOut)
-            {
-                break;
-            }
-        }
     }
 
     private static List<NetworkConnection> GetNetworkConnections()
@@ -108,16 +70,16 @@ public static partial class Cache
         foreach (var connection in connections)
         {
             NetworkConnection conn = new();
-            int port = 0;
-            port += connection.localPort[0] << 8;
+
+            // port numbers are 16-bit numbers stored in two bytes. The bit-shifts here convert the two bytes into the real port number.
+            int port = connection.localPort[0] << 8;
             port += connection.localPort[1];
 
-            int rport = 0;
-            rport += connection.remotePort[0] << 8;
+            int rport = connection.remotePort[0] << 8;
             rport += connection.remotePort[1];
 
+            // IPv4 addresses are returned as a 32-bit unsigned integer and must be converted into a byte array to use in the IPAddress constructor.
             var la = connection.localAddr;
-
             var localAddrByteArray = BitConverter.GetBytes(la);
             var localAddr = new IPAddress(localAddrByteArray);
 
@@ -135,7 +97,6 @@ public static partial class Cache
         }
         var v6connections = GetAllTCPv6Connections();
 
-        //[CLEANUP]: There is a much cleaner way to do this.
         foreach (var connection in v6connections)
         {
             NetworkConnection conn = new();
@@ -145,47 +106,13 @@ public static partial class Cache
 
             int rport = 0;
             rport += connection.remotePort[0] << 8;
-            rport += connection.remotePort[1];
+            rport += connection.remotePort[1];            
 
-            var la = connection.localAddr;
-            var ra = connection.remoteAddr;
+            IPAddress localIpAddress = new(connection.localAddr);
+            IPAddress remoteIpAddress = new(connection.remoteAddr);
 
-            var localAddr = "";
-            var remoteAddr = "";
-            for (int i = 0; i < la.Length; i++)
-            {
-                if (i % 2 == 0)
-                {
-                    if (i != 0)
-                    {
-                        localAddr += ":";
-                    }
-                    if (la[i] == 0x00 && la[i + 1] == 0x00)
-                    {
-                        i++;
-                        continue;
-                    }
-                }
-                byte[] annoyingArrayAssignment = new byte[1] { la[i] };
-                localAddr += BitConverter.ToString(annoyingArrayAssignment);
-            }
-            for (int i = 0; i < ra.Length; i++)
-            {
-                if (i % 2 == 0)
-                {
-                    if (i != 0)
-                    {
-                        remoteAddr += ":";
-                    }
-                    if (ra[i] == 0x00 && ra[i + 1] == 0x00)
-                    {
-                        i++;
-                        continue;
-                    }
-                }
-                byte[] annoyingArrayAssignment = new byte[1] { ra[i] };
-                remoteAddr += BitConverter.ToString(annoyingArrayAssignment);
-            }
+            var localAddr = localIpAddress.ToString();
+            var remoteAddr = remoteIpAddress.ToString();
 
             conn.LocalIPAddress = localAddr;
             conn.LocalPort = port;
@@ -268,29 +195,19 @@ public static partial class Cache
     }
     private static void CombineAdapterInformation(Dictionary<string, object> adapter, Dictionary<string, object> adapter2)
     {
-        object FullDuplex;
-        object MediaConnectState;
-        object MediaDuplexState;
-        object MtuSize;
-        object Name;
-        object OperationalStatusDownedMediaDisconnected;
-        object PermanentAddress;
-        object PromiscuousMode;
-        object State;
-        object InterfaceGuid;
 
         List<bool> NetAdapter2Integrity = new()
         {
-            adapter2.TryWmiRead("FullDuplex", out FullDuplex),
-            adapter2.TryWmiRead("MediaConnectState", out MediaConnectState),
-            adapter2.TryWmiRead("MediaDuplexState", out MediaDuplexState),
-            adapter2.TryWmiRead("MtuSize", out MtuSize),
-            adapter2.TryWmiRead("Name", out Name),
-            adapter2.TryWmiRead("OperationalStatusDownMediaDisconnected", out OperationalStatusDownedMediaDisconnected),
-            adapter2.TryWmiRead("PermanentAddress", out PermanentAddress),
-            adapter2.TryWmiRead("PromiscuousMode", out PromiscuousMode),
-            adapter2.TryWmiRead("State", out State),
-            adapter2.TryWmiRead("InterfaceGuid", out InterfaceGuid)
+            adapter2.TryWmiRead("FullDuplex", out object FullDuplex),
+            adapter2.TryWmiRead("MediaConnectState", out object MediaConnectState),
+            adapter2.TryWmiRead("MediaDuplexState", out object MediaDuplexState),
+            adapter2.TryWmiRead("MtuSize", out object MtuSize),
+            adapter2.TryWmiRead("Name", out object Name),
+            adapter2.TryWmiRead("OperationalStatusDownMediaDisconnected", out object OperationalStatusDownedMediaDisconnected),
+            adapter2.TryWmiRead("PermanentAddress", out object PermanentAddress),
+            adapter2.TryWmiRead("PromiscuousMode", out object PromiscuousMode),
+            adapter2.TryWmiRead("State", out object State),
+            adapter2.TryWmiRead("InterfaceGuid", out object InterfaceGuid)
         };
         if (NetAdapter2Integrity.Contains(false))
         {
@@ -374,74 +291,6 @@ public static partial class Cache
         }
         return tableRows != null ? tableRows.ToList() : new List<IPR>();
     }
-
-    private static async System.Threading.Tasks.Task<int> GetLatency(string ipAddress, int timeout, byte[] buffer, PingOptions pingOptions)
-    {
-        try
-        {
-            using var ping = new Ping();
-            var pingReply = await ping.SendPingAsync(ipAddress, timeout, buffer, pingOptions);
-
-            if (pingReply != null)
-            {
-                return pingReply.Status != IPStatus.Success ? -1 : (int)pingReply.RoundtripTime;
-            }
-            else
-            {
-                return -1;
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-            return -2;
-        }
-    }
-
-    private static async System.Threading.Tasks.Task<(int, double)> GetHostStats(string ipAddress, int timeout = 10000, int pingCount = 100)
-    {
-        var pingOptions = new PingOptions();
-
-        var data = "meaninglessdatawithalotofletters"; // 32 letters in total.
-        var buffer = Encoding.ASCII.GetBytes(data);
-
-        var failedPings = 0;
-        var errors = 0;
-        var latencySum = 0;
-        var statTasks = new List<System.Threading.Tasks.Task<int>>();
-
-        for (int i = 0; i < pingCount; i++)
-        {
-            var task = System.Threading.Tasks.Task.Run(() => GetLatency(ipAddress, timeout, buffer, pingOptions));
-            statTasks.Add(task);
-        }
-        await System.Threading.Tasks.Task.WhenAll(statTasks);
-        foreach (var task in statTasks)
-        {
-            switch (task.Result)
-            {
-                case -1:
-                    failedPings++;
-                    break;
-
-                case -2:
-                    errors++;
-                    break;
-
-                default:
-                    latencySum += task.Result;
-                    break;
-            }
-        }
-        var averageLatency = latencySum / pingCount;
-        var packetLoss = failedPings / (double)pingCount;
-        if (errors > 0)
-        {
-            Console.WriteLine($"{ipAddress} - ERRORS: {errors}");
-        }
-        return (averageLatency, packetLoss);
-    }
-
     private static string GetHostsFile()
     {
         StringBuilder hostsFile = new();
@@ -459,28 +308,11 @@ public static partial class Cache
         }
         return hostsFile.ToString();
     }
-
     public static string GetHostsFileHash()
     {
         using var sha256 = System.Security.Cryptography.SHA256.Create();
         using var stream = File.OpenRead(@"C:\Windows\System32\drivers\etc\hosts");
         var hash = sha256.ComputeHash(stream);
         return BitConverter.ToString(hash).Replace("-", "");
-    }
-
-    private static async System.Threading.Tasks.Task<NetworkRoute> GetNetworkRoutes(string ipAddress, int pingCount = 100, int timeout = 10000, int bufferSize = 100)
-    {
-        var addressList = GetTraceroute(ipAddress, timeout, 30, bufferSize);
-        var networkRoute = new NetworkRoute();
-
-        foreach (var address in addressList)
-        {
-            networkRoute.Address.Add(address.ToString());
-            (int Latency, double Loss) hostStats = await GetHostStats(ipAddress, timeout, pingCount);
-            networkRoute.AverageLatency.Add(hostStats.Latency);
-            networkRoute.PacketLoss.Add(hostStats.Loss);
-        }
-
-        return networkRoute;
     }
 }
