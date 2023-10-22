@@ -146,7 +146,7 @@
                   Width="140" Foreground="White"
                   FontFamily="Consolas" />
 
-        <!-- Upload Toggle -->
+        <!-- Debug Log -->
 
         <Border CornerRadius="8"
                 BorderThickness="1"
@@ -155,15 +155,16 @@
                     Grid.Row="2" Grid.RowSpan="1"
                     Grid.Column="3" Margin="5,5,5,5" />
 
-        <CheckBox HorizontalAlignment="Center"
-                  VerticalAlignment="Center" Content=" Don't Upload  "
-                  Checked="UploadOff" Unchecked="UploadOn"
+        <CheckBox Name="DebugLogCheckbox"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center" Content=" Enable Debug  &#x0a;    Logging"
+                  Checked="DebugLogToggleOn" Unchecked="DebugLogToggleOff"
                   Style="{DynamicResource CheckBoxStyle1}"
                   Grid.Row="2" Grid.Column="3"
                   Width="140" Foreground="White"
-                  FontFamily="Consolas" VerticalContentAlignment="Center" />
+                  FontFamily="Consolas"/>
 
-        <!-- Debug Log -->
+        <!-- Upload Toggle -->
 
         <Border CornerRadius="8"
                 BorderThickness="1"
@@ -172,12 +173,44 @@
                     Grid.Row="3" Grid.RowSpan="1"
                     Grid.Column="3" Margin="5,5,5,5" />
 
-        <CheckBox HorizontalAlignment="Center"
-                  VerticalAlignment="Center" Content=" Enable Debug  &#x0a;    Logging"
-                  Checked="DebugLogToggleOn" Unchecked="DebugLogToggleOff"
+        <CheckBox Name="DontUploadCheckbox"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center" Content=" Don't Upload  "
+                  Checked="UploadOff" Unchecked="UploadOn"
                   Style="{DynamicResource CheckBoxStyle1}"
                   Grid.Row="3" Grid.Column="3"
                   Width="140" Foreground="White"
-                  FontFamily="Consolas" />
+                  FontFamily="Consolas" VerticalContentAlignment="Center"/>
+
+
+
+        <!-- <CheckBox
+                  VerticalAlignment="Top" Content="Unlock"
+                  Checked="UnlockUploadOn" Unchecked="UnlockUploadOff"
+                  Style="{DynamicResource CheckBoxStyle1}"
+                  Grid.Row="3" Grid.Column="3" Foreground="White"
+                  FontFamily="Consolas" FontSize="12" RenderTransformOrigin="0.5,0.5" Margin="6,36,74,0" >
+            <CheckBox.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform ScaleX="0.7" ScaleY="0.7"/>
+                    <SkewTransform/>
+                    <RotateTransform/>
+                    <TranslateTransform/>
+                </TransformGroup>
+            </CheckBox.RenderTransform>
+        </CheckBox> -->
+        <TextBlock Name="WarningTextBlock"
+                   Foreground="Red"
+                   Grid.Row="4"
+                   Grid.Column="3"
+                   FontSize="10"
+                   FontFamily="Consolas"
+                   TextWrapping="Wrap"
+                   VerticalAlignment="Top"
+                   HorizontalAlignment="Center"
+                   Visibility="Hidden" Margin="0,4,0,8">
+            Careful! Disabling upload will prevent helpers from seeing the report.
+        </TextBlock>
     </Grid>
+
 </Page>

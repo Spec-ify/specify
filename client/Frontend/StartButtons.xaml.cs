@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System;
+using System.Windows.Media;
 
 namespace specify_client;
 
@@ -17,11 +18,13 @@ public partial class StartButtons : Page
     private void UploadOff(object sender, RoutedEventArgs e)
     {
         Settings.DontUpload = true;
+        WarningTextBlock.Visibility = Visibility.Visible;
     }
 
     private void UploadOn(object sender, RoutedEventArgs e)
     {
         Settings.DontUpload = false;
+        WarningTextBlock.Visibility = Visibility.Hidden;
     }
 
     private void UsernameOn(object sender, RoutedEventArgs e)
@@ -53,7 +56,18 @@ public partial class StartButtons : Page
     {
         Settings.EnableDebug = false;
     }
-
+    private void UnlockUploadOn(object sender, RoutedEventArgs e)
+    {
+        DontUploadCheckbox.IsEnabled = true;
+        DontUploadCheckbox.Foreground = new SolidColorBrush(Colors.White);
+        WarningTextBlock.Visibility = Visibility.Visible;
+    }
+    private void UnlockUploadOff(object sender, RoutedEventArgs e)
+    {
+        DontUploadCheckbox.IsEnabled = false;
+        DontUploadCheckbox.Foreground = new SolidColorBrush(Colors.Gray);
+        WarningTextBlock.Visibility = Visibility.Hidden;
+    }
     private async void StartAction(object sender, RoutedEventArgs e)
     {
         try

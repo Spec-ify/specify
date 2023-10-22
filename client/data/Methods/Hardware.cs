@@ -1001,7 +1001,8 @@ public static partial class Cache
             // Verify the command was successful and report any errors.
             if (!result)
             {
-                LogEvent($"Interop failure during NVMe SMART data retrieval. {Marshal.GetLastWin32Error()} on drive {driveLetter}", Region.Hardware, EventType.ERROR);
+                string errorMessage = new Win32Exception(Marshal.GetLastWin32Error()).Message;
+                LogEvent($"Interop failure during NVMe SMART data retrieval. {Marshal.GetLastWin32Error()} - {errorMessage} on drive {driveLetter}", Region.Hardware, EventType.ERROR);
                 Marshal.FreeHGlobal(buffer);
                 return drive;
             }
