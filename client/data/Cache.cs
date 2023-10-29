@@ -14,7 +14,6 @@ public static partial class Cache
     [NonSerialized]
     public const int AF_INET6 = 23; // IP_v6 = System.Net.Sockets.AddressFamily.InterNetworkV6
 
-    public static List<string> Issues { get; set; }
     public static Dictionary<string, object> Os { get; private set; }
     public static Dictionary<string, object> Cs { get; private set; }
     public static IDictionary SystemVariables { get; private set; }

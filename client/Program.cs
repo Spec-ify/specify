@@ -18,8 +18,6 @@ public class Program
     {
         try
         {
-            // Issues is no longer used anywhere, however it is assigned a list to prevent potential errors with Specified.
-            data.Cache.Issues = new List<string>();
             
             // Set Specify to run in en-US so system messages are printed in English.
             var culture = CultureInfo.CreateSpecificCulture("en-US");

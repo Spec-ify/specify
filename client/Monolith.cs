@@ -38,8 +38,6 @@ public class Monolith
     public MonolithHardware Hardware;
     public MonolithSecurity Security;
     public MonolithNetwork Network;
-    /** For issues with gathering the data itself. No diagnoses based on the info will be made in this program. */
-    public List<string> Issues;
     public string DebugLogText;
 
     public Monolith()
@@ -54,7 +52,6 @@ public class Monolith
         Hardware = new MonolithHardware();
         Security = new MonolithSecurity();
         Network = new MonolithNetwork();
-        Issues = Cache.Issues;
     }
 
     public string Serialize()
