@@ -303,7 +303,7 @@ public static partial class Cache
         }
         catch (FileNotFoundException)
         {
-            DebugLog.LogEvent("Hosts file not found.", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
+            DebugLog.LogEvent("Hosts file not found.", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
             return "";
         }
         return hostsFile.ToString();
@@ -311,8 +311,17 @@ public static partial class Cache
     public static string GetHostsFileHash()
     {
         using var sha256 = System.Security.Cryptography.SHA256.Create();
-        using var stream = File.OpenRead(@"C:\Windows\System32\drivers\etc\hosts");
-        var hash = sha256.ComputeHash(stream);
-        return BitConverter.ToString(hash).Replace("-", "");
+        try
+        {
+            using var stream = File.OpenRead(@"C:\Windows\System32\drivers\etc\hosts");
+            var hash = sha256.ComputeHash(stream);
+            return BitConverter.ToString(hash).Replace("-", "");
+        } 
+        catch (FileNotFoundException)
+        {
+            // If this catch happens, the error has already been reported in GetHostsFile() and does not need to be reported again.
+            return "";
+        }
+        
     }
 }
