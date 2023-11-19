@@ -1198,7 +1198,7 @@ public static partial class Cache
     }
 
     // TEMPERATURES
-    private static async Task<List<TempMeasurement>> GetTemps()
+    private static async Task GetTemps()
     {
         var taskName = "GetTemps";
         await OpenTask(Region.Hardware, taskName);
@@ -1250,7 +1250,7 @@ public static partial class Cache
         }
 
         await CloseTask(Region.Hardware, taskName);
-        return Temps;
+        Temperatures = Temps;
     }
 
     // BATTERIES
