@@ -514,6 +514,7 @@ public static partial class Cache
                 (Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender", "DisableAntiSpyware");
             var passiveMode = new RegistryValue<int?>
                 (Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender", "PassiveMode");
+            passiveMode.Name = "Windows Defender\\Passive Mode"; // This edit makes it easier to understand what the registry entry is.
             var puaProtection = new RegistryValue<int?>
                 (Registry.LocalMachine, @"\SOFTWARE\Microsoft\Windows Defender", "PUAProtection");
             // Defender 2
@@ -523,6 +524,7 @@ public static partial class Cache
                 (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiSpyware");
             var passiveModepolicy = new RegistryValue<int?>
                 (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "PassiveMode");
+            passiveModepolicy.Name = "Windows Defender\\Passive Mode";
             var puaProtectionpolicy = new RegistryValue<int?>
                 (Registry.LocalMachine, @"\SOFTWARE\Policies\Microsoft\Windows Defender", "PUAProtection");
 
@@ -530,6 +532,7 @@ public static partial class Cache
                 (Registry.LocalMachine, @"\Software\Policies\Microsoft\MRT", "DontReportInfectionInformation");
             var disableWer = new RegistryValue<int?>
                 (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting", "Disabled");
+            disableWer.Name = "Windows Error Reporting\\Disabled";
             var unsupportedTpmOrCpu = new RegistryValue<int?>
                 (Registry.LocalMachine, @"SYSTEM\Setup\MoSetup", "AllowUpgradesWithUnsupportedTPMOrCPU");
             var hwSchMode = new RegistryValue<int?>
@@ -550,6 +553,7 @@ public static partial class Cache
             var bypassRamCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassRAMCheck");
             var bypassSecureBootCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassSecureBootCheck");
             var hwNotificationCache = new RegistryValue<int?>(Registry.CurrentUser, @"Control Panel\UnsupportedHardwareNotificationCache", "SV2");
+            hwNotificationCache.Name = "UnsupportedHardwareNotificationCache\\SV2";
             var prioritySeparation = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\PriorityControl", "Win32PrioritySeparation");
 
             ChoiceRegistryValues = new List<IRegistryValue>()
