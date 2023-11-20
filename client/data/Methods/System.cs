@@ -513,7 +513,7 @@ public static partial class Cache
             var disableAs = new RegistryValue<int?>
                 (Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender", "DisableAntiSpyware");
             var passiveMode = new RegistryValue<int?>
-                (Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender", "Windows Defender\\PassiveMode");
+                (Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows Defender", "PassiveMode");
             var puaProtection = new RegistryValue<int?>
                 (Registry.LocalMachine, @"\SOFTWARE\Microsoft\Windows Defender", "PUAProtection");
             // Defender 2
@@ -522,14 +522,14 @@ public static partial class Cache
             var disableAspolicy = new RegistryValue<int?>
                 (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiSpyware");
             var passiveModepolicy = new RegistryValue<int?>
-                (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "Windows Defender\\PassiveMode");
+                (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows Defender", "PassiveMode");
             var puaProtectionpolicy = new RegistryValue<int?>
                 (Registry.LocalMachine, @"\SOFTWARE\Policies\Microsoft\Windows Defender", "PUAProtection");
 
             var drii = new RegistryValue<int?>
                 (Registry.LocalMachine, @"\Software\Policies\Microsoft\MRT", "DontReportInfectionInformation");
             var disableWer = new RegistryValue<int?>
-                (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting", "Windows Error Reporting\\Disabled");
+                (Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting", "Disabled");
             var unsupportedTpmOrCpu = new RegistryValue<int?>
                 (Registry.LocalMachine, @"SYSTEM\Setup\MoSetup", "AllowUpgradesWithUnsupportedTPMOrCPU");
             var hwSchMode = new RegistryValue<int?>
@@ -549,7 +549,7 @@ public static partial class Cache
             var bypassTpmCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassTPMCheck");
             var bypassRamCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassRAMCheck");
             var bypassSecureBootCheck = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\Setup\LabConfig", "BypassSecureBootCheck");
-            var hwNotificationCache = new RegistryValue<int?>(Registry.CurrentUser, @"Control Panel\UnsupportedHardwareNotificationCache", "UnsupportedHardwareNotificationCache\\SV2");
+            var hwNotificationCache = new RegistryValue<int?>(Registry.CurrentUser, @"Control Panel\UnsupportedHardwareNotificationCache", "SV2");
             var prioritySeparation = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\PriorityControl", "Win32PrioritySeparation");
 
             ChoiceRegistryValues = new List<IRegistryValue>()
