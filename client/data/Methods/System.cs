@@ -308,8 +308,9 @@ public static partial class Cache
         const string dumpDir = @"C:\Windows\Minidump";
         string TempFolder = Path.GetTempPath() + @"specify-dumps";
         string TempZip = Path.GetTempPath() + @"specify-dumps.zip";
+        CountMinidumps();
 
-        if (CountMinidumps() <= 0)
+        if (RecentMinidumps <= 0)
         {
             await LogEventAsync("No current dumps found.", Region.System);
             await CloseTask(Region.System, "GetMiniDumps");
@@ -470,12 +471,12 @@ public static partial class Cache
         await CloseTask(Region.System, taskName);
     }
 
-    private static int CountMinidumps()
+    private static void CountMinidumps()
     {
         const string dumpPath = @"C:\Windows\Minidump";
         var count = 0;
 
-        if (!Directory.Exists(dumpPath)) return 0;
+        if (!Directory.Exists(dumpPath)) return;
 
         var files = Directory.GetFiles(dumpPath);
 
@@ -488,7 +489,7 @@ public static partial class Cache
                 count++;
             }
         }
-        return count;
+        RecentMinidumps = count;
     }
 
     private static async Task RegistryCheck()
