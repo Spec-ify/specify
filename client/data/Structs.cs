@@ -88,6 +88,7 @@ public class Partition
     public uint CfgMgrErrorCode;
     public uint LastErrorCode;
     public bool DirtyBitSet;
+    public bool BitlockerEncryptionStatus = false;
     [NonSerialized()] public string DeviceId; // Only used to link partitions, do not serialize.
 }
 

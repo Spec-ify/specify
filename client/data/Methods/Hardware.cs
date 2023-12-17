@@ -499,7 +499,6 @@ public static partial class Cache
         List<DiskDrive> drives = new();
         var driveWmiInfo = GetWmi("Win32_DiskDrive");
 
-        // This assumes the WMI info reports disks in order by drive number. I'm not certain this is a safe assumption.
         var diskNumber = 0;
         foreach (var driveWmi in driveWmiInfo)
         {
@@ -828,6 +827,47 @@ public static partial class Cache
         }
         return drives;
     }
+    private static List<DiskDrive> GetBitlockerStatus(List<DiskDrive> drives)
+    {
+        try
+        {
+            var ns = @"root\cimv2\Security\MicrosoftVolumeEncryption";
+            var cls = "Win32_EncryptableVolume";
+            var bitlockerStatuses = GetWmi(cls, "*", ns);
+            foreach (var bitlockerStatus in bitlockerStatuses)
+            {
+                var partition = GetPartitionByDriveLetter((string)bitlockerStatus["DriveLetter"], drives);
+                if (partition != null)
+                {
+                    partition.BitlockerEncryptionStatus = (bool)bitlockerStatus["IsVolumeInitializedForProtection"];
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            LogEvent($"Unexpected exception while retrieving bitlocker status. {e}", Region.Hardware, EventType.ERROR);
+        }
+        return drives;
+    }
+    private static Partition GetPartitionByDriveLetter(string driveLetter, List<DiskDrive> drives)
+    {
+        foreach(var drive in drives)
+        {
+            foreach(var partition in drive.Partitions)
+            {
+                if(string.IsNullOrEmpty(partition.PartitionLetter))
+                {
+                    continue;
+                }
+                if(partition.PartitionLetter.Equals(driveLetter))
+                {
+                    return partition;
+                }
+            }
+        }
+        LogEvent($"A matching partition could not be found for drive letter \"{driveLetter}\"", Region.Hardware, EventType.ERROR);
+        return null;
+    }
     private static async Task GetDiskDriveData()
     {
         var taskName = "GetDiskDriveData";
@@ -838,6 +878,7 @@ public static partial class Cache
         drives = GetBasicPartitionInfo(drives);
         drives = LinkLogicalPartitions(drives);
         drives = LinkNonLogicalPartitions(drives);
+        drives = GetBitlockerStatus(drives);
 
         try
         {
