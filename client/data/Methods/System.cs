@@ -35,19 +35,19 @@ public static partial class Cache
             Region region = Region.System;
             await StartRegion(region);
 
-            systemTaskList.Add(GetEnvironmentVariables());
-            systemTaskList.Add(GetSystemWMIInfo());
-            systemTaskList.Add(CheckCommercialOneDrive());
-            systemTaskList.Add(GetInstalledApps());
-            systemTaskList.Add(GetScheduledTasks());
+            systemTaskList.Add(GetEnvironmentVariables()); 
+            systemTaskList.Add(GetSystemWMIInfo()); 
+            systemTaskList.Add(CheckCommercialOneDrive()); 
+            systemTaskList.Add(GetInstalledApps()); 
+            systemTaskList.Add(GetScheduledTasks()); 
             systemTaskList.Add(GetStartupTasks());
-            systemTaskList.Add(RegistryCheck());
-            systemTaskList.Add(GetMicroCodes());
-            systemTaskList.Add(GetStaticCoreCount());
-            systemTaskList.Add(GetBrowserExtensions());
-            systemTaskList.Add(GetMiniDumps());
-            systemTaskList.Add(GetDefaultBrowser());
-            systemTaskList.Add(GetProcesses());
+            systemTaskList.Add(RegistryCheck()); 
+            systemTaskList.Add(GetMicroCodes()); 
+            systemTaskList.Add(GetStaticCoreCount()); 
+            systemTaskList.Add(GetBrowserExtensions()); 
+            systemTaskList.Add(GetMiniDumps()); 
+            systemTaskList.Add(GetDefaultBrowser()); 
+            systemTaskList.Add(GetProcesses()); 
 
             // Check if username contains non-alphanumeric characters
             UsernameSpecialCharacters = !Regex.IsMatch(Environment.UserName, @"^[a-zA-Z0-9]+$");
@@ -239,10 +239,13 @@ public static partial class Cache
     {
         List<StartupTask> startupTasks = new();
         var key = reg.OpenSubKey(keyLocation);
-        foreach (var appName in key.GetValueNames())
+        if (key != null)
         {
-            var startupTask = await CreateStartupTask(appName, (string)key.GetValue(appName));
-            startupTasks.Add(startupTask);
+            foreach (var appName in key.GetValueNames())
+            {
+                var startupTask = await CreateStartupTask(appName, (string)key.GetValue(appName));
+                startupTasks.Add(startupTask);
+            }
         }
         return startupTasks;
     }

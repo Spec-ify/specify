@@ -81,10 +81,10 @@ public static class DebugLog
             var section = OpenTasks[i];
             if(section.Count > 0)
             {
-                LogEvent($"{region} has outstanding tasks", region, EventType.ERROR);
+                LogEvent($"{region} has outstanding tasks:", region, EventType.ERROR);
                 foreach(var task in section)
                 {
-                    LogEvent(task.Key, region);
+                    LogEvent($"OUTSTANDING: {task.Key}", region);
                 }
             }
         }
