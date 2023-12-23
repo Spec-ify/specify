@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace specify_client.data;
 
@@ -295,3 +297,106 @@ public class ChromiumManifest
 public class PageFile
 {
 }
+public class MachineCheckException
+{
+    public string Timestamp;
+    public bool MciStatusRegisterValid; // Bit 63
+    public bool ErrorOverflow; // Bit 62
+    public bool UncorrectedError; // Bit 61
+    public bool ErrorReportingEnabled; // Bit 60
+    // Bits 59 and 58 are not relevant.
+    public bool ProcessorContextCorrupted; // Bit 57
+    public bool PoisonedData; // Bit 43 - AMD only
+    ushort ExtendedErrorCode; // Bits 16-31 - IA32 only
+    ushort McaErrorCode; // Bits 0-15
+    string ErrorMessage;
+    string TransactionType; // TT
+    string MemoryHeirarchyLevel; // LL
+    string RequestType; // RRRR
+    string Participation; // PP
+    string Timeout; // T
+    string MemoryOrIo; // II
+    string MemoryTransactionType; // MMM
+    string ChannelNumber; // CCCC
+}
+public class UnexpectedShutdown
+{
+    public DateTime? Timestamp;
+    public int BugcheckCode;
+    public ulong BugcheckParameter1;
+    public ulong BugcheckParameter2;
+    public ulong BugcheckParameter3;
+    public ulong BugcheckParameter4;
+    public ulong PowerButtonTimestamp;
+}
+public class PciWheaError
+{
+    public string Timestamp;
+    public ushort VendorId;
+    public ushort DeviceId;
+}
+public unsafe class WheaErrorRecord
+{
+    public string Timestamp;
+    WheaErrorHeader ErrorHeader;
+    List<WheaErrorDescriptor> ErrorDescriptors;
+    List<string> ErrorPackets;
+}
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+unsafe struct WheaErrorHeader
+{
+    public uint Signature;
+    public ushort Revision;
+    public uint SignatureEnd;
+    public ushort SectionCount;
+    public WheaSeverity Severity;
+    public uint ValidBits;
+    public uint Length;
+    public ulong Timestamp;
+    public Guid PlatformId;
+    public Guid PartitionId;
+    public Guid CreatorId;
+    public Guid NotifyType;
+    public ulong RecordId;
+    public uint Flags;
+    public ulong PersistenceInfo;
+    public uint Reserved1;
+    public ulong Reserved2;
+    public static WheaErrorHeader FromBytes(byte[] bytes)
+    {
+        fixed (byte* pData = bytes)
+        {
+            return Unsafe.ReadUnaligned<WheaErrorHeader>(pData);
+        }
+    }
+}
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+unsafe struct WheaErrorDescriptor
+{
+    public uint SectionOffset;
+    public uint SectionLength;
+    public ushort Revision;
+    public byte ValidBits;
+    public byte Reserved;
+    public uint Flags;
+    public Guid SectionType;
+    public Guid FRUId;
+    public WheaSeverity SectionSeverity;
+    public fixed byte FRUText[20];
+
+    public static WheaErrorDescriptor FromBytes(byte[] bytes)
+    {
+        fixed (byte* pData = bytes)
+        {
+            return Unsafe.ReadUnaligned<WheaErrorDescriptor>(pData);
+        }
+    }
+}
+
+enum WheaSeverity
+{
+    Corrected,
+    Fatal,
+    Warning,
+    Information
+};

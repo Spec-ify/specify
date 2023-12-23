@@ -49,6 +49,7 @@ public class ProgressList
             { "Security", new ProgressStatus("Security Info", data.Cache.MakeSecurityData) },
             { "Network", new ProgressStatus("Network Info", data.Cache.MakeNetworkData) },
             { "Hardware", new ProgressStatus("Hardware Info", data.Cache.MakeHardwareData) },
+            { "Events", new ProgressStatus("Event Logs", data.Cache.MakeEventData) },
             {
                 Specificializing,
                 new ProgressStatus(Specificializing, Monolith.Specificialize,

@@ -37,6 +37,7 @@ public class Program
             pList.RunItem("Security");
             pList.RunItem("Network");
             pList.RunItem("Hardware");
+            pList.RunItem("Events");
             pList.RunItem(ProgressList.Specificializing);
         }
         catch (Exception ex)

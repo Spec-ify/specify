@@ -121,6 +121,7 @@
     </ApplicationDefinition>
     <Compile Include="Data\Cache.cs" />
     <Compile Include="Data\Methods\BasicInfo.cs" />
+    <Compile Include="Data\Methods\Events.cs" />
     <Compile Include="Data\Methods\Hardware.cs" />
     <Compile Include="Data\Methods\Network.cs" />
     <Compile Include="Data\Methods\Security.cs" />

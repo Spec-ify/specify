@@ -86,4 +86,10 @@ public static partial class Cache
     public static bool HardwareWriteSuccess { get; private set; } = false; 
     public static bool SecurityWriteSuccess { get; private set; } = false;
     public static bool NetworkWriteSuccess { get; private set; } = false;
+
+    // Events/Errors
+    public static List<UnexpectedShutdown> UnexpectedShutdowns { get; private set; } // Error 41s
+    public static List<MachineCheckException> MachineCheckExceptions { get; private set; }
+    public static List<PciWheaError> PciWheaErrors { get; private set; }
+    public static List<WheaErrorRecord> WheaErrors { get; private set; }
 }

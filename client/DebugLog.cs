@@ -12,15 +12,15 @@ public static class DebugLog
 {
     
     public static string LogText;
-    public static readonly int[] ErrorCount = new int[6];
+    public static readonly int[] ErrorCount = new int[7];
     private static bool Started = false;
     private static DateTime LogStartTime { get; set; }
     private const string LogFilePath = "specify_debug.log";
     private const string LogFailureFilePath = "specify_log_failure.log";
-    private static readonly bool[] RegionStarted = new bool[5];
-    private static readonly bool[] RegionCompleted = new bool[5];
-    private static readonly DateTime[] RegionStartTime = new DateTime[5];
-    private static Dictionary<string, DateTime>[] OpenTasks = new Dictionary<string, DateTime>[5];
+    private static readonly bool[] RegionStarted = new bool[6];
+    private static readonly bool[] RegionCompleted = new bool[6];
+    private static readonly DateTime[] RegionStartTime = new DateTime[6];
+    private static Dictionary<string, DateTime>[] OpenTasks = new Dictionary<string, DateTime>[6];
 
     private static SemaphoreSlim logSemaphore = new(1, 1);
 
@@ -31,7 +31,9 @@ public static class DebugLog
         Security = 2,
         Networking = 3,
         Hardware = 4,
-        Misc = 5
+        Events = 5,
+        Misc = 6
+        
     }
 
     public enum EventType

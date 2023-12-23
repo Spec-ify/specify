@@ -38,6 +38,7 @@ public class Monolith
     public MonolithHardware Hardware;
     public MonolithSecurity Security;
     public MonolithNetwork Network;
+    public MonolithEvents Events;
     public string DebugLogText;
 
     public Monolith()
@@ -52,6 +53,7 @@ public class Monolith
         Hardware = new MonolithHardware();
         Security = new MonolithSecurity();
         Network = new MonolithNetwork();
+        Events = new MonolithEvents();
     }
 
     public string Serialize()
@@ -447,6 +449,16 @@ public class Monolith
             ErrorCount = DebugLog.ErrorCount[(int)DebugLog.Region.Networking];
             ReceiveSideScaling = Cache.ReceiveSideScaling;
             AutoTuningLevelLocal = Cache.AutoTuningLevelLocal;
+        }
+    }
+
+    [Serializable]
+    public class MonolithEvents
+    {
+        public List<UnexpectedShutdown> UnexpectedShutdowns;
+        public MonolithEvents()
+        {
+            UnexpectedShutdowns = Cache.UnexpectedShutdowns;
         }
     }
 

@@ -15,6 +15,9 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Diagnostics.Eventing.Reader;
+using System.Xml.Serialization;
+using System.Xml;
 
 namespace specify_client.data;
 
@@ -47,7 +50,7 @@ public static partial class Cache
             systemTaskList.Add(GetBrowserExtensions()); 
             systemTaskList.Add(GetMiniDumps()); 
             systemTaskList.Add(GetDefaultBrowser()); 
-            systemTaskList.Add(GetProcesses()); 
+            systemTaskList.Add(GetProcesses());
 
             // Check if username contains non-alphanumeric characters
             UsernameSpecialCharacters = !Regex.IsMatch(Environment.UserName, @"^[a-zA-Z0-9]+$");
@@ -61,7 +64,6 @@ public static partial class Cache
         }
         SystemWriteSuccess = true;
     }
-
     private static async Task GetProcesses()
     {
         await OpenTask(Region.System, "GetProcesses");
