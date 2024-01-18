@@ -321,7 +321,7 @@ public static partial class Cache
         await GetEdidData();
 
         await CloseTask(Region.Hardware, taskName);
-        MonitorInfo =  monitors;
+        MonitorInfo = monitors;
     }
     private static async Task GetEdidData()
     {
@@ -345,7 +345,7 @@ public static partial class Cache
                     byte[] data = (byte[])outParams["BlockContent"];
 
                     // If the EDID block is not 128 bytes, it does not match EDID specification 1.4 and should not be parsed.
-                    if(data.Length != 128)
+                    if (data.Length != 128)
                     {
                         await LogEventAsync($"Raw EDID block has invalid length: {data.Length}", Region.Hardware, EventType.ERROR);
                         await LogEventAsync(BitConverter.ToString(data), Region.Hardware);
@@ -531,7 +531,7 @@ public static partial class Cache
                 LogEvent($"Could not retrieve Instance ID of drive @ index {diskNumber}", Region.Hardware, EventType.ERROR);
             }
 
-            if(!driveWmi.TryWmiRead("MediaType", out drive.MediaType))
+            if (!driveWmi.TryWmiRead("MediaType", out drive.MediaType))
             {
                 drive.MediaType = "Unknown (WMI Failure)";
             }
@@ -557,11 +557,11 @@ public static partial class Cache
             var diskIndex = (uint)partitionWmi["DiskIndex"];
             partitionWmi.TryWmiRead("ConfigManagerErrorCode", out partition.CfgMgrErrorCode);
             partitionWmi.TryWmiRead("LastErrorCode", out partition.LastErrorCode);
-            if(partition.CfgMgrErrorCode != 0 || partition.LastErrorCode != 0) 
+            if (partition.CfgMgrErrorCode != 0 || partition.LastErrorCode != 0)
             {
                 //[CLEANUP]: This is Logged in DebugLog until Specified has a clean way of displaying these errors.
                 LogEvent(
-                    $"Partition @ {partition.DeviceId} Reported an error: CMEC: {partition.CfgMgrErrorCode} - LEC: {partition.LastErrorCode}", 
+                    $"Partition @ {partition.DeviceId} Reported an error: CMEC: {partition.CfgMgrErrorCode} - LEC: {partition.LastErrorCode}",
                     Region.Hardware,
                     EventType.ERROR);
             }
@@ -576,7 +576,7 @@ public static partial class Cache
         }
         return drives;
     }
-    private static List<DiskDrive> GetNonNvmeSmartData(List<DiskDrive> drives, Dictionary<string, object> m) 
+    private static List<DiskDrive> GetNonNvmeSmartData(List<DiskDrive> drives, Dictionary<string, object> m)
     {
 
         // The following lines up the attribute list creationlink smart data to its corresponding drive.
@@ -687,7 +687,7 @@ public static partial class Cache
                                 break;
                             }
                         }
-                        if(found) break;
+                        if (found) break;
                     }
                     catch (Exception ex)
                     {
@@ -851,15 +851,15 @@ public static partial class Cache
     }
     private static Partition GetPartitionByDriveLetter(string driveLetter, List<DiskDrive> drives)
     {
-        foreach(var drive in drives)
+        foreach (var drive in drives)
         {
-            foreach(var partition in drive.Partitions)
+            foreach (var partition in drive.Partitions)
             {
-                if(string.IsNullOrEmpty(partition.PartitionLetter))
+                if (string.IsNullOrEmpty(partition.PartitionLetter))
                 {
                     continue;
                 }
-                if(partition.PartitionLetter.Equals(driveLetter))
+                if (partition.PartitionLetter.Equals(driveLetter))
                 {
                     return partition;
                 }
@@ -914,7 +914,7 @@ public static partial class Cache
                 }
             }
         }
-        
+
         foreach (var d in drives)
         {
             bool complete = true;
@@ -1072,22 +1072,22 @@ public static partial class Cache
              */
             var criticalWarningValue = Convert.ToString(smartInfo->CriticalWarning.CriticalWarning, 2).PadLeft(8, '0');
 
-            SmartAttribute criticalWarning =            new(0x01, "Critical Warning(!)", criticalWarningValue);
-            SmartAttribute compositeTemperature =       new(0x02, "Temperature", driveTemperature + " C");
-            SmartAttribute availableSpare =             new(0x03, "Available Spare", smartInfo->AvailableSpare.ToString());
-            SmartAttribute availableSpareThreshold =    new(0x04, "Available Spare Threshold", smartInfo->AvailableSpareThreshold.ToString());
-            SmartAttribute percentageUsed =             new(0x05, "Percentage Used", smartInfo->PercentageUsed.ToString());
+            SmartAttribute criticalWarning = new(0x01, "Critical Warning(!)", criticalWarningValue);
+            SmartAttribute compositeTemperature = new(0x02, "Temperature", driveTemperature + " C");
+            SmartAttribute availableSpare = new(0x03, "Available Spare", smartInfo->AvailableSpare.ToString());
+            SmartAttribute availableSpareThreshold = new(0x04, "Available Spare Threshold", smartInfo->AvailableSpareThreshold.ToString());
+            SmartAttribute percentageUsed = new(0x05, "Percentage Used", smartInfo->PercentageUsed.ToString());
 
-            SmartAttribute dataUnitsRead =              MakeNvmeAttribute(smartInfo->DataUnitRead, 0x06, "Data Units Read");
-            SmartAttribute dataUnitsWritten =           MakeNvmeAttribute(smartInfo->DataUnitWritten, 0x07, "Data Units Written");
-            SmartAttribute hostReadCommands =           MakeNvmeAttribute(smartInfo->HostReadCommands, 0x08, "Host Read Commands");
-            SmartAttribute hostWrittenCommands =        MakeNvmeAttribute(smartInfo->HostWrittenCommands, 0x09, "Host Written Commands");
-            SmartAttribute controllerBusyTime =         MakeNvmeAttribute(smartInfo->ControllerBusyTime, 0x0A, "Controller Busy Time");
-            SmartAttribute powerCycle =                 MakeNvmeAttribute(smartInfo->PowerCycle, 0x0B, "Power Cycles");
-            SmartAttribute powerOnHours =               MakeNvmeAttribute(smartInfo->PowerOnHours, 0x0C, "Power-On Hours");
-            SmartAttribute unsafeShutdowns =            MakeNvmeAttribute(smartInfo->UnsafeShutdowns, 0x0D, "Unsafe Shutdowns");
-            SmartAttribute mediaErrors =                MakeNvmeAttribute(smartInfo->MediaErrors, 0x0E, "Media and Integrity Errors");
-            SmartAttribute errorLogEntries =            MakeNvmeAttribute(smartInfo->ErrorInfoLogEntryCount, 0x0F, "Number of Error Information Log Entries");
+            SmartAttribute dataUnitsRead = MakeNvmeAttribute(smartInfo->DataUnitRead, 0x06, "Data Units Read");
+            SmartAttribute dataUnitsWritten = MakeNvmeAttribute(smartInfo->DataUnitWritten, 0x07, "Data Units Written");
+            SmartAttribute hostReadCommands = MakeNvmeAttribute(smartInfo->HostReadCommands, 0x08, "Host Read Commands");
+            SmartAttribute hostWrittenCommands = MakeNvmeAttribute(smartInfo->HostWrittenCommands, 0x09, "Host Written Commands");
+            SmartAttribute controllerBusyTime = MakeNvmeAttribute(smartInfo->ControllerBusyTime, 0x0A, "Controller Busy Time");
+            SmartAttribute powerCycle = MakeNvmeAttribute(smartInfo->PowerCycle, 0x0B, "Power Cycles");
+            SmartAttribute powerOnHours = MakeNvmeAttribute(smartInfo->PowerOnHours, 0x0C, "Power-On Hours");
+            SmartAttribute unsafeShutdowns = MakeNvmeAttribute(smartInfo->UnsafeShutdowns, 0x0D, "Unsafe Shutdowns");
+            SmartAttribute mediaErrors = MakeNvmeAttribute(smartInfo->MediaErrors, 0x0E, "Media and Integrity Errors");
+            SmartAttribute errorLogEntries = MakeNvmeAttribute(smartInfo->ErrorInfoLogEntryCount, 0x0F, "Number of Error Information Log Entries");
 
             drive.SmartData = new()
             {
@@ -1361,7 +1361,7 @@ public static partial class Cache
             {
                 EventType severity = EventType.ERROR;
                 // 0x10d2 is an extremely common error code on desktops with no batteries. It should not be marked as an error.
-                if(errorReader.Contains("(0x10d2)"))
+                if (errorReader.Contains("(0x10d2)"))
                 {
                     severity = EventType.INFORMATION;
                 }

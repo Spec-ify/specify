@@ -59,6 +59,7 @@ public static partial class Cache
     public static List<BatteryData> Batteries { get; private set; }
     public static bool? SecureBootEnabled { get; private set; }
     public static List<IRegistryValue> ChoiceRegistryValues { get; private set; }
+    public static int? LastBiosTime { get; private set; }
     public static List<Dictionary<string, object>> PowerProfiles { get; private set; }
     public static List<string> MicroCodes { get; private set; }
     public static int RecentMinidumps { get; private set; }
@@ -83,7 +84,7 @@ public static partial class Cache
     // The WriteSuccess flags allow Specified to easily ignore incomplete sections, avoiding fatal parsing issues.
     public static bool MainDataWriteSuccess { get; private set; } = false;
     public static bool SystemWriteSuccess { get; private set; } = false;
-    public static bool HardwareWriteSuccess { get; private set; } = false; 
+    public static bool HardwareWriteSuccess { get; private set; } = false;
     public static bool SecurityWriteSuccess { get; private set; } = false;
     public static bool NetworkWriteSuccess { get; private set; } = false;
 
@@ -91,5 +92,5 @@ public static partial class Cache
     public static List<UnexpectedShutdown> UnexpectedShutdowns { get; private set; } // Error 41s
     public static List<MachineCheckException> MachineCheckExceptions { get; private set; }
     public static List<PciWheaError> PciWheaErrors { get; private set; }
-    public static List<WheaErrorRecord> WheaErrors { get; private set; }
+    public static List<WheaErrorRecordReadable> WheaErrorRecords { get; private set; }
 }

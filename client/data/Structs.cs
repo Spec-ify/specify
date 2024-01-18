@@ -104,7 +104,7 @@ public class SmartAttribute
         Id = id;
         Name = name;
         RawValue = rawValue;
-    }   
+    }
 }
 
 public class TempMeasurement
@@ -225,7 +225,7 @@ public class ScheduledTask
             Author = t.Definition.RegistrationInfo.Author;
             TriggerTypes = t.Definition.Triggers.Select(e => e.TriggerType).ToList();
         }
-        catch (FileNotFoundException) 
+        catch (FileNotFoundException)
         {
             try
             {
@@ -297,6 +297,16 @@ public class ChromiumManifest
 public class PageFile
 {
 }
+public class UnexpectedShutdown
+{
+    public DateTime? Timestamp;
+    public int BugcheckCode;
+    public string BugcheckParameter1;
+    public string BugcheckParameter2;
+    public string BugcheckParameter3;
+    public string BugcheckParameter4;
+    public ulong PowerButtonTimestamp;
+}
 public class MachineCheckException
 {
     public string Timestamp;
@@ -304,46 +314,74 @@ public class MachineCheckException
     public bool ErrorOverflow; // Bit 62
     public bool UncorrectedError; // Bit 61
     public bool ErrorReportingEnabled; // Bit 60
-    // Bits 59 and 58 are not relevant.
     public bool ProcessorContextCorrupted; // Bit 57
     public bool PoisonedData; // Bit 43 - AMD only
-    ushort ExtendedErrorCode; // Bits 16-31 - IA32 only
-    ushort McaErrorCode; // Bits 0-15
-    string ErrorMessage;
-    string TransactionType; // TT
-    string MemoryHeirarchyLevel; // LL
-    string RequestType; // RRRR
-    string Participation; // PP
-    string Timeout; // T
-    string MemoryOrIo; // II
-    string MemoryTransactionType; // MMM
-    string ChannelNumber; // CCCC
+    public ushort ExtendedErrorCode; // Bits 16-31 - IA32 only
+    public string McaErrorCode; // Bits 0-15
+    public string ErrorMessage;
+    public string TransactionType; // TT
+    public string MemoryHeirarchyLevel; // LL
+    public string RequestType; // RRRR
+    public string Participation; // PP
+    public string Timeout; // T
+    public string MemoryOrIo; // II
+    public string MemoryTransactionType; // MMM
+    public string ChannelNumber; // CCCC
 }
-public class UnexpectedShutdown
-{
-    public DateTime? Timestamp;
-    public int BugcheckCode;
-    public ulong BugcheckParameter1;
-    public ulong BugcheckParameter2;
-    public ulong BugcheckParameter3;
-    public ulong BugcheckParameter4;
-    public ulong PowerButtonTimestamp;
-}
+
 public class PciWheaError
 {
-    public string Timestamp;
-    public ushort VendorId;
-    public ushort DeviceId;
+    public DateTime? Timestamp;
+    public string VendorId;
+    public string DeviceId;
 }
 public unsafe class WheaErrorRecord
 {
-    public string Timestamp;
-    WheaErrorHeader ErrorHeader;
-    List<WheaErrorDescriptor> ErrorDescriptors;
-    List<string> ErrorPackets;
+    public DateTime? Timestamp;
+    public WheaErrorHeader ErrorHeader;
+    public List<WheaErrorDescriptor> ErrorDescriptors = new();
+    public List<string> ErrorPackets = new();
+}
+public class WheaErrorRecordReadable
+{
+    public DateTime? Timestamp;
+    public WheaErrorHeaderReadable ErrorHeader;
+    public List<WheaErrorDescriptorReadable> ErrorDescriptors;
+    public List<string> ErrorPackets;
+}
+public class WheaErrorHeaderReadable
+{
+    public string Signature;
+    public string Revision;
+    public string SignatureEnd;
+    public string SectionCount;
+    public string Severity;
+    public string ValidBits;
+    public string Length;
+    public DateTime Timestamp;
+    public string PlatformId;
+    public string PartitionId;
+    public string CreatorId;
+    public string NotifyType;
+    public string RecordId;
+    public string Flags;
+    public string PersistenceInfo;
+}
+public class WheaErrorDescriptorReadable
+{
+    public string SectionOffset;
+    public string SectionLength;
+    public string Revision;
+    public string ValidBits;
+    // public string Reserved; - I don't think this is useful. Just not gonna bother saving it and needing to display it on Specified.
+    public string Flags;
+    public string SectionType;
+    public string FRUId;
+    public string SectionSeverity;
+    public string FRUText;
 }
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-unsafe struct WheaErrorHeader
+public unsafe struct WheaErrorHeader
 {
     public uint Signature;
     public ushort Revision;
@@ -371,7 +409,7 @@ unsafe struct WheaErrorHeader
     }
 }
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-unsafe struct WheaErrorDescriptor
+public unsafe struct WheaErrorDescriptor
 {
     public uint SectionOffset;
     public uint SectionLength;
@@ -393,7 +431,7 @@ unsafe struct WheaErrorDescriptor
     }
 }
 
-enum WheaSeverity
+public enum WheaSeverity
 {
     Corrected,
     Fatal,

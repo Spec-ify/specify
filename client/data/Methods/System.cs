@@ -38,18 +38,18 @@ public static partial class Cache
             Region region = Region.System;
             await StartRegion(region);
 
-            systemTaskList.Add(GetEnvironmentVariables()); 
-            systemTaskList.Add(GetSystemWMIInfo()); 
-            systemTaskList.Add(CheckCommercialOneDrive()); 
-            systemTaskList.Add(GetInstalledApps()); 
-            systemTaskList.Add(GetScheduledTasks()); 
+            systemTaskList.Add(GetEnvironmentVariables());
+            systemTaskList.Add(GetSystemWMIInfo());
+            systemTaskList.Add(CheckCommercialOneDrive());
+            systemTaskList.Add(GetInstalledApps());
+            systemTaskList.Add(GetScheduledTasks());
             systemTaskList.Add(GetStartupTasks());
-            systemTaskList.Add(RegistryCheck()); 
-            systemTaskList.Add(GetMicroCodes()); 
-            systemTaskList.Add(GetStaticCoreCount()); 
-            systemTaskList.Add(GetBrowserExtensions()); 
-            systemTaskList.Add(GetMiniDumps()); 
-            systemTaskList.Add(GetDefaultBrowser()); 
+            systemTaskList.Add(RegistryCheck());
+            systemTaskList.Add(GetMicroCodes());
+            systemTaskList.Add(GetStaticCoreCount());
+            systemTaskList.Add(GetBrowserExtensions());
+            systemTaskList.Add(GetMiniDumps());
+            systemTaskList.Add(GetDefaultBrowser());
             systemTaskList.Add(GetProcesses());
 
             // Check if username contains non-alphanumeric characters
@@ -68,7 +68,7 @@ public static partial class Cache
     {
         await OpenTask(Region.System, "GetProcesses");
         var outputProcesses = new List<OutputProcess>();
-        var rawProcesses = Process.GetProcesses();        
+        var rawProcesses = Process.GetProcesses();
 
         foreach (var rawProcess in rawProcesses)
         {
@@ -284,7 +284,7 @@ public static partial class Cache
     {
         //get information about an executable file
         var filePath = startupTask.ImagePath.Trim('\"');
-        
+
         //trim shortcut target information
         var substringIndex = filePath.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
 
@@ -503,6 +503,9 @@ public static partial class Cache
         await OpenTask(Region.System, taskName);
         try
         {
+
+            LastBiosTime = new RegistryValue<int?>
+                (Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Power", "FwPOSTTime").Value;
             var tdrLevel = new RegistryValue<int?>
                 (Registry.LocalMachine, @"System\CurrentControlSet\Control\GraphicsDrivers", "TdrLevel");
             var nbFLimit = new RegistryValue<int?>

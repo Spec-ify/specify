@@ -66,8 +66,8 @@ public class Monolith
         DebugLog.CheckOpenTasks();
         await DebugLog.LogEventAsync("Serialization starts");
         Monolith m;
-        try 
-        { 
+        try
+        {
             m = new Monolith();
         }
         catch (Exception e)
@@ -153,6 +153,7 @@ public class Monolith
             await DebugLog.LogEventAsync($"{e}", DebugLog.Region.Misc, DebugLog.EventType.INFORMATION);
             Settings.DontUpload = true;
             await Specificialize();
+            return;
         }
         await DebugLog.LogEventAsync($"File uploaded successfully: {url}", DebugLog.Region.Misc);
         var t = new Thread(() =>
@@ -396,6 +397,7 @@ public class Monolith
         public IDictionary PageFile;
         public bool WriteSuccess;
         public int ErrorCount;
+        public int? LastBiosTime;
         public MonolithSystem()
         {
             UserVariables = Cache.UserVariables;
@@ -420,6 +422,7 @@ public class Monolith
             DefaultBrowser = Cache.DefaultBrowser;
             PageFile = Cache.PageFile;
             WriteSuccess = Cache.SystemWriteSuccess;
+            LastBiosTime = Cache.LastBiosTime;
             ErrorCount = DebugLog.ErrorCount[(int)DebugLog.Region.System];
         }
     }
@@ -456,9 +459,15 @@ public class Monolith
     public class MonolithEvents
     {
         public List<UnexpectedShutdown> UnexpectedShutdowns;
+        public List<MachineCheckException> MachineCheckExceptions;
+        public List<WheaErrorRecordReadable> WheaErrorRecords;
+        public List<PciWheaError> PciWheaErrors;
         public MonolithEvents()
         {
             UnexpectedShutdowns = Cache.UnexpectedShutdowns;
+            MachineCheckExceptions = Cache.MachineCheckExceptions;
+            WheaErrorRecords = Cache.WheaErrorRecords;
+            PciWheaErrors = Cache.PciWheaErrors;
         }
     }
 
