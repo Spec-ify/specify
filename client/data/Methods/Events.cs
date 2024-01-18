@@ -215,7 +215,7 @@ public static partial class Cache
     {
         MachineCheckException mce = GetCommonMceProperties(MciStat);
 
-        mce.ProcessorContextCorrupted = int.Parse(MciStat[7].ToString(), System.Globalization.NumberStyles.HexNumber) >= 8;
+        mce.PoisonedData = int.Parse(MciStat[7].ToString(), System.Globalization.NumberStyles.HexNumber) >= 8;
 
         mce = TranslateAmdMceErrorCode(mce);
 
