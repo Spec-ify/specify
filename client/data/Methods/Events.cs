@@ -173,11 +173,11 @@ public static partial class Cache
     {
         MachineCheckException mce = new();
 
-        string MciStat = dataNode.InnerText;
+        string MciStatString = dataNode.InnerText;
 
-        if (!ulong.TryParse(MciStat, out var _))
+        if (!ulong.TryParse(MciStatString, System.Globalization.NumberStyles.HexNumber, null, out ulong MciStat))
         {
-            LogEvent($"MciStat string invalid: {MciStat}", Region.Events, EventType.ERROR);
+            LogEvent($"MciStat string invalid: {MciStatString}", Region.Events, EventType.ERROR);
             return mce;
         }
 
@@ -201,21 +201,19 @@ public static partial class Cache
 
         return mce;
     }
-    public static MachineCheckException MakeIntelMce(string MciStat)
+    public static MachineCheckException MakeIntelMce(ulong MciStat)
     {
         MachineCheckException mce = GetCommonMceProperties(MciStat);
-
-        mce.ExtendedErrorCode = ushort.Parse(MciStat.Substring(10, 4), System.Globalization.NumberStyles.HexNumber);
 
         mce = TranslateIntelMceErrorCode(mce);
 
         return mce;
     }
-    public static MachineCheckException MakeAmdMce(string MciStat)
+    public static MachineCheckException MakeAmdMce(ulong MciStat)
     {
         MachineCheckException mce = GetCommonMceProperties(MciStat);
 
-        mce.PoisonedData = int.Parse(MciStat[7].ToString(), System.Globalization.NumberStyles.HexNumber) >= 8;
+        mce.PoisonedData = CheckBitMask(MciStat, 1ul << 43);
 
         mce = TranslateAmdMceErrorCode(mce);
 
@@ -231,20 +229,21 @@ public static partial class Cache
         // NOT IMPLEMENTED
         return mce;
     }
-    public static MachineCheckException GetCommonMceProperties(string MciStat)
+    public static MachineCheckException GetCommonMceProperties(ulong MciStat)
     {
         MachineCheckException mce = new();
 
-        //TODO: Make these bitmasks.
+        mce.MciStatusRegisterValid = CheckBitMask(MciStat, 1ul << 63);
+        mce.ErrorOverflow = CheckBitMask(MciStat, 1ul << 62);
+        mce.UncorrectedError = CheckBitMask(MciStat, 1ul << 61);
+        mce.ErrorReportingEnabled = CheckBitMask(MciStat, 1ul << 60);
+        mce.ProcessorContextCorrupted = CheckBitMask(MciStat, 1ul << 57);
 
-        // Sorry arc.
-        string upper8 = Convert.ToString(int.Parse(MciStat.Substring(2, 2), System.Globalization.NumberStyles.HexNumber), 2).PadLeft(8, '0');
+        // The extended error code on MCI Status codes are bits 16-31. We mask the MciStat to get just those bits and then bitshift it right to get the full code.
+        var maskedCode = MciStat & 0xFFFF0000;
+        var bitshiftedCode = maskedCode >> 16;
 
-        mce.MciStatusRegisterValid = upper8[0] == '1';
-        mce.ErrorOverflow = upper8[1] == '1';
-        mce.UncorrectedError = upper8[2] == '1';
-        mce.ErrorReportingEnabled = upper8[3] == '1';
-        mce.ProcessorContextCorrupted = upper8[6] == '1';
+        mce.ExtendedErrorCode = (ushort)bitshiftedCode;
 
         string errorCode = MakeMcaErrorCode(MciStat);
 
@@ -252,18 +251,17 @@ public static partial class Cache
 
         return mce;
     }
-    public static string MakeMcaErrorCode(string MciStat)
+    public static string MakeMcaErrorCode(ulong MciStat)
     {
-        StringBuilder errorCode = new();
+        // Convert the lower 16 bits of the MciStatus code to a binary string
+        StringBuilder binary = new(Convert.ToString((long)(MciStat & 0xFFFF), 2).PadLeft(16, '0'));
 
-        for (int i = 14; i < 18; i++)
-        {
-            string c = MciStat[i].ToString();
-            var binary = Convert.ToString(int.Parse(c, System.Globalization.NumberStyles.HexNumber), 2);
-            errorCode.Append(binary + " ");
-        }
+        // Add spaces every four bits
+        binary.Insert(12, ' ');
+        binary.Insert(8, ' ');
+        binary.Insert(4, ' ');
 
-        return errorCode.ToString().Trim();
+        return binary.ToString().Trim();
     }
     public static PciWheaError MakePcieError(EventRecord eventInstance, XmlNode eventDataNode)
     {
@@ -663,5 +661,9 @@ public static partial class Cache
             }
         }
         return sb.ToString();
+    }
+    public static bool CheckBitMask(ulong value, ulong mask)
+    {
+        return (value & mask) == mask;
     }
 }

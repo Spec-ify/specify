@@ -316,7 +316,7 @@ public class MachineCheckException
     public bool ErrorReportingEnabled; // Bit 60
     public bool ProcessorContextCorrupted; // Bit 57
     public bool PoisonedData; // Bit 43 - AMD only
-    public ushort ExtendedErrorCode; // Bits 16-31 - IA32 only
+    public ushort ExtendedErrorCode; // Bits 16-31
     public string McaErrorCode; // Bits 0-15
     public string ErrorMessage;
     public string TransactionType; // TT
