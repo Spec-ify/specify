@@ -438,3 +438,34 @@ public enum WheaSeverity
     Warning,
     Information
 };
+/*
+ *  0000 0000 0000 0000 - No Error - No error has been reported to this bank of error-reporting registers.
+    0000 0000 0000 0001 - Unclassified - This error has not been classified into the MCA error classes.
+    0000 0000 0000 0010 - Microcode ROM Parity Error - Parity error in internal microcode ROM
+    0000 0000 0000 0011 - External Error - The BINIT# from another processor caused this processor to enter machine check.
+    0000 0000 0000 0100 - FRC Error - FRC (functional redundancy check) main/secondary error.
+    0000 0000 0000 0101 - Internal Parity Error - Internal parity error.
+    0000 0000 0000 0110 - SMM Handler Code Access Violation - An attempt was made by the SMM Handler to execute outside the ranges specified by SMRR.
+    0000 0100 0000 0000 - Internal Timer Error - Internal timer error.
+    0000 1110 0000 1011 - I/O Error - generic I/O error.
+    0000 01xx xxxx xxxx - Internal Unclassified - Internal unclassified errors.*/
+
+/*
+ *  000F 0000 0000 11LL - Generic Cache Hierarchy - Generic cache hierarchy error
+    000F 0000 0001 TTLL - TLB Errors - {TT}TLB{LL}_ERR
+    000F 0000 1MMM CCCC - Memory Controller Errors - {MMM}_CHANNEL{CCCC}_ERR
+    000F 0001 RRRR TTLL - Cache Hierarchy Errors - {TT}CACHE{LL}_{RRRR}_ERR
+    000F 0010 1MMM CCCC - Extended Memory Errors - {MMM}_CHANNEL{CCCC}_ERR
+    000F 1PPT RRRR IILL - Bus and Interconnect Errors  BUS{LL}_{PP}_{RRRR}_{II}_{T}_ERR*/
+public enum SimpleErrorCodes : ulong
+{
+    NoError = 0b0000,
+    Unclassified = 0b0001,
+    Microcode = 0b0010,
+    External = 0b0011,
+    FrcError = 0b0100,
+    InternalParity = 0b0101,
+    SmmHandler = 0b0110,
+    InternalTimer = 0b0000010000000000,
+    IoError = 0b0000111000001011
+}

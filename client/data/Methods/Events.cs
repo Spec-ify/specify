@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Runtime.Remoting.Channels;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace specify_client.data;
 
@@ -205,7 +207,7 @@ public static partial class Cache
     {
         MachineCheckException mce = GetCommonMceProperties(MciStat);
 
-        mce = TranslateIntelMceErrorCode(mce);
+        mce = TranslateIntelMceErrorCode(mce, MciStat);
 
         return mce;
     }
@@ -215,19 +217,418 @@ public static partial class Cache
 
         mce.PoisonedData = CheckBitMask(MciStat, 1ul << 43);
 
-        mce = TranslateAmdMceErrorCode(mce);
+        mce = TranslateAmdMceErrorCode(mce, MciStat);
 
         return mce;
     }
-    public static MachineCheckException TranslateIntelMceErrorCode(MachineCheckException mce)
+    public static MachineCheckException TranslateIntelMceErrorCode(MachineCheckException mce, ulong MciStat)
     {
-        // NOT IMPLEMENTED
+        /*
+         *  0000 0000 0000 0000 - No Error - No error has been reported to this bank of error-reporting registers.
+            0000 0000 0000 0001 - Unclassified - This error has not been classified into the MCA error classes.
+            0000 0000 0000 0010 - Microcode ROM Parity Error - Parity error in internal microcode ROM
+            0000 0000 0000 0011 - External Error - The BINIT# from another processor caused this processor to enter machine check.
+            0000 0000 0000 0100 - FRC Error - FRC (functional redundancy check) main/secondary error.
+            0000 0000 0000 0101 - Internal Parity Error - Internal parity error.
+            0000 0000 0000 0110 - SMM Handler Code Access Violation - An attempt was made by the SMM Handler to execute outside the ranges specified by SMRR.
+            0000 0100 0000 0000 - Internal Timer Error - Internal timer error. 
+            0000 1110 0000 1011 - I/O Error - generic I/O error. 
+            0000 01xx xxxx xxxx - Internal Unclassified - Internal unclassified errors. */
+
+
+
+        /*
+         *  000F 0000 0000 11LL - Generic Cache Hierarchy - Generic cache hierarchy error
+            000F 0000 0001 TTLL - TLB Errors - {TT}TLB{LL}_ERR
+            000F 0000 1MMM CCCC - Memory Controller Errors - {MMM}_CHANNEL{CCCC}_ERR 
+            000F 0001 RRRR TTLL - Cache Hierarchy Errors - {TT}CACHE{LL}_{RRRR}_ERR 
+            000F 0010 1MMM CCCC - Extended Memory Errors - {MMM}_CHANNEL{CCCC}_ERR 
+            000F 1PPT RRRR IILL - Bus and Interconnect Errors  BUS{LL}_{PP}_{RRRR}_{II}_{T}_ERR */
+
+
+
+        var code = MciStat & 0xFFFF;
+
+        ParseIntelMciStatus(code, out string LL, out string TT, out string II, out string CCCC, out string RRRR, out string MMM, out string PP, out string Timeout);
+
+        // I/O Error
+        if (code == (ulong)SimpleErrorCodes.IoError)
+        {
+            mce.ErrorMessage = "I/O Error - Generic I/O Error";
+        }
+        // Bus and Interconnect Errors
+        else if (CheckBitMask(code, 1ul << 11))
+        {
+            mce.ErrorMessage = "Bus and Interconnect Error";
+            mce.MemoryHeirarchyLevel = LL;
+            mce.Participation = PP;
+            mce.RequestType = RRRR;
+            mce.MemoryOrIo = II;
+            mce.Timeout = Timeout;
+        }
+        // Internal Timer
+        else if (code == (ulong)SimpleErrorCodes.InternalTimer)
+        {
+            mce.ErrorMessage = "Internal Timer Error - Internal timer error"; // Message is duplicated in the manual. I kept it for consistency's sake.
+        }
+        // Internal Unclassified Errors
+        else if (CheckBitMask(code, 1ul << 10))
+        {
+            mce.ErrorMessage = "Internal Unclassified - Internal unclassified errors";
+        }
+        // Extended Memory Errors
+        else if (CheckBitMask(code, 1ul << 9))
+        {
+            mce.ErrorMessage = "Extended Memory Error";
+            mce.MemoryTransactionType = MMM;
+            mce.ChannelNumber = CCCC;
+        }
+        // Cache Hierarchy Errors
+        else if (CheckBitMask(code, 1ul << 8))
+        {
+            mce.ErrorMessage = "Cache Hierarchy Error";
+            mce.TransactionType = TT;
+            mce.MemoryHeirarchyLevel = LL;
+            mce.RequestType = RRRR;
+        }
+        // Memory Controller Errors
+        else if (CheckBitMask(code, 1ul << 7))
+        {
+            mce.ErrorMessage = "Memory Controller Error";
+            mce.MemoryTransactionType = MMM;
+            mce.ChannelNumber = CCCC;
+        }
+        // TLB Errors
+        else if (CheckBitMask(code, 1ul << 4))
+        {
+            mce.ErrorMessage = "Translation Lookaside Buffer (TLB) Error";
+            mce.TransactionType = TT;
+            mce.MemoryHeirarchyLevel = LL;
+        }
+        // Generic Cache Heirarchy Error
+        else if (CheckBitMask(code, 0b11ul << 2))
+        {
+            mce.ErrorMessage = "Generic Cache Heirarchy Error";
+            mce.MemoryHeirarchyLevel = LL;
+        }
+        // No error
+        else if (code == (ulong)SimpleErrorCodes.NoError)
+        {
+            mce.ErrorMessage = "No Error - No error has been reported to this bank of error-reporting registers"; // ??
+        }
+        // Unclassified error
+        else if (code == (ulong)SimpleErrorCodes.Unclassified)
+        {
+            mce.ErrorMessage = "Unclassified - This error has not been classified into the MCA error classes.";
+        }
+        // Microcode ROM Parity Error
+        else if (code == (ulong)SimpleErrorCodes.Microcode)
+        {
+            mce.ErrorMessage = "Microcode ROM Parity Error - Parity error in internal microcode ROM";
+        }
+        // External Error
+        else if (code == (ulong)SimpleErrorCodes.External)
+        {
+            mce.ErrorMessage = "External Error - The BINIT# from another processor caused this processor to enter machine check.";
+        }
+        // FRC Error
+        else if (code == (ulong)SimpleErrorCodes.FrcError)
+        {
+            mce.ErrorMessage = "FRC Error - FRC (functional redundancy check) main/secondary error.";
+        }
+        // Internal Parity Error
+        else if (code == (ulong)SimpleErrorCodes.InternalParity)
+        {
+            mce.ErrorMessage = "Internal Parity Error - Internal parity error.";
+        }
+        // SMM Handler Code Access Violation
+        else if (code == (ulong)SimpleErrorCodes.SmmHandler)
+        {
+            mce.ErrorMessage = "SMM Handler Code Access Violation - An attempt was made by the SMM Handler to execute outside the ranges specified by SMRR.";
+        }
+        else
+        {
+            mce.ErrorMessage = "Invalid Error Code";
+        }
         return mce;
     }
-    public static MachineCheckException TranslateAmdMceErrorCode(MachineCheckException mce)
+    public static MachineCheckException TranslateAmdMceErrorCode(MachineCheckException mce, ulong MciStat)
     {
-        // NOT IMPLEMENTED
+        /*
+         *  0000 0000 0001 TTLL 
+         *  TLB 
+         *  TT = Transaction Type
+            LL = Cache Level
+
+            0000 0001 RRRR TTLL 
+            Memory 
+            RRRR = Memory Transaction Type
+            TT = Transaction Type
+            LL = Cache Level
+
+            0000 1XXT RRRR XXLL 
+            Bus 
+            XX = Reserved
+            T = Timeout
+            RRRR = Memory Transaction Type
+            LL = Cache Level
+
+            0000 01UU 0000 0000 
+            Internal Unclassified
+            UU = Internal Error Type*/
+
+        var code = MciStat & 0xFFFF;
+
+        ParseAmdMciStatus(code, out string LL, out string TT, out string RRRR, out string Timeout);
+
+        // Bus Error
+        if (CheckBitMask(MciStat, 1ul << 11))
+        {
+            mce.ErrorMessage = "Bus Error";
+            mce.Timeout = Timeout;
+            mce.RequestType = RRRR;
+            mce.MemoryHeirarchyLevel = LL;
+        }
+        // Internal Error
+        else if (CheckBitMask(MciStat, 1ul << 10))
+        {
+            mce.ErrorMessage = "Internal Unclassified Error";
+        }
+
+        // Memory Controller Error
+        else if (CheckBitMask(MciStat, 1ul << 8))
+        {
+            mce.ErrorMessage = "Memory Controller Error";
+            mce.RequestType = RRRR;
+            mce.TransactionType = TT;
+            mce.MemoryHeirarchyLevel = LL;
+        }
+        // TLB Error
+        else if (CheckBitMask(MciStat, 1ul << 4))
+        {
+            mce.ErrorMessage = "Translation Lookaside Buffer (TLB) Error";
+            mce.TransactionType = TT;
+            mce.MemoryHeirarchyLevel = LL;
+        }
+        // Invalid Error Code
+        else
+        {
+            mce.ErrorMessage = "Invalid Error Code";
+            LogEvent($"AMD MciStatus Code Invalid - MciStat: 0x{code:X4}", Region.Events, EventType.ERROR);
+        }
         return mce;
+    }
+    public static void ParseIntelMciStatus(ulong errorCode, out string LL, out string TT, out string II, out string CCCC, out string RRRR, out string MMM, out string PP, out string Timeout)
+    {
+        var ll = errorCode & 0b11;
+        var tt = (errorCode & 0b1100) >> 2;
+        var ii = tt;
+        var cccc = errorCode & 0b1111;
+        var rrrr = (errorCode & 0b11110000) >> 4;
+        var mmm = (errorCode & 0b1110000) >> 4;
+        var pp = (errorCode & 0b11000000000) >> 9;
+
+        Timeout = CheckBitMask(errorCode, 1ul << 8).ToString();
+
+        switch (ll)
+        {
+            case 0:
+                LL = "L0: Core";
+                break;
+            case 1:
+                LL = "L1: Level 1";
+                break;
+            case 2:
+                LL = "L2: Level 2";
+                break;
+            default:
+                LL = "LG: Generic";
+                break;
+        }
+        switch (tt)
+        {
+            case 0:
+                TT = "Instruction";
+                break;
+            case 1:
+                TT = "Data";
+                break;
+            case 2:
+                TT = "Generic";
+                break;
+            default:
+                TT = "Reserved";
+                break;
+        }
+        switch (ii)
+        {
+            case 0:
+                II = "Memory Access";
+                break;
+
+            case 2:
+                II = "I/O";
+                break;
+            case 3:
+                II = "Other transaction"; // ??
+                break;
+            default: // Should be 0b01
+                II = "Reserved/Invalid";
+                break;
+        }
+        if (cccc != 7)
+        {
+            CCCC = cccc.ToString();
+        }
+        else
+        {
+            CCCC = "Unspecified";
+        }
+        switch (rrrr)
+        {
+            case 0:
+                RRRR = "Generic";
+                break;
+            case 1:
+                RRRR = "Generic Read";
+                break;
+            case 2:
+                RRRR = "Generic Write";
+                break;
+            case 3:
+                RRRR = "Data Read";
+                break;
+            case 4:
+                RRRR = "Data Write";
+                break;
+            case 5:
+                RRRR = "Instruction Fetch";
+                break;
+            case 6:
+                RRRR = "Prefetch";
+                break;
+            case 7:
+                RRRR = "Evict";
+                break;
+            case 8:
+                RRRR = "Snoop (Probe)";
+                break;
+            default:
+                RRRR = "INVALID";
+                LogEvent($"Memory Transaction Type Invalid: RRRR: {rrrr} - ErrorCode: 0x{errorCode:X4}", Region.Events, EventType.ERROR);
+                break;
+
+
+        }
+        switch (mmm)
+        {
+            case 0:
+                MMM = "Generic Undefined Request";
+                break;
+            case 1:
+                MMM = "Memory Read Error";
+                break;
+            case 2:
+                MMM = "Memory Write Error";
+                break;
+            case 3:
+                MMM = "Address/Command Error";
+                break;
+            case 4:
+                MMM = "Memory Scrubbing Error";
+                break;
+            default:
+                MMM = "Reserved/Invalid";
+                break;
+        }
+        switch (pp)
+        {
+            case 0:
+                PP = "Local processor originated request";
+                break;
+            case 1:
+                PP = "Local processor responded to request";
+                break;
+            case 2:
+                PP = "Local processor observed as third party";
+                break;
+            default:
+                PP = "Generic";
+                break;
+        }
+    }
+    public static void ParseAmdMciStatus(ulong errorCode, out string LL, out string TT, out string RRRR, out string Timeout)
+    {
+        var ll = errorCode & 0b11;
+        var tt = (errorCode & 0b1100) >> 2;
+        var rrrr = (errorCode & 0b11110000) >> 4;
+
+        Timeout = CheckBitMask(errorCode, 1ul << 8).ToString();
+
+        switch (ll)
+        {
+            case 0:
+                LL = "L0: Core";
+                break;
+            case 1:
+                LL = "L1: Level 1";
+                break;
+            case 2:
+                LL = "L2: Level 2";
+                break;
+            default:
+                LL = "LG: Generic";
+                break;
+        }
+        switch (tt)
+        {
+            case 0:
+                TT = "Instruction";
+                break;
+            case 1:
+                TT = "Data";
+                break;
+            case 2:
+                TT = "Generic";
+                break;
+            default:
+                TT = "Reserved";
+                break;
+        }
+        switch (rrrr)
+        {
+            case 0:
+                RRRR = "Generic";
+                break;
+            case 1:
+                RRRR = "Generic Read";
+                break;
+            case 2:
+                RRRR = "Generic Write";
+                break;
+            case 3:
+                RRRR = "Data Read";
+                break;
+            case 4:
+                RRRR = "Data Write";
+                break;
+            case 5:
+                RRRR = "Instruction Fetch";
+                break;
+            case 6:
+                RRRR = "Prefetch";
+                break;
+            case 7:
+                RRRR = "Evict";
+                break;
+            case 8:
+                RRRR = "Snoop (Probe)";
+                break;
+            default:
+                RRRR = "INVALID";
+                LogEvent($"Memory Transaction Type Invalid: RRRR: {rrrr} - ErrorCode: 0x{errorCode:X4}", Region.Events, EventType.ERROR);
+                break;
+        }
     }
     public static MachineCheckException GetCommonMceProperties(ulong MciStat)
     {
