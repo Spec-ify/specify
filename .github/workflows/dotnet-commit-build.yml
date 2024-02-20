@@ -15,7 +15,7 @@ jobs:
         with:
           msbuild-architecture: x64
       - name: Setup NuGet
-        uses: NuGet/setup-nuget@v1
+        uses: NuGet/setup-nuget@v2
       - name: Install dependencies
         run: nuget restore client\client.sln
       - name: Build
