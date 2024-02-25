@@ -27,15 +27,17 @@ public static partial class Cache
         try
         {
             Region region = Region.Hardware;
-            List<Task> hardwareTaskList = new();
             await StartRegion(region);
 
-            hardwareTaskList.Add(GetTemps());
-            hardwareTaskList.Add(GetHardwareWmiData());
-            hardwareTaskList.Add(GetMonitorInfo());
-            hardwareTaskList.Add(GetSMBiosMemoryInfo());
-            hardwareTaskList.Add(GetDiskDriveData());
-            hardwareTaskList.Add(GetBatteryData());
+            List<Task> hardwareTaskList = new()
+            {
+                DoTask(region, "GetTemps", GetTemps),
+                DoTask(region, "GetHardwareWmiData", GetHardwareWmiData),
+                DoTask(region, "GetMonitorInfo", GetMonitorInfo),
+                DoTask(region, "GetSMBiosMemoryInfo", GetSMBiosMemoryInfo),
+                DoTask(region, "GetDiskDriveData", GetDiskDriveData),
+                DoTask(region, "GetBatteryData", GetBatteryData)
+            };
 
             await Task.WhenAll(hardwareTaskList);
 
@@ -47,11 +49,8 @@ public static partial class Cache
         }
         HardwareWriteSuccess = true;
     }
-    private static async Task GetHardwareWmiData()
+    private static void GetHardwareWmiData()
     {
-        var taskName = "GetHardwareWmiData";
-        await OpenTask(Region.Hardware, taskName);
-
         Cpu = GetWmi("Win32_Processor",
                 "CurrentClockSpeed, Manufacturer, Name, SocketDesignation, NumberOfEnabledCore, ThreadCount").First();
         Gpu = GetWmi("Win32_VideoController",
@@ -62,16 +61,10 @@ public static partial class Cache
         Drivers = GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
         Devices = GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status,ConfigManagerErrorCode");
         BiosInfo = GetWmi("Win32_bios");
-
-        await CloseTask(Region.Hardware, taskName);
     }
     // RAM
     private static async Task GetSMBiosMemoryInfo()
     {
-        // taskName deliberately omits "SMBios" - This method can fail.
-        // It may be confusing to see a task for SMBios data being closed out when WMI data was gathered instead.
-        var taskName = "GetMemoryInfo";
-        await OpenTask(Region.Hardware, taskName);
         try
         {
             var SMBiosObj = GetWmi("MSSMBios_RawSMBiosTables", "*", "root\\WMI").FirstOrDefault();
@@ -167,18 +160,17 @@ public static partial class Cache
             }
             SMBiosRamInfo = true;
             Ram = SMBiosMemoryInfo;
-            await CloseTask(Region.Hardware, taskName);
         }
         catch (Exception e)
         {
             await LogEventAsync("SMBios retrieval failed.", Region.Hardware, EventType.ERROR);
             await LogEventAsync($"{e}");
-            await GetWmiMemoryInfo(taskName);
+            await GetWmiMemoryInfo();
         }
     }
 
     // This is used as a backup in case SMBios memory info retrieval fails.
-    private static async Task GetWmiMemoryInfo(string taskName)
+    private static async Task GetWmiMemoryInfo()
     {
         SMBiosRamInfo = false;
         List<RamStick> RamInfo = new();
@@ -213,7 +205,6 @@ public static partial class Cache
             RamInfo.Add(stick);
         }
         Ram = RamInfo;
-        await CloseTask(Region.Hardware, taskName);
     }
 
     //MONITORS
@@ -234,8 +225,6 @@ public static partial class Cache
 
     private static async Task GetMonitorInfo()
     {
-        var taskName = "GetMonitorInfo";
-        await OpenTask(Region.Hardware, taskName);
         List<Monitor> monitors = new();
         uint PathCount, ModeCount;
         int error = GetDisplayConfigBufferSizes(QUERY_DEVICE_CONFIG_FLAGS.QDC_ONLY_ACTIVE_PATHS,
@@ -320,7 +309,6 @@ public static partial class Cache
         // Gather Extended Display Identification Data
         await GetEdidData();
 
-        await CloseTask(Region.Hardware, taskName);
         MonitorInfo = monitors;
     }
     private static async Task GetEdidData()
@@ -870,9 +858,6 @@ public static partial class Cache
     }
     private static async Task GetDiskDriveData()
     {
-        var taskName = "GetDiskDriveData";
-        await OpenTask(Region.Hardware, taskName);
-
         // "Basic" in this context refers to data we can retrieve directly from WMI without much processing. Model names, partition labels, etc.
         List<DiskDrive> drives = GetBasicDriveInfo();
         drives = GetBasicPartitionInfo(drives);
@@ -957,7 +942,6 @@ public static partial class Cache
             }
         }
         Disks = drives;
-        await CloseTask(Region.Hardware, taskName);
     }
 
     private static DiskDrive GetNvmeSmart(DiskDrive drive)
@@ -1241,9 +1225,6 @@ public static partial class Cache
     // TEMPERATURES
     private static async Task GetTemps()
     {
-        var taskName = "GetTemps";
-        await OpenTask(Region.Hardware, taskName);
-
         //Any temp sensor reading below 24 will be filtered out
         //These sensors are either not reading in celsius, are in error, or we cannot interpret them properly here
         var Temps = new List<TempMeasurement>();
@@ -1289,17 +1270,12 @@ public static partial class Cache
         {
             computer.Close();
         }
-
-        await CloseTask(Region.Hardware, taskName);
         Temperatures = Temps;
     }
 
     // BATTERIES
     private static async Task GetBatteryData()
     {
-        var taskName = "GetBatteryData";
-        await OpenTask(Region.Hardware, taskName);
-
         List<BatteryData> BatteryInfo = new List<BatteryData>();
         string path =
             Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly()
@@ -1376,6 +1352,5 @@ public static partial class Cache
         timer.Stop();
         cmd.Close();
         Batteries = BatteryInfo;
-        await CloseTask(Region.Hardware, taskName);
     }
 }

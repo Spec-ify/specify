@@ -7,6 +7,9 @@ using System.IO;
 using System.Linq;
 using System.Management;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+
+using static specify_client.DebugLog;
 
 namespace specify_client.data;
 
@@ -205,5 +208,29 @@ public static class Utils
         bool success = collection.TryGetValue(key, out object? wmi) && wmi is T;
         value = success ? (T)wmi : default;
         return success;
+    }
+    public static async Task DoTask(Region region, string taskName, Func<Task> task)
+    {
+        await OpenTask(region, taskName);
+        try
+        {
+            await Task.Run(task);
+        }
+        finally
+        {
+            await CloseTask(region, taskName);
+        }
+    }
+    public static async Task DoTask(Region region, string taskName, Action task)
+    {
+        await OpenTask(region, taskName);
+        try
+        {
+            await Task.Run(task);
+        }
+        finally
+        {
+            await CloseTask(region, taskName);
+        }
     }
 }

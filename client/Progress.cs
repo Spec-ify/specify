@@ -16,8 +16,12 @@ public enum ProgressType
 
 public class ProgressStatus
 {
+    CancellationTokenSource tokenSource = new();
+    private ProgressType status;
+
+    public CancellationToken Token => tokenSource.Token;
     public string Name { get; }
-    public ProgressType Status { get; set; }
+    public ProgressType Status { get => status; set { status = value; if (value == ProgressType.Failed || value == ProgressType.Complete) tokenSource.Cancel(); } }
     public Func<Task> Action { get; }
     public List<string> Dependencies { get; }
     public bool SkipProgressWait { get; }
@@ -52,8 +56,8 @@ public class ProgressList
             { "Events", new ProgressStatus("Event Logs", data.Cache.MakeEventData) },
             {
                 Specificializing,
-                new ProgressStatus(Specificializing, Monolith.Specificialize,
-                    new List<string>(){ "MainData", "SystemData", "Security", "Network", "Hardware" })
+                new ProgressStatus(Specificializing, Monolith.Specificialize) 
+                    //new List<string>(){ "MainData", "SystemData", "Security", "Network", "Hardware" })
             }
         };
     }
@@ -67,10 +71,8 @@ public class ProgressList
             foreach (var k in item.Dependencies)
             {
                 var dep = Items.ContainsKey(k) ? Items[k] : throw new Exception($"Dependency {k} of {key} does not exist!");
-                while (dep.Status != ProgressType.Complete)
-                {
-                    Thread.Sleep(0);
-                }
+
+                dep.Token.WaitHandle.WaitOne();
             }
             item.Status = ProgressType.Processing;
             await item.Action();

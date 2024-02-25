@@ -4,7 +4,9 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace specify_client;
 
@@ -20,7 +22,7 @@ public static class DebugLog
     private static readonly bool[] RegionStarted = new bool[6];
     private static readonly bool[] RegionCompleted = new bool[6];
     private static readonly DateTime[] RegionStartTime = new DateTime[6];
-    private static Dictionary<string, DateTime>[] OpenTasks = new Dictionary<string, DateTime>[6];
+    private static ConcurrentDictionary<string, DateTime>[] OpenTasks = new ConcurrentDictionary<string, DateTime>[6];
 
     private static SemaphoreSlim logSemaphore = new(1, 1);
 
@@ -48,7 +50,18 @@ public static class DebugLog
     {
         if (!OpenTasks[(int)region].ContainsKey(taskName))
         {
-            OpenTasks[(int)region].Add(taskName, DateTime.Now);
+            int timeout = 0;
+            while(!OpenTasks[(int)region].TryAdd(taskName, DateTime.Now))
+            {
+                if(timeout > 10)
+                {
+                    await LogEventAsync($"{taskName} could not be opened. Unknown error.", region, EventType.ERROR);
+                    return;
+                }
+                await Task.Delay(10);
+                timeout++;
+            }
+
             await LogEventAsync($"Task Started: {taskName}", region);
         }
         // Ensure OpenTask hasn't been called twice on the same task.
@@ -61,9 +74,21 @@ public static class DebugLog
     {
         if (OpenTasks[(int)region].ContainsKey(taskName))
         {
-            await LogEventAsync($"Task Completed: {taskName} - Runtime: {(DateTime.Now - OpenTasks[(int)region][taskName]).TotalMilliseconds}", region);
-            OpenTasks[(int)region].Remove(taskName);
+            var runtime = (DateTime.Now - OpenTasks[(int)region][taskName]).TotalMilliseconds;
+            int timeout = 0;
             
+            while(!OpenTasks[(int)region].TryRemove(taskName, out _))
+            {
+                if (timeout > 10)
+                {
+                    await LogEventAsync($"{taskName} could not be opened. Unknown error.", region, EventType.ERROR);
+                    return;
+                }
+                await Task.Delay(10);
+                timeout++;
+            }
+            await LogEventAsync($"Task Completed: {taskName} - Runtime: {runtime}", region);
+
         }
         // Ensure CloseTask hasn't been called on a task that was never opened, or called twice on the same task.
         else

@@ -34,23 +34,26 @@ public static partial class Cache
     {
         try
         {
-            List<Task> systemTaskList = new();
+            
             Region region = Region.System;
             await StartRegion(region);
 
-            systemTaskList.Add(GetEnvironmentVariables());
-            systemTaskList.Add(GetSystemWMIInfo());
-            systemTaskList.Add(CheckCommercialOneDrive());
-            systemTaskList.Add(GetInstalledApps());
-            systemTaskList.Add(GetScheduledTasks());
-            systemTaskList.Add(GetStartupTasks());
-            systemTaskList.Add(RegistryCheck());
-            systemTaskList.Add(GetMicroCodes());
-            systemTaskList.Add(GetStaticCoreCount());
-            systemTaskList.Add(GetBrowserExtensions());
-            systemTaskList.Add(GetMiniDumps());
-            systemTaskList.Add(GetDefaultBrowser());
-            systemTaskList.Add(GetProcesses());
+            List<Task> systemTaskList = new()
+            {
+                DoTask(region, "GetEnvironmentVariables", GetEnvironmentVariables),
+                DoTask(region, "GetSystemWMIInfo", GetSystemWMIInfo),
+                DoTask(region, "CheckCommercialOneDrive", CheckCommercialOneDrive),
+                DoTask(region, "GetInstalledApps", GetInstalledApps),
+                DoTask(region, "GetScheduledTasks", GetScheduledTasks),
+                DoTask(region, "GetStartupTasks", GetStartupTasks),
+                DoTask(region, "RegistryCheck", RegistryCheck),
+                DoTask(region, "GetMicrocodes", GetMicroCodes),
+                DoTask(region, "GetStaticCoreCount", GetStaticCoreCount),
+                DoTask(region, "GetBrowserExtensions", GetBrowserExtensions),
+                DoTask(region, "GetMinidumps", GetMiniDumps),
+                DoTask(region, "GetDefaultBrowser", GetDefaultBrowser),
+                DoTask(region, "GetProcesses", GetProcesses)
+            };
 
             // Check if username contains non-alphanumeric characters
             UsernameSpecialCharacters = !Regex.IsMatch(Environment.UserName, @"^[a-zA-Z0-9]+$");
@@ -66,7 +69,6 @@ public static partial class Cache
     }
     private static async Task GetProcesses()
     {
-        await OpenTask(Region.System, "GetProcesses");
         var outputProcesses = new List<OutputProcess>();
         var rawProcesses = Process.GetProcesses();
 
@@ -122,13 +124,10 @@ public static partial class Cache
             });
         }
         RunningProcesses = outputProcesses;
-        await CloseTask(Region.System, "GetProcesses");
     }
 
-    private static async Task GetInstalledApps()
+    private static void GetInstalledApps()
     {
-        var taskName = "GetInstalledApps";
-        await OpenTask(Region.System, taskName);
 
         // Code Adapted from https://social.msdn.microsoft.com/Forums/en-US/94c2f14d-c45e-4b55-9ba0-eb091bac1035/c-get-installed-programs, thanks Rajasekhar.R! - K97i
         // Currently throws a hissy fit, NullReferenceException when actually adding to the Class
@@ -143,8 +142,6 @@ public static partial class Cache
         apps.AddRange(lm64List);
 
         InstalledApps = apps;
-
-        await CloseTask(Region.System, taskName);
     }
 
     private static List<InstalledApp> GetInstalledAppsAtKey(string keyLocation, RegistryKey reg)
@@ -218,9 +215,6 @@ public static partial class Cache
     // Group 4: %AppData%\Microsoft\Windows\Start Menu\Programs\Startup
     public static async Task GetStartupTasks()
     {
-        var taskName = "GetStartupTasks";
-        await OpenTask(Region.System, taskName);
-
         List<StartupTask> startupTasks = new();
 
         var group1TaskList = await GetStartupTasksAtKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", Registry.CurrentUser);
@@ -234,7 +228,6 @@ public static partial class Cache
         startupTasks.AddRange(group4TaskList);
 
         StartupTasks = startupTasks;
-        await CloseTask(Region.System, taskName);
     }
 
     private static async Task<List<StartupTask>> GetStartupTasksAtKey(string keyLocation, RegistryKey reg)
@@ -307,7 +300,6 @@ public static partial class Cache
 
     public static async Task GetMiniDumps()
     {
-        await OpenTask(Region.System, "GetMiniDumps");
         string result = null;
         const string specifiedDumpDestination = "https://dumpload.spec-ify.com/";
         const string dumpDir = @"C:\Windows\Minidump";
@@ -318,7 +310,6 @@ public static partial class Cache
         if (RecentMinidumps <= 0)
         {
             await LogEventAsync("No current dumps found.", Region.System);
-            await CloseTask(Region.System, "GetMiniDumps");
             return;
         }
 
@@ -326,7 +317,6 @@ public static partial class Cache
         if (dumps.Length == 0)
         {
             await LogEventAsync($"Dumps could not be retrieved from {dumpDir}", Region.System, EventType.ERROR);
-            await CloseTask(Region.System, "GetMiniDumps");
             return;
         }
 
@@ -334,7 +324,6 @@ public static partial class Cache
         if (MessageBox.Show("Would you like to upload your BSOD minidumps with your specs report?", "Minidumps detected", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
         {
             await LogEventAsync("Dump Upload Request Refused.", Region.System);
-            await CloseTask(Region.System, "GetMiniDumps");
             return;
         }
 
@@ -345,7 +334,6 @@ public static partial class Cache
         if (!await CreateMinidumpZipFile(dumps, TempFolder, TempZip))
         {
             await LogEventAsync("Dump zip file creation failure.", Region.System, EventType.ERROR);
-            await CloseTask(Region.System, "GetMiniDumps");
             return;
         }
 
@@ -355,7 +343,6 @@ public static partial class Cache
         if (string.IsNullOrEmpty(result))
         {
             await LogEventAsync($"Dump upload failure. {result}", Region.System, EventType.ERROR);
-            await CloseTask(Region.System, "GetMiniDumps");
             return;
         }
 
@@ -364,7 +351,6 @@ public static partial class Cache
         new DirectoryInfo(TempFolder).Delete(true);
 
         DumpZip = result;
-        await CloseTask(Region.System, "GetMiniDumps");
     }
     private static async Task<bool> CreateMinidumpZipFile(string[] dumps, string TempFolder, string TempZip)
     {
@@ -431,11 +417,8 @@ public static partial class Cache
         return result;
     }
 
-    private static async Task GetMicroCodes()
+    private static void GetMicroCodes()
     {
-        var taskName = "GetMicroCodes";
-        await OpenTask(Region.System, taskName);
-
         const string intelPath = @"C:\Windows\System32\mcupdate_genuineintel.dll";
         const string amdPath = @"C:\Windows\System32\mcupdate_authenticamd.dll";
 
@@ -444,14 +427,10 @@ public static partial class Cache
         if (File.Exists(amdPath)) res.Add(amdPath);
 
         MicroCodes = res;
-        await CloseTask(Region.System, taskName);
     }
 
     private static async Task GetStaticCoreCount()
     {
-        var taskName = "GetStaticCoreCount";
-        await OpenTask(Region.System, taskName);
-
         string output = string.Empty;
 
         var procStartInfo = new ProcessStartInfo("bcdedit", "/enum")
@@ -473,7 +452,6 @@ public static partial class Cache
             }
             StaticCoreCount = output.Contains("numproc");
         }
-        await CloseTask(Region.System, taskName);
     }
 
     private static void CountMinidumps()
@@ -499,8 +477,6 @@ public static partial class Cache
 
     private static async Task RegistryCheck()
     {
-        var taskName = "RegistryCheck";
-        await OpenTask(Region.System, taskName);
         try
         {
 
@@ -577,12 +553,10 @@ public static partial class Cache
             await LogEventAsync($"{ex}");
             ChoiceRegistryValues = new List<IRegistryValue>();
         }
-        await CloseTask(Region.System, taskName);
     }
 
     private static async Task GetBrowserExtensions()
     {
-        await OpenTask(Region.System, "GetBrowserExtensions");
         List<Browser> Browsers = new List<Browser>();
         string UserPath = string.Concat("C:\\Users\\", Username, "\\Appdata\\");
         Dictionary<string, string> BrowserPaths = new Dictionary<string, string>()
@@ -768,14 +742,10 @@ public static partial class Cache
             }
         }
         BrowserExtensions = Browsers;
-        await CloseTask(Region.System, "GetBrowserExtensions");
     }
 
     private static async Task CheckCommercialOneDrive()
     {
-        var taskName = "CheckCommercialOneDrive";
-        await OpenTask(Region.System, taskName);
-
         bool ODFound = false;
         try
         {
@@ -805,14 +775,10 @@ public static partial class Cache
                 }
             }
         }
-        await CloseTask(Region.System, taskName);
     }
 
-    private static async Task GetScheduledTasks()
+    private static void GetScheduledTasks()
     {
-        var taskName = "GetScheduledTasks";
-        await OpenTask(Region.System, taskName);
-
         var scheduledTasks = new List<ScheduledTask>();
         using var ts = new Microsoft.Win32.TaskScheduler.TaskService();
         var rawTaskList = EnumScheduledTasks(ts.RootFolder);
@@ -830,12 +796,10 @@ public static partial class Cache
         }
         ScheduledTasks = scheduledTasks;
 
-        await CloseTask(Region.System, taskName);
     }
 
     private static async Task GetDefaultBrowser()
     {
-        await OpenTask(Region.System, "GetDefaultBrowser");
         try
         {
             string defaultBrowserProcess = Regex.Match(GetRegistryValue<string>(Registry.ClassesRoot, string.Concat(GetRegistryValue<string>(Registry.CurrentUser,
@@ -846,10 +810,6 @@ public static partial class Cache
         {
             await LogEventAsync("Could not detect default browser", Region.System, EventType.ERROR);
             await LogEventAsync($"{e}", Region.System);
-        }
-        finally
-        {
-            await CloseTask(Region.System, "GetDefaultBrowser");
         }
     }
 
@@ -866,28 +826,19 @@ public static partial class Cache
         }
     }
 
-    private static async Task GetEnvironmentVariables()
+    private static void GetEnvironmentVariables()
     {
-        var taskName = "GetEnvironmentVariables";
-        await OpenTask(Region.System, taskName);
-
         SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
         UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
-
-        await CloseTask(Region.System, taskName);
     }
 
-    private static async Task GetSystemWMIInfo()
+    private static void GetSystemWMIInfo()
     {
-        var taskName = "GetSystemWMIInfo";
-        await OpenTask(Region.System, taskName);
-
         Services = GetWmi("Win32_Service", "Name, Caption, PathName, StartMode, State");
         InstalledHotfixes = GetWmi("Win32_QuickFixEngineering", "Description,HotFixID,InstalledOn");
         // As far as I can tell, Size is the size of the file on the filesystem and Usage is the amount actually used
         PageFile = GetWmi("Win32_PageFileUsage", "AllocatedBaseSize, Caption, CurrentUsage, PeakUsage").FirstOrDefault();
 
         PowerProfiles = GetPowerProfiles();
-        await CloseTask(Region.System, taskName);
     }
 }
