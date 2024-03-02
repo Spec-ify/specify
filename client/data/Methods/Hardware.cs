@@ -1281,6 +1281,11 @@ public static partial class Cache
             Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly()
                 .Location); //Directory the .exe has been launched from
 
+        if (File.Exists(Path.Combine(path, "battery-report.xml")))
+        {
+            File.Delete(Path.Combine(path, "battery-report.xml"));
+        }
+
         Process cmd = new Process //Generate the XML report we'll be grabbing the data from
         {
             StartInfo =
