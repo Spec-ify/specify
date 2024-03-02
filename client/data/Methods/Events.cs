@@ -169,7 +169,7 @@ public static partial class Cache
     {
         MachineCheckException mce = new();
 
-        string MciStatString = dataNode.InnerText;
+        string MciStatString = dataNode.InnerText.Substring(2);
 
         if (!ulong.TryParse(MciStatString, System.Globalization.NumberStyles.HexNumber, null, out ulong MciStat))
         {

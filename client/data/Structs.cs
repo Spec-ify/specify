@@ -309,7 +309,6 @@ public class UnexpectedShutdown
 }
 public class MachineCheckException
 {
-    public string Timestamp;
     public bool MciStatusRegisterValid; // Bit 63
     public bool ErrorOverflow; // Bit 62
     public bool UncorrectedError; // Bit 61
@@ -337,14 +336,12 @@ public class PciWheaError
 }
 public unsafe class WheaErrorRecord
 {
-    public DateTime? Timestamp;
     public WheaErrorHeader ErrorHeader;
     public List<WheaErrorDescriptor> ErrorDescriptors = new();
     public List<string> ErrorPackets = new();
 }
 public class WheaErrorRecordReadable
 {
-    public DateTime? Timestamp;
     public WheaErrorHeaderReadable ErrorHeader;
     public List<WheaErrorDescriptorReadable> ErrorDescriptors;
     public List<string> ErrorPackets;
