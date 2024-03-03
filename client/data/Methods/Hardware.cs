@@ -52,7 +52,7 @@ public static partial class Cache
     private static void GetHardwareWmiData()
     {
         Cpu = GetWmi("Win32_Processor",
-                "CurrentClockSpeed, Manufacturer, Name, SocketDesignation, NumberOfEnabledCore, ThreadCount").First();
+                "CurrentClockSpeed, LoadPercentage, Manufacturer, Name, SocketDesignation, NumberOfEnabledCore, ThreadCount").First();
         Gpu = GetWmi("Win32_VideoController",
             "Description, AdapterRam, CurrentHorizontalResolution, CurrentVerticalResolution, "
             + "CurrentRefreshRate, CurrentBitsPerPixel, DriverVersion, DriverDate");
