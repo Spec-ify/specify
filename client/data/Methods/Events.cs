@@ -46,8 +46,10 @@ public static partial class Cache
         string eventLogName = "System";
         int targetEventId = 41;
         string query = $"*[System[EventID={targetEventId}]]";
+        var eventLogQuery = new EventLogQuery(eventLogName, PathType.LogName, query);
+        eventLogQuery.ReverseDirection = true;
 
-        using (EventLogReader logReader = new EventLogReader(new EventLogQuery(eventLogName, PathType.LogName, query)))
+        using (EventLogReader logReader = new EventLogReader(eventLogQuery))
         {
             int maxEvents = 10; // I don't think we need more than 10. The cursed powershell command only grabs 10.
             UnexpectedShutdowns = new();
@@ -110,8 +112,10 @@ public static partial class Cache
         string eventLogName = "System";
         string eventSource = "Microsoft-Windows-WHEA-Logger";
         string query = $"*[System/Provider[@Name=\"{eventSource}\"]]";
+        var eventLogQuery = new EventLogQuery(eventLogName, PathType.LogName, query);
+        eventLogQuery.ReverseDirection = true;
 
-        using (EventLogReader logReader = new EventLogReader(new EventLogQuery(eventLogName, PathType.LogName, query)))
+        using (EventLogReader logReader = new EventLogReader(eventLogQuery))
         {
             /* There are three main types of WHEA errors from the WHEA-Logger in Event Viewer:
              * Machine Check Exceptions, which have an MCI Status number to be decoded
