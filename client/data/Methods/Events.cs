@@ -151,7 +151,8 @@ public static partial class Cache
                             if (dataName.Contains("MciStat"))
                             {
                                 // MCE
-                                MachineCheckExceptions.Add(MakeMachineCheckException(dataNode));
+                                var timestamp = eventInstance.TimeCreated;
+                                MachineCheckExceptions.Add(MakeMachineCheckException(dataNode, timestamp));
                             }
                             if (dataName.Contains("PrimaryDeviceName"))
                             {
@@ -169,9 +170,10 @@ public static partial class Cache
             }
         }
     }
-    public static MachineCheckException MakeMachineCheckException(XmlNode dataNode)
+    public static MachineCheckException MakeMachineCheckException(XmlNode dataNode, DateTime timestamp)
     {
         MachineCheckException mce = new();
+        mce.Timestamp = timestamp;
 
         string MciStatString = dataNode.InnerText.Substring(2);
 

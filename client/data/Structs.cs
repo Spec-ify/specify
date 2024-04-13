@@ -309,6 +309,7 @@ public class UnexpectedShutdown
 }
 public class MachineCheckException
 {
+    public DateTime? Timestamp;
     public bool MciStatusRegisterValid; // Bit 63
     public bool ErrorOverflow; // Bit 62
     public bool UncorrectedError; // Bit 61
