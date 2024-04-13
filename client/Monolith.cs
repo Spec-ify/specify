@@ -264,6 +264,7 @@ public class Monolith
     {
         public string Edition;
         public string Version;
+        public string Sku;
         public string FriendlyVersion;
         public string InstallDate;
         public long Uptime;
@@ -284,6 +285,7 @@ public class Monolith
 
             Edition = (string)os["Caption"];
             Version = (string)os["Version"];
+            Utils.TryWmiRead(cs, "SystemSKUNumber", out Sku);
             FriendlyVersion = Utils.GetRegistryValue<string>(Registry.LocalMachine,
                 @"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
                 "DisplayVersion") ?? Utils.GetRegistryValue<string>(Registry.LocalMachine,
