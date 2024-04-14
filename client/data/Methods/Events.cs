@@ -170,7 +170,7 @@ public static partial class Cache
             }
         }
     }
-    public static MachineCheckException MakeMachineCheckException(XmlNode dataNode, DateTime timestamp)
+    public static MachineCheckException MakeMachineCheckException(XmlNode dataNode, DateTime? timestamp)
     {
         MachineCheckException mce = new();
         mce.Timestamp = timestamp;
