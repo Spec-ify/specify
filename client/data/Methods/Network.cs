@@ -49,8 +49,10 @@ public static partial class Cache
             HostsFileHash = GetHostsFileHash();
             await DebugLog.LogEventAsync("Hosts file retrieved.", region);
 
-            NetworkConnections = GetNetworkConnections();
-            await DebugLog.LogEventAsync("NetworkConnections Information retrieved.", region);
+            TCPConnections = GetTCPConnections();
+            UDPEndpoints = Utils.GetWmi("MSFT_NetUDPEndpoint", "LocalAddress,LocalPort,OwningProcess",
+                @"root\standardcimv2");
+            await DebugLog.LogEventAsync("Network Connections Information retrieved.", region);
 
             await DebugLog.EndRegion(DebugLog.Region.Networking);
         }
@@ -61,15 +63,15 @@ public static partial class Cache
         NetworkWriteSuccess = true;
     }
 
-    private static List<NetworkConnection> GetNetworkConnections()
+    private static List<TCPConnection> GetTCPConnections()
     {
         DateTime start = DateTime.Now;
-        DebugLog.LogEvent("GetNetworkConnections() Started.", DebugLog.Region.Networking);
-        List<NetworkConnection> connectionsList = new();
+        DebugLog.LogEvent("GetTCPConnections() Started.", DebugLog.Region.Networking);
+        List<TCPConnection> connectionsList = new();
         var connections = GetAllTCPv4Connections();
         foreach (var connection in connections)
         {
-            NetworkConnection conn = new();
+            TCPConnection conn = new();
 
             // port numbers are 16-bit numbers stored in two bytes. The bit-shifts here convert the two bytes into the real port number.
             int port = connection.localPort[0] << 8;
@@ -99,7 +101,7 @@ public static partial class Cache
 
         foreach (var connection in v6connections)
         {
-            NetworkConnection conn = new();
+            TCPConnection conn = new();
             int port = 0;
             port += connection.localPort[0] << 8;
             port += connection.localPort[1];
@@ -122,7 +124,7 @@ public static partial class Cache
 
             connectionsList.Add(conn);
         }
-        DebugLog.LogEvent($"GetNetworkConnections() completed. Total Runtime {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Networking);
+        DebugLog.LogEvent($"GetTCPConnections() completed. Total Runtime {(DateTime.Now - start).TotalMilliseconds}", DebugLog.Region.Networking);
         return connectionsList;
     }
     private static void GetAdapterProperties()

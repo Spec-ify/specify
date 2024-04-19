@@ -114,7 +114,7 @@ public class TempMeasurement
     public float SensorValue;
 }
 
-public class NetworkConnection
+public class TCPConnection
 {
     public string LocalIPAddress;
     public int LocalPort;

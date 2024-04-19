@@ -35,7 +35,8 @@ public static partial class Cache
     public static List<Dictionary<string, object>> NetAdapters { get; private set; }
     public static List<Dictionary<string, object>> NetAdapters2 { get; private set; }
     public static List<Dictionary<string, object>> IPRoutes { get; private set; }
-    public static List<NetworkConnection> NetworkConnections { get; private set; }
+    public static List<TCPConnection> TCPConnections { get; private set; }
+    public static List<Dictionary<string, object>> UDPEndpoints { get; private set; }
     public static bool ReceiveSideScaling { get; private set; }
     public static Dictionary<string, string> AutoTuningLevelLocal { get; private set; }
     public static List<Browser> BrowserExtensions { get; private set; }

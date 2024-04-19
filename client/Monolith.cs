@@ -435,7 +435,8 @@ public class Monolith
         public List<Dictionary<string, object>> Adapters;
         //public List<Dictionary<string, object>> Adapters2;
         public List<Dictionary<string, object>> Routes;
-        public List<NetworkConnection> NetworkConnections;
+        public List<TCPConnection> NetworkConnections;
+        public List<Dictionary<string, object>> UDPEndpoints;
         public bool ReceiveSideScaling;
         public Dictionary<string, string> AutoTuningLevelLocal;
         public string HostsFile;
@@ -447,7 +448,8 @@ public class Monolith
             Adapters = Cache.NetAdapters;
             //Adapters2 = Cache.NetAdapters2;
             Routes = Cache.IPRoutes;
-            NetworkConnections = Cache.NetworkConnections;
+            NetworkConnections = Cache.TCPConnections;
+            UDPEndpoints = Cache.UDPEndpoints;
             HostsFile = Cache.HostsFile;
             HostsFileHash = Cache.HostsFileHash;
             WriteSuccess = Cache.NetworkWriteSuccess;
