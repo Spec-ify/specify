@@ -18,6 +18,7 @@ using System.Threading;
 using System.Diagnostics.Eventing.Reader;
 using System.Xml.Serialization;
 using System.Xml;
+using System.Runtime.CompilerServices;
 
 namespace specify_client.data;
 
@@ -297,6 +298,16 @@ public static partial class Cache
         startupTask.AppDescription = description;
         return startupTask;
     }
+    public static long DirectorySize(string[] filePaths)
+    {
+        long sum = 0;
+        foreach(var path in filePaths)
+        {
+            FileInfo fileInfo = new(path);
+            sum += fileInfo.Length;
+        }
+        return sum;
+    }
 
     public static async Task GetMiniDumps()
     {
@@ -305,6 +316,7 @@ public static partial class Cache
         const string dumpDir = @"C:\Windows\Minidump";
         string TempFolder = Path.GetTempPath() + @"specify-dumps";
         string TempZip = Path.GetTempPath() + @"specify-dumps.zip";
+
         CountMinidumps();
 
         if (RecentMinidumps <= 0)
@@ -314,6 +326,13 @@ public static partial class Cache
         }
 
         string[] dumps = Directory.GetFiles(dumpDir);
+        var directorySize = DirectorySize(dumps);
+        if (directorySize > 0x10000000) // 256 MB
+        {
+            await LogEventAsync($"Dump files are too large to upload: {directorySize / 1024 / 1024} MB", Region.System, EventType.WARNING);
+            return;
+        }
+
         if (dumps.Length == 0)
         {
             await LogEventAsync($"Dumps could not be retrieved from {dumpDir}", Region.System, EventType.ERROR);
@@ -337,7 +356,16 @@ public static partial class Cache
             return;
         }
 
-        await LogEventAsync("Dump zip file built. Attempting upload.", Region.System);
+        FileInfo fileInfo = new(TempZip);
+
+        if(fileInfo.Length >= 0x8000000) // 128 MiB
+        {
+            await LogEventAsync($"Dump zip too large: {fileInfo.Length / 1024 / 1024} MB", Region.System, EventType.WARNING);
+            File.Delete(TempZip);
+            return;
+        }
+
+        await LogEventAsync($"Dump zip file built. Attempting upload. - Size: {fileInfo.Length:X}", Region.System);
 
         result = await UploadMinidumps(TempZip, specifiedDumpDestination);
         if (string.IsNullOrEmpty(result))
@@ -357,9 +385,15 @@ public static partial class Cache
         try
         {
             bool copied = false;
-            //Any dump older than a month is not included in the zip.
             foreach (string dump in dumps)
             {
+                // Skip any non-dump files, if any.
+                if (!dump.ToLower().Contains(".dmp")) 
+                {
+                    await LogEventAsync($"{dump} is not a dump file.", Region.System, EventType.WARNING);
+                    continue;
+                }
+
                 var fileName = string.Concat(TempFolder + @"/", Regex.Match(dump, "[^\\\\]*$").Value);
                 File.Copy(dump, fileName);
                 if (!File.Exists(fileName))
