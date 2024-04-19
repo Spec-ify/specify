@@ -327,7 +327,7 @@ public static partial class Cache
 
         string[] dumps = Directory.GetFiles(dumpDir);
         var directorySize = DirectorySize(dumps);
-        if (directorySize > 0x10000000) // 256 MB
+        if (directorySize > 0x10000000) // 256 MiB
         {
             await LogEventAsync($"Dump files are too large to upload: {directorySize / 1024 / 1024} MB", Region.System, EventType.WARNING);
             return;
@@ -396,6 +396,8 @@ public static partial class Cache
 
                 var fileName = string.Concat(TempFolder + @"/", Regex.Match(dump, "[^\\\\]*$").Value);
                 File.Copy(dump, fileName);
+
+                // This check only exists because of a bug where specify was uploading empty zip files. This bug has been fixed, but I'm leaving the check just in case.
                 if (!File.Exists(fileName))
                 {
                     await LogEventAsync($"Failed to copy {Regex.Match(dump, "[^\\\\]*$").Value} to dump folder.", Region.System, EventType.ERROR);
