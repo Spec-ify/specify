@@ -75,6 +75,7 @@ public class DiskDrive
     public ulong? DiskFree;
     public uint? BlockSize;
     public string MediaType;
+    public string InterfaceType;
     public List<Partition> Partitions;
     public List<SmartAttribute> SmartData;
     [NonSerialized()] public string InstanceId; // Only used to link SmartData, do not serialize. Unless you really want to.

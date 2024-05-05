@@ -524,6 +524,11 @@ public static partial class Cache
                 drive.MediaType = "Unknown (WMI Failure)";
             }
 
+            if (!driveWmi.TryWmiRead("InterfaceType", out drive.InterfaceType))
+            {
+                drive.MediaType = "Unknown (WMI Failure)";
+            }
+
             drive.Partitions = new List<Partition>();
 
             diskNumber++;
@@ -946,6 +951,12 @@ public static partial class Cache
 
     private static DiskDrive GetNvmeSmart(DiskDrive drive)
     {
+        // Stop if drive is not an NVME drive. This happens on all external drives.
+        if(drive.InterfaceType != "SCSI" || !drive.MediaType.ToLower().Contains("fixed"))
+        {
+            LogEvent($"Could not retrieve NVME Smart Data. Drive {drive.DeviceName} is not an NVME drive. Interface: {drive.InterfaceType}. Media type: {drive.MediaType}", Region.Hardware);
+            return drive;
+        }
         // Get the drive letter to send to CreateFile()
         string driveLetter = "";
         foreach (var partition in drive.Partitions)
