@@ -53,7 +53,8 @@ public static partial class Cache
                 DoTask(region, "GetBrowserExtensions", GetBrowserExtensions),
                 DoTask(region, "GetMinidumps", GetMiniDumps),
                 DoTask(region, "GetDefaultBrowser", GetDefaultBrowser),
-                DoTask(region, "GetProcesses", GetProcesses)
+                DoTask(region, "GetProcesses", GetProcesses),
+                DoTask(region, "GetWindowsOld", GetWindowsOld)
             };
 
             // Check if username contains non-alphanumeric characters
@@ -67,6 +68,10 @@ public static partial class Cache
             await LogFatalError($"{ex}", Region.System);
         }
         SystemWriteSuccess = true;
+    }
+    private static async Task GetWindowsOld()
+    {
+        WindowsOld = Directory.Exists(@"C:\Windows.Old");
     }
     private static async Task GetProcesses()
     {

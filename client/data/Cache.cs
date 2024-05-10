@@ -41,6 +41,7 @@ public static partial class Cache
     public static Dictionary<string, string> AutoTuningLevelLocal { get; private set; }
     public static List<Browser> BrowserExtensions { get; private set; }
     public static string DefaultBrowser { get; private set; }
+    public static bool WindowsOld { get; private set; }
 
     public static string Username => Environment.UserName;
 

@@ -400,6 +400,7 @@ public class Monolith
         public bool WriteSuccess;
         public int ErrorCount;
         public int? LastBiosTime;
+        public bool WindowsOld;
         public MonolithSystem()
         {
             UserVariables = Cache.UserVariables;
@@ -426,6 +427,7 @@ public class Monolith
             WriteSuccess = Cache.SystemWriteSuccess;
             LastBiosTime = Cache.LastBiosTime;
             ErrorCount = DebugLog.ErrorCount[(int)DebugLog.Region.System];
+            WindowsOld = Cache.WindowsOld;
         }
     }
 
