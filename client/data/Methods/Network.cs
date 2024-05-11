@@ -295,20 +295,21 @@ public static partial class Cache
     }
     private static string GetHostsFile()
     {
-        StringBuilder hostsFile = new();
+        //StringBuilder hostsFile = new();
         try
         {
-            foreach (var str in File.ReadAllLines(@"C:\Windows\System32\drivers\etc\hosts"))
+            return File.ReadAllText(@"C:\Windows\System32\drivers\etc\hosts");
+            /*foreach (var str in File.ReadAllLines(@"C:\Windows\System32\drivers\etc\hosts"))
             {
                 hostsFile.Append($"{str}\n");
-            }
+            }*/
         }
         catch (FileNotFoundException)
         {
             DebugLog.LogEvent("Hosts file not found.", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
             return "";
         }
-        return hostsFile.ToString();
+        //return hostsFile.ToString();
     }
     public static string GetHostsFileHash()
     {
