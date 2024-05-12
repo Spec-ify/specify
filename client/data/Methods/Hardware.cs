@@ -902,7 +902,9 @@ public static partial class Cache
 
                     if (!result)
                     {
-                        LogEvent($"{new Win32Exception(Marshal.GetLastWin32Error()).Message}", Region.Hardware, EventType.ERROR);
+                        LogEvent($"Partition Scheme could not be retrieved on {driveLetter}. Interop failure. {new Win32Exception(Marshal.GetLastWin32Error()).Message}", Region.Hardware, EventType.ERROR);
+                        Marshal.FreeHGlobal(buffer);
+                        continue;
                     }
 
                     drive.PartitionScheme = (partitionInfo->PartitionStyle).ToString();
