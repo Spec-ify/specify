@@ -14,6 +14,7 @@ using System.Xml;
 using System.Text;
 using System.ComponentModel;
 using static specify_client.Interop;
+using HidSharp.Utility;
 
 namespace specify_client.data;
 
@@ -861,6 +862,58 @@ public static partial class Cache
         LogEvent($"A matching partition could not be found for drive letter \"{driveLetter}\"", Region.Hardware, EventType.ERROR);
         return null;
     }
+    private static List<DiskDrive> GetPartitionSchemes(List<DiskDrive> drives)
+    {
+        foreach (var drive in drives)
+        {
+            foreach(var partition in drive.Partitions)
+            {
+                if(string.IsNullOrEmpty(partition.PartitionLetter))
+                {
+                    continue;
+                }
+
+                var driveLetter = partition.PartitionLetter;
+                driveLetter = $@"\\.\{driveLetter}" + '\0';
+
+                // Get a handle to the drive.
+                var handle = CreateFile(driveLetter, 0x40000000, 0x1 | 0x2, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
+                if(handle == new IntPtr(-1))
+                {
+                    LogEvent($"Partition Scheme could not be retrieved on {driveLetter}. Invalid handle.", Region.Hardware, EventType.ERROR);
+                    LogEvent($"Interop Error. {new Win32Exception(Marshal.GetLastWin32Error()).Message}", Region.Hardware);
+                }
+                unsafe
+                {
+                    PARTITION_INFORMATION_EX* partitionInfo = null;
+                    uint bufferLength = (uint)sizeof(PARTITION_INFORMATION_EX);
+                    var buffer = Marshal.AllocHGlobal((int)bufferLength);
+
+                    partitionInfo = (PARTITION_INFORMATION_EX*)buffer;
+
+                    var result = DeviceIoControl(handle,
+                                                 ((0x00000007) << 16) | ((0) << 14) | ((0x0012) << 2) | (0), // IOCTL_DISK_GET_PARTITION_INFO_EX
+                                                 IntPtr.Zero,
+                                                 0,
+                                                 buffer,
+                                                 bufferLength,
+                                                 out uint returnedLength,
+                                                 IntPtr.Zero);
+
+                    if (!result)
+                    {
+                        LogEvent($"{new Win32Exception(Marshal.GetLastWin32Error()).Message}", Region.Hardware, EventType.ERROR);
+                    }
+
+                    drive.PartitionScheme = (partitionInfo->PartitionStyle).ToString();
+
+                    Marshal.FreeHGlobal(buffer);
+
+                }
+            }
+        }
+        return drives;
+    }
     private static async Task GetDiskDriveData()
     {
         // "Basic" in this context refers to data we can retrieve directly from WMI without much processing. Model names, partition labels, etc.
@@ -868,6 +921,7 @@ public static partial class Cache
         drives = GetBasicPartitionInfo(drives);
         drives = LinkLogicalPartitions(drives);
         drives = LinkNonLogicalPartitions(drives);
+        drives = GetPartitionSchemes(drives);
         drives = GetBitlockerStatus(drives);
 
         try

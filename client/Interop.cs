@@ -3,6 +3,7 @@ using System.Text;
 
 namespace specify_client;
 
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 public static class Interop
@@ -556,5 +557,54 @@ public static class Interop
         public ushort TemperatureSensor8;
         public fixed byte Reserved1[296];
     }
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct PARTITION_INFORMATION_EX
+    {
+        public PARTITION_STYLE PartitionStyle;
+        public LARGE_INTEGER StartingOffset;
+        public LARGE_INTEGER PartitionLength;
+        public uint PartitionNumber;
+        public byte RewritePartition;
+        public byte IsServicePartition;
+        public DUMMYUNION PartitionScheme;
+        [StructLayout(LayoutKind.Explicit)]
+        public struct DUMMYUNION
+        {
+            [FieldOffset(0)] public PARTITION_INFORMATION_MBR Mbr;
+            [FieldOffset(0)] public PARTITION_INFORMATION_GPT Gpt;
+        }
+    }
 
+    public enum PARTITION_STYLE
+    {
+        PARTITION_STYLE_MBR,
+        PARTITION_STYLE_GPT,
+        PARTITION_STYLE_RAW
+    }
+    [StructLayout (LayoutKind.Sequential)]
+    public struct PARTITION_INFORMATION_MBR
+    {
+        public byte PartitionType;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool BootIndicator;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool RecognizedPartition;
+        public uint HiddenSectors;
+        public Guid PartitionId;
+    }
+    [StructLayout (LayoutKind.Sequential)]
+    public unsafe struct PARTITION_INFORMATION_GPT
+    {
+        public Guid PartitionType;
+        public Guid PartitionId;
+        public ulong Attributes;
+        public fixed ushort Name[36];
+    }
+    [StructLayout(LayoutKind.Explicit, Size = 8)]
+    public struct LARGE_INTEGER
+    {
+        [FieldOffset(0)] public Int64 QuadPart;
+        [FieldOffset(0)] public UInt32 LowPart;
+        [FieldOffset(4)] public Int32 HighPart;
+    }
 }
