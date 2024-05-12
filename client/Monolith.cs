@@ -468,12 +468,20 @@ public class Monolith
         public List<MachineCheckException> MachineCheckExceptions;
         public List<WheaErrorRecordReadable> WheaErrorRecords;
         public List<PciWheaError> PciWheaErrors;
+        public int UnexpectedShutdownCount;
+        public int MachineCheckExceptionCount;
+        public int WheaErrorRecordCount;
+        public int PciWheaErrorCount;
         public MonolithEvents()
         {
             UnexpectedShutdowns = Cache.UnexpectedShutdowns;
             MachineCheckExceptions = Cache.MachineCheckExceptions;
             WheaErrorRecords = Cache.WheaErrorRecords;
             PciWheaErrors = Cache.PciWheaErrors;
+            UnexpectedShutdownCount = Cache.UnexpectedShutdownCount;
+            MachineCheckExceptionCount = Cache.MachineCheckExceptionCount;
+            WheaErrorRecordCount = Cache.WheaErrorRecordCount;
+            PciWheaErrorCount = Cache.PciWheaErrorCount;
         }
     }
 

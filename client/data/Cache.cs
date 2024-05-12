@@ -95,4 +95,8 @@ public static partial class Cache
     public static List<MachineCheckException> MachineCheckExceptions { get; private set; }
     public static List<PciWheaError> PciWheaErrors { get; private set; }
     public static List<WheaErrorRecordReadable> WheaErrorRecords { get; private set; }
+    public static int UnexpectedShutdownCount { get; private set; }
+    public static int MachineCheckExceptionCount { get; private set; }
+    public static int PciWheaErrorCount { get; private set; }
+    public static int WheaErrorRecordCount { get; private set; }
 }

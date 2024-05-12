@@ -48,6 +48,7 @@ public static partial class Cache
         string query = $"*[System[EventID={targetEventId}]]";
         var eventLogQuery = new EventLogQuery(eventLogName, PathType.LogName, query);
         eventLogQuery.ReverseDirection = true;
+        
 
         using (EventLogReader logReader = new EventLogReader(eventLogQuery))
         {
@@ -56,9 +57,11 @@ public static partial class Cache
 
             for (EventRecord eventInstance = logReader.ReadEvent(); eventInstance != null; eventInstance = logReader.ReadEvent())
             {
-                if (UnexpectedShutdowns.Count >= maxEvents)
+                UnexpectedShutdownCount++;
+                if (UnexpectedShutdownCount > maxEvents)
                 {
-                    break;
+                    // Do not process further events, but continue counting them. There has to be a better way to do this.
+                    continue;
                 }
 
                 UnexpectedShutdown shutdown = new();
@@ -131,13 +134,6 @@ public static partial class Cache
 
             for (EventRecord eventInstance = logReader.ReadEvent(); eventInstance != null; eventInstance = logReader.ReadEvent())
             {
-                if (MachineCheckExceptions.Count >= maxEvents ||
-                    PciWheaErrors.Count >= maxEvents ||
-                    WheaErrorRecords.Count >= maxEvents)
-                {
-                    break;
-                }
-
                 XmlNode eventDataNode = GetDataNode(eventInstance);
 
                 if (eventDataNode != null)
@@ -151,17 +147,32 @@ public static partial class Cache
                             if (dataName.Contains("MciStat"))
                             {
                                 // MCE
+                                MachineCheckExceptionCount++;
+                                if (MachineCheckExceptionCount > maxEvents)
+                                {
+                                    continue;
+                                }
                                 var timestamp = eventInstance.TimeCreated;
                                 MachineCheckExceptions.Add(MakeMachineCheckException(dataNode, timestamp));
                             }
                             if (dataName.Contains("PrimaryDeviceName"))
                             {
                                 // PCIe Error
+                                PciWheaErrorCount++;
+                                if(PciWheaErrorCount > maxEvents)
+                                {
+                                    continue;
+                                }
                                 PciWheaErrors.Add(MakePcieError(eventInstance, eventDataNode));
                             }
                             if (dataName.Contains("RawData"))
                             {
                                 // WHEA Record
+                                WheaErrorRecordCount++;
+                                if(WheaErrorRecordCount > maxEvents)
+                                {
+                                    continue;
+                                }
                                 WheaErrorRecords.Add(MakeWheaErrorRecord(dataNode));
                             }
                         }
