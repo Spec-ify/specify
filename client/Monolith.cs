@@ -401,6 +401,8 @@ public class Monolith
         public int ErrorCount;
         public int? LastBiosTime;
         public bool WindowsOld;
+        public List<string> InstalledLanguagePacks;
+        public string SystemLanguage;
         public MonolithSystem()
         {
             UserVariables = Cache.UserVariables;
@@ -428,6 +430,8 @@ public class Monolith
             LastBiosTime = Cache.LastBiosTime;
             ErrorCount = DebugLog.ErrorCount[(int)DebugLog.Region.System];
             WindowsOld = Cache.WindowsOld;
+            InstalledLanguagePacks = Cache.InstalledLanguagePacks;
+            SystemLanguage = Cache.SystemLanguage;
         }
     }
 

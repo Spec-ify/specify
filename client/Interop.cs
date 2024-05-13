@@ -369,8 +369,14 @@ public static class Interop
     internal static extern uint GetExtendedTcpTable(
         IntPtr pTcpTable, ref int dwOutBufLen, bool sort, int ipVersion, TCP_TABLE_CLASS tblClass, uint reserved = 0);
 
+    [DllImport("user32.dll")]
+    public static extern uint GetKeyboardLayoutList(int nBuff, [Out] IntPtr[] lpList);
+
     [DllImport("kernel32", SetLastError = true)] // this function is used to get the pointer on the process heap required by AllocateAndGetTcpExTableFromStack
-    internal static extern IntPtr GetProcessHeap();
+    public static extern IntPtr GetProcessHeap();
+
+    
+
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct STORAGE_PROPERTY_SET
     {
@@ -378,6 +384,7 @@ public static class Interop
         STORAGE_SET_TYPE SetType;
         fixed byte AdditionalParameters[1];
     }
+
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct STORAGE_PROTOCOL_SPECIFIC_DATA_EXT
     {
@@ -607,4 +614,5 @@ public static class Interop
         [FieldOffset(0)] public UInt32 LowPart;
         [FieldOffset(4)] public Int32 HighPart;
     }
+
 }

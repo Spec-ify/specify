@@ -42,8 +42,9 @@ public static partial class Cache
     public static List<Browser> BrowserExtensions { get; private set; }
     public static string DefaultBrowser { get; private set; }
     public static bool WindowsOld { get; private set; }
-
     public static string Username => Environment.UserName;
+    public static List<string> InstalledLanguagePacks { get; private set; }
+    public static string SystemLanguage { get; private set; }
 
     // all the hardware stuff
     //each item in the list is a stick of ram

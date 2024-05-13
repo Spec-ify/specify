@@ -19,11 +19,13 @@ using System.Diagnostics.Eventing.Reader;
 using System.Xml.Serialization;
 using System.Xml;
 using System.Runtime.CompilerServices;
+using System.Globalization;
 
 namespace specify_client.data;
 
 using static specify_client.DebugLog;
 using static Utils;
+using static specify_client.Interop;
 
 using Win32Task = Microsoft.Win32.TaskScheduler.Task;
 using TaskFolder = Microsoft.Win32.TaskScheduler.TaskFolder;
@@ -54,7 +56,8 @@ public static partial class Cache
                 DoTask(region, "GetMinidumps", GetMiniDumps),
                 DoTask(region, "GetDefaultBrowser", GetDefaultBrowser),
                 DoTask(region, "GetProcesses", GetProcesses),
-                DoTask(region, "GetWindowsOld", GetWindowsOld)
+                DoTask(region, "GetWindowsOld", GetWindowsOld),
+                DoTask(region, "GetLanguages", GetLanguages)
             };
 
             // Check if username contains non-alphanumeric characters
@@ -881,5 +884,45 @@ public static partial class Cache
         PageFile = GetWmi("Win32_PageFileUsage", "AllocatedBaseSize, Caption, CurrentUsage, PeakUsage").FirstOrDefault();
 
         PowerProfiles = GetPowerProfiles();
+    }
+
+    private static void GetLanguages()
+    {
+        InstalledLanguagePacks = new();
+        // first determine the number of installed languages
+        uint size = GetKeyboardLayoutList(0, null);
+        IntPtr[] ids = new IntPtr[size];
+
+        // then get the handles list of those languages
+        GetKeyboardLayoutList(ids.Length, ids);
+        if (ids.Length > 0)
+        {
+            foreach (int id in ids)
+            {
+                var cultureInfo = new CultureInfo(id & 0xFFFF);
+                InstalledLanguagePacks.Add(cultureInfo.Name);
+            }
+        }
+        else
+        {
+            // Is this possible?
+            LogEvent("No language packs installed.", Region.System);
+        }
+
+        SystemLanguage = GetSystemLanguage();
+    }
+    private static string GetSystemLanguage()
+    {
+        var osInfo = GetWmi("Win32_OperatingSystem", "OSLanguage").FirstOrDefault();
+        if (Utils.TryWmiRead(osInfo, "OSLanguage", out uint language))
+        {
+            var cultureInfo = new CultureInfo((int)language);
+            return cultureInfo.Name;
+        }
+        else
+        {
+            LogEvent($"Could not retrieve OS Language.", Region.System, EventType.ERROR);
+            return "Error (WMI Failure)";
+        }
     }
 }
