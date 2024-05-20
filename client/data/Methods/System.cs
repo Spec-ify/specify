@@ -599,190 +599,191 @@ public static partial class Cache
     private static async Task GetBrowserExtensions()
     {
         List<Browser> Browsers = new List<Browser>();
-        string UserPath = string.Concat("C:\\Users\\", Username, "\\Appdata\\");
-        Dictionary<string, string> BrowserPaths = new Dictionary<string, string>()
-        {
-            {"Edge", "Local\\Microsoft\\Edge\\User Data\\"},
-            {"Vivaldi", "Local\\Vivaldi\\User Data\\"},
-            {"Brave", "Local\\BraveSoftware\\Brave-Browser\\User Data\\"},
-            {"Chrome", "Local\\Google\\Chrome\\User Data\\"},
-            {"Firefox", "Roaming\\Mozilla\\Firefox\\Profiles\\"},
-            {"OperaGX","Roaming\\Opera Software\\Opera GX Stable\\"}
-        };
+        Dictionary<string, string> BrowserPaths = GetSingleUserBrowsers();
+        //In the future we'll be adding multiuser browsers to this list
 
-        foreach (KeyValuePair<string, string> BrowserPath in BrowserPaths)
+        foreach (KeyValuePair<string, string> browserPath in BrowserPaths)
         {
-            if (Directory.Exists(string.Concat(UserPath, BrowserPath.Value)))
+            if (browserPath.Key.Equals("Firefox"))
             {
-                if (BrowserPath.Key.Equals("Firefox"))
+                Browser browser = new Browser()
                 {
-                    Browser browser = new Browser()
-                    {
-                        Name = "Firefox",
-                        Profiles = new List<Browser.BrowserProfile>()
-                    };
+                    Name = "Firefox",
+                    Profiles = new List<Browser.BrowserProfile>()
+                };
 
-                    foreach (string dir in Directory.GetDirectories(string.Concat(UserPath, BrowserPath.Value)))
-                    {
-                        try
-                        {
-                            var addonsFile = string.Concat(dir, "\\addons.json");
-                            if (!File.Exists(addonsFile)) continue;
-                            List<JToken> extensions = JObject.Parse(File.ReadAllText(addonsFile))["addons"].Children().ToList();
-                            Browser.BrowserProfile profile = new Browser.BrowserProfile()
-                            {
-                                name = new DirectoryInfo(dir).Name.Substring(8),
-                                Extensions = new List<Browser.Extension>()
-                            };
-
-                            foreach (JToken extension in extensions)
-                                profile.Extensions.Add(new Browser.Extension()
-                                {
-                                    name = (string)extension["name"],
-                                    description = (string)extension["description"],
-                                    version = (string)extension["version"]
-                                });
-
-                            browser.Profiles.Add(profile);
-                        }
-                        catch (Exception e)
-                        {
-                            await LogEventAsync($"Exception occurred in GetBrowserExtensions() during browser enumeration.", Region.System, EventType.ERROR);
-                            await LogEventAsync($"{e}");
-                        }
-                    }
-
-                    Browsers.Add(browser);
-                }
-                else if (BrowserPath.Key.Equals("OperaGX"))
+                foreach (string dir in Directory.GetDirectories(browserPath.Value))
                 {
-                    Browser browser = new Browser()
+                    try
                     {
-                        Name = "OperaGX",
-                        Profiles = new List<Browser.BrowserProfile>()
-                    };
-                    List<string> defaultExtensions = new List<string>() //Extensions installed by default, we can ignore these
-                    {
-                        "aelmefcddnelhophneodelaokjogeemi",
-                        "enegjkbbakeegngfapepobipndnebkdk",
-                        "gojhcdgcpbpfigcaejpfhfegekdgiblk",
-                        "kbmoiomgmchbpihhdpabemajcbjpcijk"
-                    };
-                    Browser.BrowserProfile profile = new Browser.BrowserProfile()
-                    {
-                        name = "Default",
-                        Extensions = new List<Browser.Extension>()
-                    };
-                    //make sre the dirs actually exist
-                    if (Directory.Exists(string.Concat(UserPath, BrowserPath.Value, "Extensions")))
-                    {
-                        //Default profile logic needs to exist seperately due to OperaGX's AppData file structure.
-                        foreach (string edir in Directory.GetDirectories(string.Concat(UserPath, BrowserPath.Value, "Extensions")))
+                        string addonsFile = string.Concat(dir, "\\addons.json");
+                        if (!File.Exists(addonsFile))
                         {
-                            if (!defaultExtensions.Contains(new DirectoryInfo(edir).Name))
-                            {
-                                if (new DirectoryInfo(edir).Name.Equals("Temp"))
-                                    continue;
-
-                                try
-                                {
-                                    profile.Extensions.Add(ParseChromiumExtension(edir));
-                                }
-                                catch (Exception e)
-                                {
-                                    if (e is FileNotFoundException || e is JsonException)
-                                        await LogEventAsync(string.Concat("Malformed or missing manifest or locale data for extension at ", edir), Region.System, EventType.WARNING);
-                                    //DirectoryNotFoundException can occur with certain browsers when a profile exists but no extensions are installed
-                                }
-                            }
+                            await LogEventAsync($"Firefox missing addons.json, suggests corrupted appdata",
+                                Region.System, EventType.WARNING);
+                            continue;
                         }
-                    }
-                    browser.Profiles.Add(profile);
-
-                    var sideProfilesPath = string.Concat(UserPath, BrowserPath.Value, "_side_profiles");
-                    if (Directory.Exists(sideProfilesPath))
-                    {
-                        //Fetch side profiles
-                        foreach (string pdir in Directory.GetDirectories(sideProfilesPath))
-                        {
-                            profile = JsonConvert.DeserializeObject<Browser.BrowserProfile>(
-                                File.ReadAllText(Directory.GetFiles(pdir, "*sideprofile.json")[0]));
-                            profile.Extensions = new List<Browser.Extension>();
-
-                            foreach (string edir in Directory.GetDirectories(string.Concat(pdir, "\\Extensions")))
-                            {
-                                if (!defaultExtensions.Contains(new DirectoryInfo(edir).Name))
-                                {
-                                    if (new DirectoryInfo(edir).Name.Equals("Temp"))
-                                        continue;
-
-                                    try
-                                    {
-                                        profile.Extensions.Add(ParseChromiumExtension(edir));
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        if (e is FileNotFoundException || e is JsonException)
-                                            await LogEventAsync(string.Concat("Malformed or missing manifest or locale data for extension at ", edir), Region.System, EventType.WARNING);
-                                    }
-                                }
-                            }
-
-                            browser.Profiles.Add(profile);
-                        }
-                    }
-
-                    Browsers.Add(browser);
-                }
-                else //Chromium Browsers
-                {
-                    Browser browser = new Browser()
-                    {
-                        Name = BrowserPath.Key,
-                        Profiles = new List<Browser.BrowserProfile>()
-                    };
-                    List<string> directories = Directory.GetDirectories(string.Concat(UserPath, BrowserPath.Value), "Profile*").ToList();
-                    directories.Add(string.Concat(UserPath, BrowserPath.Value, "Default"));
-
-                    foreach (string dir in directories)
-                    {
                         Browser.BrowserProfile profile = new Browser.BrowserProfile()
                         {
-                            name = new DirectoryInfo(dir).Name,
+                            name = new DirectoryInfo(dir).Name.Substring(8),
                             Extensions = new List<Browser.Extension>()
                         };
-                        try
-                        {
-                            foreach (string edir in Directory.GetDirectories(string.Concat(dir, "\\Extensions")))
-                            {
-                                if (new DirectoryInfo(edir).Name.Equals("Temp"))
-                                    continue;
+                        List<JToken> extensions = JObject.Parse(
+                            File.ReadAllText(addonsFile))["addons"].Children().ToList();
 
-                                try
-                                {
-                                    profile.Extensions.Add(ParseChromiumExtension(edir));
-                                }
-                                catch (Exception e)
-                                {
-                                    if (e is FileNotFoundException || e is JsonException)
-                                        await LogEventAsync(string.Concat("Malformed or missing manifest or locale data for extension at ", edir), Region.System, EventType.WARNING);
-                                    //DirectoryNotFoundException can occur with certain browsers when a profile exists but no extensions are installed
-                                }
-                            }
-                        }
-                        catch (DirectoryNotFoundException)
-                        {
-                            //Do nothing, this means no extensions are installed
-                        }
+                        foreach (JToken extension in extensions)
+                            profile.Extensions.Add(new Browser.Extension()
+                            {
+                                name = (string)extension["name"],
+                                description = (string)extension["description"],
+                                version = (string)extension["version"]
+                            });
 
                         browser.Profiles.Add(profile);
                     }
-
-                    Browsers.Add(browser);
+                    catch (Exception e) 
+                    {
+                        await LogEventAsync($"Exception occured in GetBrowserExtension() during Firefox profile gathering.",
+                            Region.System, EventType.ERROR);
+                        await LogEventAsync($"{e}");
+                    }
                 }
+
+                Browsers.Add(browser);
+            }
+            else if (browserPath.Key.Equals("OperaGX"))
+            {
+                Browser browser = new Browser()
+                {
+                    Name = "OperaGX",
+                    Profiles = new List<Browser.BrowserProfile>()
+                };
+                List<string> defaultExtensions = new List<string>() //Extensions installed by default, we can ignore these
+                {
+                    "aelmefcddnelhophneodelaokjogeemi",
+                    "enegjkbbakeegngfapepobipndnebkdk",
+                    "gojhcdgcpbpfigcaejpfhfegekdgiblk",
+                    "igpdmclhhlcpoindmhkhillbfhdgoegm",
+                    "ompjkhnkeoicimmaehlcmgmpghobbjoj"
+                };
+
+                foreach (KeyValuePair<Browser.BrowserProfile, string> profile in GetOperaGXProfiles(browserPath.Value)) 
+                {
+                    if (!Directory.Exists(profile.Value))
+                    {
+                        browser.Profiles.Add(profile.Key); //Still add the profile so we know a profile is there.
+                        continue; //When a side profile is created but not initialized
+                    }
+                        
+                    foreach (string eDir in Directory.GetDirectories(profile.Value)) 
+                    {
+                        DirectoryInfo di = new DirectoryInfo(eDir);
+                        if (!defaultExtensions.Contains(di.Name) && !di.Name.Equals("Temp"))
+                        {
+                            Console.WriteLine($"Checking {di.Name}");
+                            try
+                            {
+                                profile.Key.Extensions.Add(ParseChromiumExtension(eDir));
+                            }
+                            catch (Exception e)
+                            {
+                                if (e is FileNotFoundException || e is JsonException)
+                                    await LogEventAsync($"Error reading manifest or locale data for {di.Name} in {browser.Name}",
+                                        Region.System, EventType.WARNING);
+                            }
+                        }
+                    }
+
+                    browser.Profiles.Add(profile.Key);
+                }
+
+                Browsers.Add(browser);
+            }
+            else //Chromium browsers, these all basically handle their data the same way
+            {
+                Browser browser = new Browser()
+                {
+                    Name = browserPath.Key,
+                    Profiles = GetChromiumProfiles(browserPath.Value)
+                };
+
+                foreach (Browser.BrowserProfile profile in browser.Profiles)
+                {
+                    if (!Directory.Exists($"{browserPath.Value}{profile.name}\\Extensions"))
+                        continue; //This profile has no extensions.                         
+
+                    foreach (string eDir in Directory.GetDirectories($"{browserPath.Value}{profile.name}\\Extensions"))
+                    {
+                        DirectoryInfo di = new DirectoryInfo(eDir);
+                        if (!di.Name.Equals("Temp"))
+                            try
+                            {
+                                profile.Extensions.Add(ParseChromiumExtension(eDir));
+                            }
+                            catch (Exception e)
+                            {
+                                if (e is FileNotFoundException || e is JsonException)
+                                    await LogEventAsync($"Error reading manifest or locale data for {di.Name} in {browser.Name}",
+                                        Region.System, EventType.WARNING);
+
+                                if (e is ArgumentOutOfRangeException)
+                                    Console.WriteLine("I am here!");
+                            }
+                    }
+                }
+
+                Browsers.Add(browser);
             }
         }
+
         BrowserExtensions = Browsers;
+    }
+
+    //Fetch OperaGX profiles
+    //Returns a dictonary object containing a profile object and the directory extensions exist for each profile
+    private static Dictionary<Browser.BrowserProfile, string> GetOperaGXProfiles(string dir)
+    {
+        Console.WriteLine("Grabbing profiles for OperaGX");
+        Dictionary<Browser.BrowserProfile, string> Profiles = new Dictionary<Browser.BrowserProfile, string>();
+        Browser.BrowserProfile profile = new Browser.BrowserProfile()
+        {
+            name = "Default",
+            Extensions = new List<Browser.Extension>()
+        };
+        Profiles.Add(profile, $"{dir}\\Extensions"); //Add default profile
+        string sideProfilePath = string.Concat(dir, "_side_profiles");
+
+        if (Directory.Exists(sideProfilePath))
+        {
+            //Fetch side profiles
+            foreach (string profileDir in Directory.GetDirectories(sideProfilePath))
+            {
+                Console.WriteLine($"{profileDir}");
+                profile = JsonConvert.DeserializeObject<Browser.BrowserProfile>(
+                    File.ReadAllText(Directory.GetFiles(profileDir, "*sideprofile.json")[0]));
+                profile.Extensions = new List<Browser.Extension>();
+                Profiles.Add(profile, $"{profileDir}\\Extensions");
+            }
+        }
+
+        return Profiles;
+    }
+
+    //Fetch profiles from Chromium based browsers
+    private static List<Browser.BrowserProfile> GetChromiumProfiles(string dir)
+    {
+        List<Browser.BrowserProfile> Profiles = new List<Browser.BrowserProfile>();
+        List<string> directories = Directory.GetDirectories(dir, "Profile*").ToList();
+        directories.Add(string.Concat(dir, "Default")); //Add default profile
+
+        foreach (string pDir in directories)
+            Profiles.Add(new Browser.BrowserProfile()
+            {
+                name = new DirectoryInfo(pDir).Name,
+                Extensions = new List<Browser.Extension>()
+            });
+        
+        return Profiles;
     }
 
     private static async Task CheckCommercialOneDrive()

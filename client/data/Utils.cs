@@ -120,6 +120,7 @@ public static class Utils
         }
     }
 
+    //Attempts to parse extension manifests found in OperaGX and Chromium browsers
     public static Browser.Extension ParseChromiumExtension(string path)
     {
         try
@@ -195,6 +196,40 @@ public static class Utils
             return null;
         }
     }
+    
+    //Check for browsers installed in single user mode (most common) in AppData
+    public static Dictionary<string, string> GetSingleUserBrowsers()
+    {
+        Dictionary<string, string> FoundBrowsers = new Dictionary<string, string>();
+        string UserPath = string.Concat("C:\\Users\\", Cache.Username, "\\Appdata\\");
+        Dictionary<string, string> BrowserPaths = new Dictionary<string, string>()
+        {
+            {"Edge", @"Local\Microsoft\Edge\User Data\"},
+            {"Vivaldi", @"Local\Vivaldi\User Data\"},
+            {"Brave", @"Local\BraveSoftware\Brave-Browser\User Data\"},
+            {"Chrome", @"Local\Google\Chrome\User Data\"},
+            {"Firefox", @"Roaming\Mozilla\Firefox\Profiles\"},
+            {"OperaGX",@"Roaming\Opera Software\Opera GX Stable\"}
+        };
+
+        foreach (KeyValuePair<string, string> BrowserPath in BrowserPaths)
+        {
+            string fullPath = string.Concat(UserPath, BrowserPath.Value);
+
+            if (Directory.Exists(fullPath))
+                FoundBrowsers.Add(BrowserPath.Key, fullPath);
+        }
+
+        return FoundBrowsers;
+    }
+
+    //Check for browsers installed in multi-user mode or in a custom directory
+    //TODO: Figure out how to do this after I get everything working normally with the rewrite
+    public static Dictionary<string, string> GetMultiUserBrowsers()
+    {
+        return new Dictionary<string, string>();
+    }
+    
     /// <summary>
     /// Attempts to retrieve a value from a WMI Dictionary retrieved through GetWmi(). The value will be stored in `value`.
     /// </summary>
