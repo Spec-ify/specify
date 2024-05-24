@@ -315,6 +315,10 @@ public class Monolith
     public class MonolithSecurity
     {
         public List<string> AvList;
+        public List<string> ExclusionPath;
+        public List<string> ExclusionExtension;
+        public List<string> ExclusionProcess;
+        public List<string> ExclusionIpAddresses;
         public List<string> FwList;
         public bool? UacEnabled;
         public bool? SecureBootEnabled;
@@ -325,6 +329,10 @@ public class Monolith
         public MonolithSecurity()
         {
             AvList = Cache.AvList;
+            ExclusionPath = Cache.ExclusionPath;
+            ExclusionExtension = Cache.ExclusionExtension;
+            ExclusionProcess = Cache.ExclusionProcess;
+            ExclusionIpAddresses = Cache.ExclusionIpAddresses;
             FwList = Cache.FwList;
             UacEnabled = Cache.UacEnabled;
             SecureBootEnabled = Cache.SecureBootEnabled;

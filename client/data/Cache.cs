@@ -27,6 +27,10 @@ public static partial class Cache
     public static List<ScheduledTask> WinScheduledTasks { get; private set; }
     public static List<StartupTask> StartupTasks { get; private set; }
     public static List<string> AvList { get; private set; }
+    public static List<string> ExclusionPath { get; private set; }
+    public static List<string> ExclusionExtension { get; private set; }
+    public static List<string> ExclusionProcess { get; private set; }
+    public static List<string> ExclusionIpAddresses { get; private set; }
     public static List<string> FwList { get; private set; }
     public static string HostsFile { get; private set; }
     public static string HostsFileHash { get; private set; }

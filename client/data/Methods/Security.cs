@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management;
+using System.Threading.Tasks;
 
 namespace specify_client.data;
 
@@ -14,7 +15,12 @@ public static partial class Cache
         {
             DebugLog.Region region = DebugLog.Region.Security;
             await DebugLog.StartRegion(region);
+
             AvList = AVList();
+
+            // Make this whole section async
+            await Utils.DoTask(DebugLog.Region.Security, "GetExclusionList", GetExclusionList);
+
             FwList = Utils.GetWmi("FirewallProduct", "displayName", @"root\SecurityCenter2")
                 .Select(x => (string)x["displayName"]).ToList();
             await DebugLog.LogEventAsync("Security WMI Information Retrieved.", region);
@@ -64,7 +70,54 @@ public static partial class Cache
         }
         SecurityWriteSuccess = true;
     }
+    private static async Task GetExclusionList()
+    {
+        var exclusions = Utils.GetWmi("MSFT_MpPreference", "*", @"root\Microsoft\Windows\Defender").FirstOrDefault();
 
+        Utils.TryWmiRead(exclusions, "ExclusionPath", out string[] exclusionPath);
+        Utils.TryWmiRead(exclusions, "ExclusionExtension", out string[] exclusionExtension);
+        Utils.TryWmiRead(exclusions, "ExclusionProcess", out string[] exclusionProcess);
+        Utils.TryWmiRead(exclusions, "ExclusionIpAddress", out string[] exclusionIpAddresses);
+
+        // We cannot error log this as the keys simply do not exist in WMI if no exclusions are set.
+
+        if (exclusionPath != null)
+        {
+            ExclusionPath = exclusionPath.ToList();
+        }
+        else
+        {
+            ExclusionPath = new();
+        }
+
+        if (exclusionExtension != null)
+        {
+            ExclusionExtension = exclusionExtension.ToList();
+        }
+        else
+        {
+            ExclusionExtension = new();
+        }
+
+        if (exclusionProcess != null)
+        {
+            ExclusionProcess = exclusionProcess.ToList();
+        }
+        else
+        {
+            ExclusionProcess = new();
+        }
+
+        if (exclusionIpAddresses != null)
+        {
+            ExclusionIpAddresses = exclusionIpAddresses.ToList();
+        }
+        else
+        {
+            ExclusionIpAddresses = new();
+        }
+
+    }
     public static List<string> AVList()
     {
         var antiviruses = Utils.GetWmi("AntivirusProduct", "displayName", @"root\SecurityCenter2")
