@@ -495,6 +495,7 @@ public static partial class Cache
                 StaticCoreCount = null;
             }
             StaticCoreCount = output.Contains("numproc");
+            LimitedMemory = output.Contains("allowedinmemorysettings");
         }
     }
 
@@ -583,12 +584,13 @@ public static partial class Cache
             var hwNotificationCache = new RegistryValue<int?>(Registry.CurrentUser, @"Control Panel\UnsupportedHardwareNotificationCache", "SV2");
             hwNotificationCache.Name = "UnsupportedHardwareNotificationCache\\SV2";
             var prioritySeparation = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\PriorityControl", "Win32PrioritySeparation");
+            var coreIsolation = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios", "HypervisorEnforcedCodeIntegrity");
 
             ChoiceRegistryValues = new List<IRegistryValue>()
             {
                 tdrLevel, nbFLimit, throttlingIndex, superFetch, disableAv, disableAs, puaProtection, passiveMode, disableAvpolicy, disableAspolicy,
                 puaProtectionpolicy, passiveModepolicy, drii, disableWer,unsupportedTpmOrCpu, hwSchMode, WUServer, noAutoUpdate, fastBoot, auditBoot,
-                previewBuilds, bypassCpuCheck, bypassStorageCheck, bypassRamCheck, bypassTpmCheck, bypassSecureBootCheck, hwNotificationCache, prioritySeparation
+                previewBuilds, bypassCpuCheck, bypassStorageCheck, bypassRamCheck, bypassTpmCheck, bypassSecureBootCheck, hwNotificationCache, prioritySeparation, coreIsolation
             };
         }
         catch (Exception ex)

@@ -390,6 +390,7 @@ public class Monolith
         public int RecentMinidumps;
         public string DumpZip;
         public bool? StaticCoreCount;
+        public bool? LimitedMemory;
         public List<IRegistryValue> ChoiceRegistryValues;
         public bool? UsernameSpecialCharacters;
         public int? OneDriveCommercialPathLength;
@@ -419,6 +420,7 @@ public class Monolith
             RecentMinidumps = Cache.RecentMinidumps;
             DumpZip = Cache.DumpZip;
             StaticCoreCount = Cache.StaticCoreCount;
+            LimitedMemory = Cache.LimitedMemory;
             ChoiceRegistryValues = Cache.ChoiceRegistryValues;
             UsernameSpecialCharacters = Cache.UsernameSpecialCharacters;
             OneDriveCommercialPathLength = Cache.OneDriveCommercialPathLength;

@@ -68,6 +68,7 @@ public static partial class Cache
     public static int RecentMinidumps { get; private set; }
     public static string DumpZip { get; private set; }
     public static bool? StaticCoreCount { get; private set; }
+    public static bool? LimitedMemory { get; private set; }
     public static List<Monitor> MonitorInfo { get; private set; }
     public static List<EdidData> EdidData { get; private set; }
     public static bool? UsernameSpecialCharacters { get; private set; }

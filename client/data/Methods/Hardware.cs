@@ -176,6 +176,7 @@ public static partial class Cache
         SMBiosRamInfo = false;
         List<RamStick> RamInfo = new();
         var WmiRamData = GetWmi("Win32_PhysicalMemory");
+        LogEvent($"Gathering memory information from WMI. {WmiRamData.Count} sticks detected.", Region.Hardware);
         foreach (var wmiStick in WmiRamData)
         {
             RamStick stick = new();
@@ -206,6 +207,7 @@ public static partial class Cache
             RamInfo.Add(stick);
         }
         Ram = RamInfo;
+        LogEvent($"Completed gathering memory information from WMI.", Region.Hardware);
     }
 
     //MONITORS
