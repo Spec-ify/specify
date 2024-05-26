@@ -403,7 +403,7 @@ public static partial class Cache
                 }
 
                 var fileName = string.Concat(TempFolder + @"/", Regex.Match(dump, "[^\\\\]*$").Value);
-                File.Copy(dump, fileName);
+                File.Copy(dump, fileName, true);
 
                 // This check only exists because of a bug where specify was uploading empty zip files. This bug has been fixed, but I'm leaving the check just in case.
                 if (!File.Exists(fileName))
