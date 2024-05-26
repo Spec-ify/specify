@@ -116,6 +116,7 @@ public static partial class Cache
                     offset++;
                     smbStringsList.Add(smbDataString.ToString());
                 }
+
                 offset++;
 
                 // This is the only type we care about; Type 17. If the type is anything else, it simply loops again.
@@ -155,7 +156,18 @@ public static partial class Cache
 
                 if (0xC + 1 < data.Length)
                 {
+                    
                     stick.Capacity = (ulong?)(data[0xC + 1] << 8) | data[0xC];
+
+                    // Type 17 0xC is limited to 32GB. We need to check if the ram is larger than 32GB and then use the extended capacity DWORD at 0x1c
+                    if (stick.Capacity >= 0x7FFF && 0x20 < data.Length)
+                    {
+                        var extendedCapacity = (ulong?)(data[0x1f] << 24 | data[0x1e] << 16 | data[0x1d] << 8 | data[0x1c]);
+                        if (extendedCapacity > 0)
+                        {
+                            stick.Capacity = extendedCapacity;
+                        }
+                    }
                 }
                 SMBiosMemoryInfo.Add(stick);
             }
