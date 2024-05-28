@@ -695,6 +695,10 @@ public static partial class Cache
                                 if (e is FileNotFoundException || e is JsonException)
                                     await LogEventAsync($"Error reading manifest or locale data for {di.Name} in {browser.Name}",
                                         Region.System, EventType.WARNING);
+
+                                if (e is NullReferenceException)
+                                    await LogEventAsync($"Null reference caught reading {di.Name} in {browser.Name}",
+                                        Region.System, EventType.WARNING);
                             }
                         }
                     }
@@ -731,8 +735,9 @@ public static partial class Cache
                                     await LogEventAsync($"Error reading manifest or locale data for {di.Name} in {browser.Name}",
                                         Region.System, EventType.WARNING);
 
-                                if (e is ArgumentOutOfRangeException)
-                                    Console.WriteLine("I am here!");
+                                if (e is NullReferenceException)
+                                    await LogEventAsync($"Null reference caught reading {di.Name} in {browser.Name}",
+                                        Region.System, EventType.WARNING);
                             }
                     }
                 }

@@ -190,6 +190,11 @@ public static class Utils
             DebugLog.LogEvent($"Chromium extension path invalid: {path}", DebugLog.Region.System, DebugLog.EventType.WARNING);
             return null;
         }
+        catch (NullReferenceException e)
+        {
+            DebugLog.LogEvent($"Null reference caught reading extension data at {path}", DebugLog.Region.System, DebugLog.EventType.WARNING);
+            return null;
+        }
         catch (Exception e)
         {
             DebugLog.LogEvent($"Unexpected exception occured in ParseChromiumExtension: {e}", DebugLog.Region.System, DebugLog.EventType.ERROR);
