@@ -495,7 +495,7 @@ public static partial class Cache
                 StaticCoreCount = null;
             }
             StaticCoreCount = output.Contains("numproc");
-            LimitedMemory = output.Contains("allowedinmemorysettings");
+            LimitedMemory = output.Contains("truncatememory");
         }
     }
 
