@@ -72,7 +72,17 @@ public static partial class Cache
     }
     private static async Task GetExclusionList()
     {
-        var exclusions = Utils.GetWmi("MSFT_MpPreference", "*", @"root\Microsoft\Windows\Defender").FirstOrDefault();
+        Dictionary<string, object> exclusions;
+
+        try
+        {
+            exclusions = Utils.GetWmi("MSFT_MpPreference", "*", @"root\Microsoft\Windows\Defender").FirstOrDefault();
+        }
+        catch (ManagementException ex)
+        {
+            await DebugLog.LogEventAsync($"Could not retrieve exclusions. {ex.Message}", DebugLog.Region.Security, DebugLog.EventType.WARNING);
+            return;
+        }
 
         Utils.TryWmiRead(exclusions, "ExclusionPath", out string[] exclusionPath);
         Utils.TryWmiRead(exclusions, "ExclusionExtension", out string[] exclusionExtension);
