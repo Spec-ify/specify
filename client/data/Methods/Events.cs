@@ -316,10 +316,10 @@ public static partial class Cache
             mce.TransactionType = TT;
             mce.MemoryHeirarchyLevel = LL;
         }
-        // Generic Cache Heirarchy Error
+        // Generic Cache Hierarchy Error
         else if (CheckBitMask(code, 0b11ul << 2))
         {
-            mce.ErrorMessage = "Generic Cache Heirarchy Error";
+            mce.ErrorMessage = "Generic Cache Hierarchy Error";
             mce.MemoryHeirarchyLevel = LL;
         }
         // No error

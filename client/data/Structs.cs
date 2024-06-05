@@ -153,7 +153,7 @@ public class EdidData
     public string DisplayGamma; // Byte 23
     public string SupportedFeaturesBitmap; // Byte 24
 
-    // Monitor Capabilites Bytes 25-125
+    // Monitor Capabilities Bytes 25-125
     public string ChromacityCoordinates; // Bytes 25-34 - 10-bit CIE 1931 xy coordinates for RGBW
     public string EstablishedTimingBitmap; // Bytes 35-37
     public string TimingInformation; // Bytes 38-53

@@ -197,7 +197,7 @@ public static class Utils
         }
         catch (Exception e)
         {
-            DebugLog.LogEvent($"Unexpected exception occured in ParseChromiumExtension: {e}", DebugLog.Region.System, DebugLog.EventType.ERROR);
+            DebugLog.LogEvent($"Unexpected exception occurred in ParseChromiumExtension: {e}", DebugLog.Region.System, DebugLog.EventType.ERROR);
             return null;
         }
     }
