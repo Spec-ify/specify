@@ -36,6 +36,6 @@ No information is otherwise kept in storage on the server, and no cookies are se
 
 ## Fallback
 
-As previously mentioned, **Specify** automatically **POST**s the results of it's runtime to **Specified** and then automatically opens the customized page, while also copying that URL to the clipboard.
+As previously mentioned, **Specify** automatically **POST**s the results of its runtime to **Specified** and then automatically opens the customized page, while also copying that URL to the clipboard.
 
 Alternatively, whenever **Specify** is unable to complete said **POST** request, or is set to not upload by the user, the **.json** file is instead written into the same directory as the **Specify** **executable** is ran from. This **.json** can then be manually uploaded to **Specified** to generate the view.
