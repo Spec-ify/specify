@@ -323,7 +323,7 @@ public class MachineCheckException
     public string McaErrorCode; // Bits 0-15
     public string ErrorMessage;
     public string TransactionType; // TT
-    public string MemoryHeirarchyLevel; // LL
+    public string MemoryHierarchyLevel; // LL
     public string RequestType; // RRRR
     public string Participation; // PP
     public string Timeout; // T

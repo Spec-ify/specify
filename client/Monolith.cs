@@ -278,9 +278,9 @@ public class Monolith
         public int ErrorCount;
         public MonolithBasicInfo()
         {
-            //win32 operating system class
+            //Win32_OperatingSystem class
             var os = Cache.Os;
-            //win32 computersystem wmi class
+            //Win32_ComputerSystem class
             var cs = Cache.Cs;
 
             Edition = (string)os["Caption"];

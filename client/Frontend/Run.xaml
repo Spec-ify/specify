@@ -13,7 +13,7 @@
     <Grid>
 
         <Image x:Name="animation"
-               gif:AnimationBehavior.SourceUri="{Binding Path=Gifsource}"
+               gif:AnimationBehavior.SourceUri="{Binding Path=gifSource}"
                gif:AnimationBehavior.RepeatBehavior="Forever"
                Grid.RowSpan="10"
                Grid.ColumnSpan="10"

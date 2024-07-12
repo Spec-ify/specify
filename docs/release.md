@@ -2,7 +2,7 @@
 
 This is the process of how we do our releases.
 
-Ensure your local repository is up to date, then update the version number to the version desired:
+Ensure your local repository is up-to-date, then update the version number to the version desired:
 - In `./specify/Program.cs`, update `SpecifyVersion`
 - In `./specify/Properties/AssemblyInfo.cs`, update `AssemblyVersion` and `AssemblyFileVersion`
 

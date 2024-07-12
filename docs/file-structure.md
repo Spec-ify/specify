@@ -64,7 +64,7 @@ Gets information about the current operating system install of the computer. Res
 
 #### [Cache.cs](/client/data/Cache.cs)
 
-Contains the class in which most of the collected info from Methods are stored. Cache.cs only receives and contains info that results in strings, bools, and numbers for organization.
+Contains the class in which most of the collected info from Methods are stored. Cache.cs only receives and contains info that results in strings, booleans, and numbers for organization.
 
 #### [Structs.cs](/client/data/Structs.cs)
 
@@ -80,7 +80,7 @@ Contains all the GUI stuff.
 
 #### [Fonts Folder](/client/Frontend/Fonts/)
 
-Contains [AldoTheApache.ttf](/client/Frontend/Fonts/AldotheApache.ttf), which is used in the endscreens.
+Contains [AldoTheApache.ttf](/client/Frontend/Fonts/AldotheApache.ttf), which is used in the end screens.
 
 #### [Images Folder](/client/Frontend/Images/)
 
@@ -108,7 +108,7 @@ Program.cs contains the method that triggers Progress.cs to do the info collecti
 
 ### [Settings.cs](/client/Settings.cs)
 
-This has the class that contains.. well.. the settings. It modifies Monolith.cs's behavior depending on the set variables.
+This has the class that stores the settings set by the user. It modifies Monolith.cs's behavior depending on the set variables.
 
 ### [Progress.cs](/client/Progress.cs)
 
@@ -120,7 +120,7 @@ Monolith.cs contains the code that exports it to a JSON (`Serialize` and `Specif
 
 ### [DebugLog.cs](/client/DebugLog.cs)
 
-DebugLog.cs contains the code for... well.. the debug log. When the proper setting is enabled, each line in the process, step by step, is recorded.
+DebugLog.cs contains the code for the debug log's functions. When the proper setting is enabled, each line in the process, step by step, is recorded.
 
 ### [Interop.cs](/client/Interop.cs)
 

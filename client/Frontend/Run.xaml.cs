@@ -46,20 +46,20 @@ public partial class Run : Page
         //Program.Main();
     }
 
-    public string Gifsource { get; set; }
+    public string gifSource { get; set; }
 
     public void Randomize()
     {
         Random rng = new Random();
 
-        string[] gifimages =
+        string[] gifImages =
         {
             "Images/RunLoops/loop1.gif", "Images/RunLoops/loop2.gif"
         };
 
-        int gifindex = rng.Next(2);
+        int gifIndex = rng.Next(2);
 
-        Gifsource = gifimages[gifindex];
+        gifSource = gifImages[gifIndex];
     }
 
     private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)

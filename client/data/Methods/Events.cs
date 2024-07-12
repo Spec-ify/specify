@@ -271,7 +271,7 @@ public static partial class Cache
         else if (CheckBitMask(code, 1ul << 11))
         {
             mce.ErrorMessage = "Bus and Interconnect Error";
-            mce.MemoryHeirarchyLevel = LL;
+            mce.MemoryHierarchyLevel = LL;
             mce.Participation = PP;
             mce.RequestType = RRRR;
             mce.MemoryOrIo = II;
@@ -299,7 +299,7 @@ public static partial class Cache
         {
             mce.ErrorMessage = "Cache Hierarchy Error";
             mce.TransactionType = TT;
-            mce.MemoryHeirarchyLevel = LL;
+            mce.MemoryHierarchyLevel = LL;
             mce.RequestType = RRRR;
         }
         // Memory Controller Errors
@@ -314,13 +314,13 @@ public static partial class Cache
         {
             mce.ErrorMessage = "Translation Lookaside Buffer (TLB) Error";
             mce.TransactionType = TT;
-            mce.MemoryHeirarchyLevel = LL;
+            mce.MemoryHierarchyLevel = LL;
         }
         // Generic Cache Hierarchy Error
         else if (CheckBitMask(code, 0b11ul << 2))
         {
             mce.ErrorMessage = "Generic Cache Hierarchy Error";
-            mce.MemoryHeirarchyLevel = LL;
+            mce.MemoryHierarchyLevel = LL;
         }
         // No error
         else if (code == (ulong)SimpleErrorCodes.NoError)
@@ -398,7 +398,7 @@ public static partial class Cache
             mce.ErrorMessage = "Bus Error";
             mce.Timeout = Timeout;
             mce.RequestType = RRRR;
-            mce.MemoryHeirarchyLevel = LL;
+            mce.MemoryHierarchyLevel = LL;
         }
         // Internal Error
         else if (CheckBitMask(MciStat, 1ul << 10))
@@ -412,14 +412,14 @@ public static partial class Cache
             mce.ErrorMessage = "Memory Controller Error";
             mce.RequestType = RRRR;
             mce.TransactionType = TT;
-            mce.MemoryHeirarchyLevel = LL;
+            mce.MemoryHierarchyLevel = LL;
         }
         // TLB Error
         else if (CheckBitMask(MciStat, 1ul << 4))
         {
             mce.ErrorMessage = "Translation Lookaside Buffer (TLB) Error";
             mce.TransactionType = TT;
-            mce.MemoryHeirarchyLevel = LL;
+            mce.MemoryHierarchyLevel = LL;
         }
         // Invalid Error Code
         else
