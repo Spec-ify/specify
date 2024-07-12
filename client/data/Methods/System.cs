@@ -425,7 +425,7 @@ public static partial class Cache
         }
         catch (Exception e)
         {
-            await LogEventAsync($"Error occured manipulating dump files! Is this running as admin?", Region.System, EventType.ERROR);
+            await LogEventAsync($"Error occurred manipulating dump files! Is this running as admin?", Region.System, EventType.ERROR);
             await LogEventAsync($"{e}", Region.System);
 
             return false; //If this failed, there's nothing more that can be done here.
@@ -452,7 +452,7 @@ public static partial class Cache
             }
             catch (Exception e)
             {
-                await LogEventAsync($"Error occured when uploading dumps.zip to Specified!", Region.System, EventType.ERROR);
+                await LogEventAsync($"Error occurred when uploading dumps.zip to Specified!", Region.System, EventType.ERROR);
                 await LogEventAsync($"{e}", Region.System);
             }
 
@@ -648,7 +648,7 @@ public static partial class Cache
                     }
                     catch (Exception e) 
                     {
-                        await LogEventAsync($"Exception occured in GetBrowserExtension() during Firefox profile gathering.",
+                        await LogEventAsync($"Exception occurred in GetBrowserExtension() during Firefox profile gathering.",
                             Region.System, EventType.ERROR);
                         await LogEventAsync($"{e}");
                     }
@@ -750,7 +750,7 @@ public static partial class Cache
     }
 
     //Fetch OperaGX profiles
-    //Returns a dictonary object containing a profile object and the directory extensions exist for each profile
+    //Returns a dictionary object containing a profile object and the directory extensions exist for each profile
     private static Dictionary<Browser.BrowserProfile, string> GetOperaGXProfiles(string dir)
     {
         Console.WriteLine("Grabbing profiles for OperaGX");

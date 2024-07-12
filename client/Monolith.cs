@@ -204,7 +204,7 @@ public class Monolith
         }
         catch (Exception ex)
         {
-            await DebugLog.LogEventAsync($"Unsuccessful HTTP Request. An Unexpected Exception occured", DebugLog.Region.Misc, DebugLog.EventType.ERROR);
+            await DebugLog.LogEventAsync($"Unsuccessful HTTP Request. An Unexpected Exception occurred", DebugLog.Region.Misc, DebugLog.EventType.ERROR);
             await DebugLog.LogEventAsync($"{ex}");
             return null;
         }

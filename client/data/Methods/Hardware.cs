@@ -443,7 +443,7 @@ public static partial class Cache
                 .Children().Children().ToList();
             var videoId = 0;
 
-            // very inefficient while loop right here, but as long as it works, thats what matters -K97i
+            // very inefficient while loop right here, but as long as it works, that's what matters -K97i
             while (true)
             {
                 try
@@ -679,7 +679,7 @@ public static partial class Cache
                                 if (drives[di].Partitions[pi].PartitionFree != 0)
                                 {
                                     // This is marked as an error to bring attention to the existence of two LogicalDisks on the same partition until the routine is written to better handle this situation.
-                                    LogEvent($"Multiple LogicalDisks are linked to the same partition: {drives[di].Partitions[pi].DeviceId} - Found: {trimmedDependent} - Exisiting: {drives[di].Partitions[pi].PartitionLetter}", Region.Hardware, EventType.ERROR);
+                                    LogEvent($"Multiple LogicalDisks are linked to the same partition: {drives[di].Partitions[pi].DeviceId} - Found: {trimmedDependent} - Existing: {drives[di].Partitions[pi].PartitionLetter}", Region.Hardware, EventType.ERROR);
                                 }
                                 // Add the information found in the matching LogicalDisk to the partition.
                                 if (!letteredDrive.TryWmiRead("VolumeName", out drives[di].Partitions[pi].PartitionLabel))
@@ -699,7 +699,7 @@ public static partial class Cache
                     }
                     catch (Exception ex)
                     {
-                        LogEvent("Unexpected exception thrown during paritition linking", Region.Hardware, EventType.ERROR);
+                        LogEvent("Unexpected exception thrown during partition linking", Region.Hardware, EventType.ERROR);
                         LogEvent($"{ex}", Region.Hardware);
                         continue;
                     }
@@ -805,7 +805,7 @@ public static partial class Cache
                 if (driveLetter == "")
                 {
                     LogEvent("Partition Link could not be established. Detailed Information follows:", Region.Hardware, EventType.ERROR);
-                    LogEvent($"Failing Partion: Size: {partitionSize} - Label: {driveLetter} - File System: {fileSystem}", Region.Hardware);
+                    LogEvent($"Failing Partition: Size: {partitionSize} - Label: {driveLetter} - File System: {fileSystem}", Region.Hardware);
                     LogEvent("Drive Info:", Region.Hardware);
                     StringBuilder errorPartitionInfo = new();
                     foreach (var drive in drives)
@@ -1129,7 +1129,7 @@ public static partial class Cache
              * NVME CriticalWarning is defined by 8 bits:
              * 0: Available Space Low
              * 1: Temperature Threshold Exceeded
-             * 2: NVM Subsytem Reliability Significantly Degraded
+             * 2: NVM Subsystem Reliability Significantly Degraded
              * 3: Media has been set to Read Only
              * 4: Volatile Memory Device Backup Failed
              * 5: Persistent Memory Region set to Read Only
@@ -1341,7 +1341,7 @@ public static partial class Cache
         }
         catch (OverflowException)
         {
-            await LogEventAsync("Absolute value overflow occured when fetching temperature data", Region.Hardware, EventType.ERROR);
+            await LogEventAsync("Absolute value overflow occurred when fetching temperature data", Region.Hardware, EventType.ERROR);
         }
         catch (Exception ex)
         {
