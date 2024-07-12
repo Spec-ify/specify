@@ -15,6 +15,18 @@ public partial class StartButtons : Page
         InitializeComponent();
     }
 
+    private void SettingsOn(object sender, RoutedEventArgs e)
+    {
+        MainText.Visibility = Visibility.Hidden;
+        SettingsToggles.Visibility = Visibility.Visible;
+    }
+
+    private void SettingsOff(object sender, RoutedEventArgs e)
+    {
+        SettingsToggles.Visibility = Visibility.Hidden;
+        MainText.Visibility = Visibility.Visible;
+    }
+
     private void UploadOff(object sender, RoutedEventArgs e)
     {
         Settings.DontUpload = true;

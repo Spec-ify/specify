@@ -5,9 +5,77 @@
              StartupUri="\Frontend\Landing.xaml" Startup="Application_Startup">
     <Application.Resources>
         <ResourceDictionary>
+            <Style TargetType="Button" x:Key="MainButtons">
+                <Setter Property="TextElement.FontFamily" Value="{DynamicResource AldoFont}" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="FontSize" Value="20" />
+                <Setter Property="FontWeight" Value="Medium" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="Height" Value="40" />
+            </Style>
+            <Style TargetType="ToggleButton" x:Key="SettingButtonStyle">
+                <Setter Property="TextElement.FontFamily" Value="{DynamicResource AldoFont}" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="FontSize" Value="20" />
+                <Setter Property="FontWeight" Value="Medium" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="Height" Value="40" />
+                
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ToggleButton}">
+                            <ControlTemplate.Resources>
+                                <Storyboard x:Key="SettingsOnStoryboard">
+                                    <ColorAnimationUsingKeyFrames Storyboard.TargetProperty="(Border.BorderBrush).Color"
+                                      Storyboard.TargetName="SettingsBorder"
+                                      FillBehavior="HoldEnd">
+                                        <ColorAnimationUsingKeyFrames.KeyFrames>
+                                            <SplineColorKeyFrame KeyTime="00:00:00.0500000" Value="#9b1d21" />
+                                        </ColorAnimationUsingKeyFrames.KeyFrames>
+                                    </ColorAnimationUsingKeyFrames>
+                                </Storyboard>
+                                <Storyboard x:Key="SettingsOffStoryboard">
+                                    <ColorAnimationUsingKeyFrames Storyboard.TargetProperty="(Border.BorderBrush).Color"
+                                      Storyboard.TargetName="SettingsBorder"
+                                      FillBehavior="HoldEnd">
+                                        <ColorAnimationUsingKeyFrames.KeyFrames>
+                                            <SplineColorKeyFrame KeyTime="00:00:00.0500000" Value="#576277" />
+                                        </ColorAnimationUsingKeyFrames.KeyFrames>
+                                    </ColorAnimationUsingKeyFrames>
+                                </Storyboard>
+                            </ControlTemplate.Resources>
+                            
+                            <Border Name="SettingsBorder" CornerRadius="8"
+                                    BorderBrush="#576277"
+                                    BorderThickness="4"
+                                    Background="{TemplateBinding Background}">
+                                <ContentPresenter VerticalAlignment="Center"
+                                                HorizontalAlignment="Center" />
+                            </Border>
+
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard Storyboard="{StaticResource SettingsOffStoryboard}" x:Name="SettingsOffStoryboard" />
+                                    </Trigger.ExitActions>
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard Storyboard="{StaticResource SettingsOnStoryboard}" x:Name="SettingsOnStoryboard" />
+                                    </Trigger.EnterActions>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <Style x:Key="CheckBoxStyle1" TargetType="{x:Type CheckBox}">
                 <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
                 <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
+                <Setter Property="FontSize" Value="6" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type CheckBox}">
@@ -34,37 +102,42 @@
                                                                   Storyboard.TargetName="bg"
                                                                   FillBehavior="HoldEnd">
                                         <ColorAnimationUsingKeyFrames.KeyFrames>
-                                            <SplineColorKeyFrame KeyTime="00:00:00.2000000" Value="#3b4252" />
+                                            <SplineColorKeyFrame KeyTime="00:00:00.2000000" Value="#27303d" />
                                         </ColorAnimationUsingKeyFrames.KeyFrames>
                                     </ColorAnimationUsingKeyFrames>
                                 </Storyboard>
                             </ControlTemplate.Resources>
 
-                            <DockPanel x:Name="dockPanel">
-                                <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
-                                                  Content="{TemplateBinding Content}" ContentStringFormat="{TemplateBinding ContentStringFormat}"
-                                                  ContentTemplate="{TemplateBinding ContentTemplate}" RecognizesAccessKey="True"
-                                                  VerticalAlignment="Center" />
-                                <Grid Margin="5,5,0,5" Background="#3b4252" Height="20">
+                            <Viewbox StretchDirection="Both" Stretch="Uniform">
+                                <DockPanel x:Name="dockPanel">
+                                    <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                                                      Content="{TemplateBinding Content}" ContentStringFormat="{TemplateBinding ContentStringFormat}"
+                                                      ContentTemplate="{TemplateBinding ContentTemplate}" RecognizesAccessKey="True"
+                                                      VerticalAlignment="Center" />
 
-                                    <Border x:Name="bg" BorderBrush="#515d7a" HorizontalAlignment="Center"
-                                            Width="36" BorderThickness="1" CornerRadius="10"
-                                            Background="#3b4252" />
+                                    <Viewbox StretchDirection="Both" Stretch="Uniform" Height="14">
+                                        <Grid Margin="5,5,0,5" Background="#3b4252" Height="20">
 
-                                    <Border HorizontalAlignment="Left" x:Name="slider"
-                                            Height="20" Width="20" BorderThickness="1" CornerRadius="400"
-                                            RenderTransformOrigin="0.5,0.5" Background="#232731">
-                                        <Border.RenderTransform>
-                                            <TransformGroup>
-                                                <ScaleTransform ScaleX="1" ScaleY="1" />
-                                                <SkewTransform AngleX="0" AngleY="0" />
-                                                <RotateTransform Angle="0" />
-                                                <TranslateTransform X="0" Y="0" />
-                                            </TransformGroup>
-                                        </Border.RenderTransform>
-                                    </Border>
-                                </Grid>
-                            </DockPanel>
+                                            <Border x:Name="bg" BorderBrush="#525c70" HorizontalAlignment="Center"
+                                                    Width="36" BorderThickness="2" CornerRadius="10"
+                                                    Background="#27303d" />
+
+                                            <Border HorizontalAlignment="Left" x:Name="slider" BorderBrush="#525c70"
+                                                    Width="20" BorderThickness="2" CornerRadius="400"
+                                                    RenderTransformOrigin="0.5,0.5" Background="#444f60">
+                                                <Border.RenderTransform>
+                                                    <TransformGroup>
+                                                        <ScaleTransform ScaleX="1" ScaleY="1" />
+                                                        <SkewTransform AngleX="0" AngleY="0" />
+                                                        <RotateTransform Angle="0" />
+                                                        <TranslateTransform X="0" Y="0" />
+                                                    </TransformGroup>
+                                                </Border.RenderTransform>
+                                            </Border>
+                                        </Grid>
+                                    </Viewbox>
+                                </DockPanel>
+                            </Viewbox>
 
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsChecked" Value="True">

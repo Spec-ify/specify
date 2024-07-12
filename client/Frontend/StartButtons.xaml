@@ -16,8 +16,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="1*" />
             <RowDefinition Height="2*" />
-            <RowDefinition Height="1*" />
-            <RowDefinition Height="1*" />
+            <RowDefinition Height="2*" />
             <RowDefinition Height="1*" />
         </Grid.RowDefinitions>
 
@@ -40,8 +39,8 @@
                 BorderThickness="1"
                     BorderBrush="#3b4252"
                     Background="#3b4252"
-                    Grid.Row="1"
-                    Grid.Column="1" Grid.ColumnSpan="3" Margin="5,5,5,5" />
+                    Grid.Row="1" Grid.Column="1" 
+                    Grid.ColumnSpan="3" Margin="5" />
 
         <Image Source="{StaticResource specifycl_logo_whiteDrawingImage}"
                     Stretch="Uniform" Width="270" VerticalAlignment="Center"
@@ -49,140 +48,162 @@
                     Grid.Column="1" Grid.ColumnSpan="3"
                     HorizontalAlignment="Center" />
 
-        <!-- Start Button -->
+        <!-- Main Buttons -->
 
-        <Border CornerRadius="8"
+        <Grid Grid.Column="3" Grid.Row="2">
+
+            <Border Grid.RowSpan="2"
+                CornerRadius="8"
                 BorderThickness="1"
+                BorderBrush="#3b4252"
+                Background="#3b4252" Margin="5,5" />
+
+
+            <Grid Margin="20">
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="1*" />
+                </Grid.RowDefinitions>
+
+                <Button Style="{StaticResource MainButtons}"
+                        x:Name = "StartButton"
+                        Content = "Start"
+                        Click="StartAction"
+                        VerticalAlignment="Center">
+
+                    <Button.Template>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border CornerRadius="8"
+                                    BorderBrush="#1fa9ce"
+                                    BorderThickness="0"
+                                    Background="#1fa9ce">
+                                <ContentPresenter VerticalAlignment="Center"
+                                HorizontalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <ToggleButton Style="{StaticResource SettingButtonStyle}"
+                        x:Name = "SettingsButton"
+                        Content = "SETTINGS"
+                        Checked="SettingsOn" Unchecked="SettingsOff"
+                        Grid.Row="1"
+                        VerticalAlignment="Center">
+
+                </ToggleButton>
+
+
+            </Grid>
+        </Grid>
+
+        <!-- Settings -->
+
+        <Grid Grid.Column="1" Grid.ColumnSpan="2"
+              Grid.Row="2">
+
+            <Border CornerRadius="8"
+                    BorderThickness="1"
                     BorderBrush="#3b4252"
-                    Background="#3b4252"
-                    Grid.Row="2" Grid.RowSpan="2"
-                    Grid.Column="2" Margin="5,5,5,5" />
+                    Background="#3b4252" Margin="5,5,5,5"  />
 
-        <StackPanel Grid.Row="2" Grid.RowSpan="2"
-                    Grid.Column="2" Grid.ColumnSpan="1"
-                    Margin="0,15,0,50">
+            <!-- Settings -->
 
-            <Button x:Name = "StartButton"
-                              Content = "Start"
-                              FontSize="16"
-                              FontWeight="Medium"
-                              Click="StartAction"
-                              Background="#40abce"
-                              Foreground="White">
+            <Grid Margin="20" Name="SettingsToggles" Visibility="Hidden" Grid.ColumnSpan="2">
 
-                <Button.Style>
-                    <Style TargetType="{x:Type Button}">
-                        <Setter Property="TextElement.FontFamily"
-                            Value="{DynamicResource AldoFont}" />
-                        <Setter Property="Cursor"
-                                Value="Hand" />
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="1*" />
+                </Grid.RowDefinitions>
 
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver"
-                                     Value="True">
-                                <Setter Property="Background"
-                                        Value="#30809b" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-                <Button.Template>
-                    <ControlTemplate TargetType="{x:Type Button}">
-                        <Border Width="100"
-                                Height="35"
-                                CornerRadius="8"
-                                Background="{TemplateBinding Background}">
-                            <ContentPresenter VerticalAlignment="Center"
-                                              HorizontalAlignment="Center" />
-                        </Border>
-                    </ControlTemplate>
-                </Button.Template>
-            </Button>
-        </StackPanel>
+                <Grid Grid.Column="0" Grid.Row="0">
 
-        <TextBlock HorizontalAlignment = "Center"
-                   TextAlignment="Center"
-                        VerticalAlignment = "Top"
-                        FontFamily="Consolas" Foreground="White"
-                        TextWrapping="Wrap" xml:space="preserve"
-                        Grid.Row="3" Grid.RowSpan="2"
-                        Grid.Column="2" Grid.ColumnSpan="1"
-                        Text="This tool gathers information about your computer" Width="140" />
+                    <Border CornerRadius="8"
+                            BorderThickness="2"
+                            BorderBrush="#576277"
+                            Margin="2"/>
 
-        <!-- Toggle Buttons -->
+                    <CheckBox HorizontalAlignment="Center"
+                              VerticalAlignment="Center" Content="Remove Username"
+                              Checked="UsernameOn" Unchecked="UsernameOff"
+                              Style="{DynamicResource CheckBoxStyle1}"
+                              Width="120" Foreground="White"
+                              FontFamily="Consolas" />
 
-        <!-- Redact Username -->
+                </Grid>
 
-        <Border CornerRadius="8"
-                BorderThickness="1"
-                    BorderBrush="#3b4252"
-                    Background="#3b4252"
-                    Grid.Row="2" Grid.RowSpan="1"
-                    Grid.Column="1" Margin="5,5,5,5" />
+                <Grid Grid.Column="0" Grid.Row="1">
 
-        <CheckBox HorizontalAlignment="Center"
-                  VerticalAlignment="Center" Content="Remove Username"
-                  Checked="UsernameOn" Unchecked="UsernameOff"
-                  Style="{DynamicResource CheckBoxStyle1}"
-                  Grid.Row="2" Grid.Column="1"
-                  Width="140" Foreground="White"
-                  FontFamily="Consolas" />
+                    <Border CornerRadius="8"
+                            BorderThickness="2"
+                            BorderBrush="#576277"
+                            Margin="2"/>
 
-        <!-- Redact OneDrive -->
+                    <CheckBox HorizontalAlignment="Center"
+                              VerticalAlignment="Center" Content="Remove OneDrive&#x0a;Commercial Name"
+                              Checked="OneDriveOn" Unchecked="OneDriveOff"
+                              Style="{DynamicResource CheckBoxStyle1}"
+                              Width="120" Foreground="White"
+                              FontFamily="Consolas" />
 
-        <Border CornerRadius="8"
-                BorderThickness="1"
-                    BorderBrush="#3b4252"
-                    Background="#3b4252"
-                    Grid.Row="3" Grid.RowSpan="1"
-                    Grid.Column="1" Margin="5,5,5,5" />
+                </Grid>
 
-        <CheckBox HorizontalAlignment="Center"
-                  VerticalAlignment="Center" Content="Remove OneDrive&#x0a;Commercial Name"
-                  Checked="OneDriveOn" Unchecked="OneDriveOff"
-                  Style="{DynamicResource CheckBoxStyle1}"
-                  Grid.Row="3" Grid.Column="1"
-                  Width="140" Foreground="White"
-                  FontFamily="Consolas" />
+                <Grid Grid.Column="1" Grid.Row="0">
 
-        <!-- Debug Log -->
+                    <Border CornerRadius="8"
+                            BorderThickness="2"
+                            BorderBrush="#576277"
+                            Margin="2"/>
 
-        <Border CornerRadius="8"
-                BorderThickness="1"
-                    BorderBrush="#3b4252"
-                    Background="#3b4252"
-                    Grid.Row="2" Grid.RowSpan="1"
-                    Grid.Column="3" Margin="5,5,5,5" />
+                    <CheckBox Name="DebugLogCheckbox"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" Content=" Enable Debug  &#x0a;    Logging"
+                    Checked="DebugLogToggleOn" Unchecked="DebugLogToggleOff"
+                    Style="{DynamicResource CheckBoxStyle1}"
+                    Grid.Row="2" Grid.Column="3"
+                    Width="120" Foreground="White"
+                    FontFamily="Consolas"/>
 
-        <CheckBox Name="DebugLogCheckbox"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center" Content=" Enable Debug  &#x0a;    Logging"
-                  Checked="DebugLogToggleOn" Unchecked="DebugLogToggleOff"
-                  Style="{DynamicResource CheckBoxStyle1}"
-                  Grid.Row="2" Grid.Column="3"
-                  Width="140" Foreground="White"
-                  FontFamily="Consolas"/>
+                </Grid>
 
-        <!-- Upload Toggle -->
+                <Grid Grid.Row="1" Grid.Column="1">
 
-        <Border CornerRadius="8"
-                BorderThickness="1"
-                    BorderBrush="#3b4252"
-                    Background="#3b4252"
-                    Grid.Row="3" Grid.RowSpan="1"
-                    Grid.Column="3" Margin="5,5,5,5" />
+                    <Border CornerRadius="8"
+                            BorderThickness="2"
+                            BorderBrush="#576277"
+                            Margin="2"/>
 
-        <CheckBox Name="DontUploadCheckbox"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center" Content=" Don't Upload  "
-                  Checked="UploadOff" Unchecked="UploadOn"
-                  Style="{DynamicResource CheckBoxStyle1}"
-                  Grid.Row="3" Grid.Column="3"
-                  Width="140" Foreground="White"
-                  FontFamily="Consolas" VerticalContentAlignment="Center"/>
+                    <CheckBox Name="DontUploadCheckbox"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" Content=" Don't Upload  "
+                              Checked="UploadOff" Unchecked="UploadOn"
+                              Style="{DynamicResource CheckBoxStyle1}"
+                              Width="120" Foreground="White"
+                              FontFamily="Consolas" VerticalContentAlignment="Center"/>
 
+                </Grid>
 
+            </Grid>
+
+            <Grid Margin="20" Name="MainText" Visibility="Visible">
+                <TextBlock Foreground="White"
+                            FontSize="12"
+                            FontFamily="Consolas"
+                            TextWrapping="Wrap"
+                            VerticalAlignment="Top">
+                    Specify is a diagnostic tool that gathers information about your computer. 
+                    <LineBreak/> <LineBreak/>
+                    It does not collect any explicitly private information.
+                </TextBlock>
+            </Grid>
+
+        </Grid>
 
         <!-- <CheckBox
                   VerticalAlignment="Top" Content="Unlock"
@@ -201,8 +222,8 @@
         </CheckBox> -->
         <TextBlock Name="WarningTextBlock"
                    Foreground="Red"
-                   Grid.Row="4"
-                   Grid.Column="3"
+                   Grid.Row="3"
+                   Grid.Column="2"
                    FontSize="10"
                    FontFamily="Consolas"
                    TextWrapping="Wrap"
