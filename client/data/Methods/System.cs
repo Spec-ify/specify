@@ -819,7 +819,7 @@ public static partial class Cache
                 if (Settings.RedactOneDriveCommercial)
                 {
                     Settings.RedactOneDriveCommercial = false;
-                    await LogEventAsync("RedactOneDriveCommercial setting disabled. OneDriveCommercial variable not found.", Region.System, EventType.WARNING);
+                    await LogEventAsync("OneDriveCommercial variable not found. Corresponding internal setting disabled.", Region.System);
                 }
                 else
                 {

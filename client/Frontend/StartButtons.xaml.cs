@@ -42,20 +42,12 @@ public partial class StartButtons : Page
     private void UsernameOn(object sender, RoutedEventArgs e)
     {
         Settings.RedactUsername = true;
+        Settings.RedactOneDriveCommercial = true;
     }
 
     private void UsernameOff(object sender, RoutedEventArgs e)
     {
         Settings.RedactUsername = false;
-    }
-
-    private void OneDriveOn(object sender, RoutedEventArgs e)
-    {
-        Settings.RedactOneDriveCommercial = true;
-    }
-
-    private void OneDriveOff(object sender, RoutedEventArgs e)
-    {
         Settings.RedactOneDriveCommercial = false;
     }
 
