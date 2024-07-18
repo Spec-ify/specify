@@ -878,6 +878,19 @@ public static partial class Cache
         }
     }
 
+    private static List<Dictionary<string, object>> GetWindowsStorePackages()
+    {
+        try
+        {
+            return GetWmi("Win32_InstalledStoreProgram", "*", @"root\cimv2");
+        }
+        catch (COMException)
+        {
+            LogEvent("Could not get Windows Store packages", Region.System, EventType.ERROR);
+            return new();
+        }
+    }
+
     private static void GetEnvironmentVariables()
     {
         SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
@@ -892,6 +905,7 @@ public static partial class Cache
         PageFile = GetWmi("Win32_PageFileUsage", "AllocatedBaseSize, Caption, CurrentUsage, PeakUsage").FirstOrDefault();
 
         PowerProfiles = GetPowerProfiles();
+        WindowsStorePackages = GetWindowsStorePackages();
     }
 
     private static void GetLanguages()

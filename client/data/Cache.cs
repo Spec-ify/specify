@@ -68,6 +68,7 @@ public static partial class Cache
     public static List<IRegistryValue> ChoiceRegistryValues { get; private set; }
     public static int? LastBiosTime { get; private set; }
     public static List<Dictionary<string, object>> PowerProfiles { get; private set; }
+    public static List<Dictionary<string, object>> WindowsStorePackages { get; private set; }
     public static List<string> MicroCodes { get; private set; }
     public static int RecentMinidumps { get; private set; }
     public static string DumpZip { get; private set; }

@@ -394,6 +394,7 @@ public class Monolith
         public List<ScheduledTask> WinScheduledTasks;
         public List<StartupTask> StartupTasks;
         public List<Dictionary<string, object>> PowerProfiles;
+        public List<Dictionary<string, object>> WindowsStorePackages;
         public List<string> MicroCodes;
         public int RecentMinidumps;
         public string DumpZip;
@@ -424,6 +425,7 @@ public class Monolith
             WinScheduledTasks = Cache.WinScheduledTasks;
             StartupTasks = Cache.StartupTasks;
             PowerProfiles = Cache.PowerProfiles;
+            WindowsStorePackages = Cache.WindowsStorePackages;
             MicroCodes = Cache.MicroCodes;
             RecentMinidumps = Cache.RecentMinidumps;
             DumpZip = Cache.DumpZip;
