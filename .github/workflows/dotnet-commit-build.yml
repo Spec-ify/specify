@@ -21,7 +21,7 @@ jobs:
       - name: Build
         run: msbuild client\client.sln -property:Configuration=Release
       - name: Upload build
-        uses: actions/upload-artifact@v4.3.4
+        uses: actions/upload-artifact@v4.3.6
         with:
           name: specify_client_commit
           path: client\bin\Release\specify_client.exe
