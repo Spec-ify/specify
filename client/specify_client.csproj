@@ -43,7 +43,7 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32bit>false</Prefer32bit>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>bin\Release\Templess\</OutputPath>
     <PlatformTarget>x64</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
