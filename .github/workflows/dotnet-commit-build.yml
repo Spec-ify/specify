@@ -18,16 +18,10 @@ jobs:
         uses: NuGet/setup-nuget@v2
       - name: Install dependencies
         run: nuget restore client\client.sln
-      - name: Build ReleaseTempless
-        run: | 
-          msbuild client\client.sln -property:Configuration=ReleaseTempless
-          ren "client\bin\Release\specify_client.exe" "client\bin\Release\specify_client_templess.exe"
       - name: Build Release
         run: msbuild client\client.sln -property:Configuration=Release
       - name: Upload build
         uses: actions/upload-artifact@v4.3.6
         with:
           name: specify_client_commit
-          path: |
-              client\bin\Release\specify_client.exe
-              client\bin\Release\specify_client_templess.exe
+          path: client\bin\Release\specify_client.exe
