@@ -35,7 +35,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseTempless|x64'">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseNoRing0|x64'">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <DefineConstants>TRACE;NORING</DefineConstants>
@@ -43,7 +43,7 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32bit>false</Prefer32bit>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <OutputPath>bin\Release\Templess\</OutputPath>
+    <OutputPath>bin\Release\NoRing0\</OutputPath>
     <PlatformTarget>x64</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -259,7 +259,7 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <Target Name="ILRepack" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+  <Target Name="ILRepack" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'ReleaseNoRing0'">
     <PropertyGroup>
       <WorkingDirectory>$(MSBuildThisFileDirectory)bin\$(Configuration)\$(TargetFramework)</WorkingDirectory>
     </PropertyGroup>
