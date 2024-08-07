@@ -56,6 +56,8 @@ public partial class Landing : Window
 
     public void ProgramFinalizeNoUpload()
     {
+        Process.Start("explorer.exe", "/select, \"" + AppDomain.CurrentDomain.BaseDirectory + "specify_specs.json\"");
+
         if (!Dispatcher.CheckAccess())
         {
             Dispatcher.BeginInvoke(new Action(ProgramFinalizeNoUpload));
