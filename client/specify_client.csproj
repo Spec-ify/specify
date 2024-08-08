@@ -39,11 +39,12 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <DefineConstants>TRACE;NORING</DefineConstants>
+    <AssemblyName>specify_client_noring0</AssemblyName>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32bit>false</Prefer32bit>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <OutputPath>bin\Release\NoRing0\</OutputPath>
+    <OutputPath>bin\Release\</OutputPath>
     <PlatformTarget>x64</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
