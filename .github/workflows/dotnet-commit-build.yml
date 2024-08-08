@@ -21,13 +21,11 @@ jobs:
       - name: Build Release
         run: msbuild client\client.sln -property:Configuration=Release
       - name: Build Release - NoRing0 build
-        run: | 
-          msbuild client\client.sln -property:Configuration=ReleaseNoRing0
-          ren "client\bin\Release\NoRing0\specify_client.exe" "specify_client_noring0.exe"
+        run: msbuild client\client.sln -property:Configuration=ReleaseNoRing0
       - name: Upload build
         uses: actions/upload-artifact@v4.3.6
         with:
           name: specify_client_commit
           path: |
             client\bin\Release\specify_client.exe
-            client\bin\Release\NoRing0\specify_client_noring0.exe
+            client\bin\Release\specify_client_noring0.exe
