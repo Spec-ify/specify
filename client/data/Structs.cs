@@ -1,4 +1,6 @@
-﻿using LibreHardwareMonitor.Hardware;
+﻿#if !NORING
+using LibreHardwareMonitor.Hardware;
+#endif
 using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
 using Newtonsoft.Json;
@@ -163,6 +165,8 @@ public class EdidData
     public string NumberOfExtensions; // Byte 126
     public string Checksum; // Byte 127
 }
+
+#if !NORING
 public class SensorUpdateVisitor : IVisitor
 {
     public void VisitComputer(IComputer computer)
@@ -182,6 +186,7 @@ public class SensorUpdateVisitor : IVisitor
     public void VisitParameter(IParameter parameter)
     { }
 }
+#endif
 
 public interface IRegistryValue
 { }

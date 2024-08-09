@@ -1,4 +1,6 @@
+#if !NORING
 using LibreHardwareMonitor.Hardware;
+#endif
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -1306,6 +1308,9 @@ public static partial class Cache
     // TEMPERATURES
     private static async Task GetTemps()
     {
+        #if NORING
+            await LogEventAsync($"Specify No Ring 0 version running. Temperatures will not be collected.", Region.Hardware, EventType.WARNING);
+        #else
         //Any temp sensor reading below 24 will be filtered out
         //These sensors are either not reading in celsius, are in error, or we cannot interpret them properly here
         var Temps = new List<TempMeasurement>();
@@ -1352,6 +1357,7 @@ public static partial class Cache
             computer.Close();
         }
         Temperatures = Temps;
+#endif
     }
 
     // BATTERIES
