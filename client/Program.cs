@@ -11,7 +11,7 @@ namespace specify_client;
 
 public class Program
 {
-    public const string SpecifyVersion = "v1.3.2";
+    public const string SpecifyVersion = "v1.4.0";
     public static Stopwatch Time;
 
     public static async Task Main()
