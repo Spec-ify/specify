@@ -1153,7 +1153,7 @@ public static partial class Cache
             SmartAttribute powerCycle = MakeNvmeAttribute(smartInfo->PowerCycle, 0x0B, "Power Cycles");
             SmartAttribute powerOnHours = MakeNvmeAttribute(smartInfo->PowerOnHours, 0x0C, "Power-On Hours");
             SmartAttribute unsafeShutdowns = MakeNvmeAttribute(smartInfo->UnsafeShutdowns, 0x0D, "Unsafe Shutdowns");
-            SmartAttribute mediaErrors = MakeNvmeAttribute(smartInfo->MediaErrors, 0x0E, "Media and Integrity Errors");
+            SmartAttribute mediaErrors = MakeNvmeAttribute(smartInfo->MediaErrors, 0x0E, "Media and Integrity Errors(!)");
             SmartAttribute errorLogEntries = MakeNvmeAttribute(smartInfo->ErrorInfoLogEntryCount, 0x0F, "Number of Error Information Log Entries");
 
             drive.SmartData = new()
