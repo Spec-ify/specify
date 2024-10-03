@@ -87,16 +87,20 @@ public class DiskDrive
 
 public class Partition
 {
+    public ulong PartitionOffset;
     public ulong PartitionCapacity;
     public ulong PartitionFree;
     public string PartitionLabel;
     public string PartitionLetter;
+    public string VolumeType;
+    public string ExtentType;
     public string Filesystem;
     public uint CfgMgrErrorCode;
     public uint LastErrorCode;
     public bool DirtyBitSet;
     public bool BitlockerEncryptionStatus = false;
     [NonSerialized()] public string DeviceId; // Only used to link partitions, do not serialize.
+    [NonSerialized()] public string VolumeId;
 }
 
 public class SmartAttribute

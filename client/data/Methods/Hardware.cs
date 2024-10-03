@@ -935,11 +935,12 @@ public static partial class Cache
     private static async Task GetDiskDriveData()
     {
         // "Basic" in this context refers to data we can retrieve directly from WMI without much processing. Model names, partition labels, etc.
-        List<DiskDrive> drives = GetBasicDriveInfo();
-        drives = GetBasicPartitionInfo(drives);
-        drives = LinkLogicalPartitions(drives);
-        drives = LinkNonLogicalPartitions(drives);
-        drives = GetPartitionSchemes(drives);
+        //List<DiskDrive> drives = GetBasicDriveInfo();
+        //drives = GetBasicPartitionInfo(drives);
+        //drives = LinkLogicalPartitions(drives);
+        //drives = LinkNonLogicalPartitions(drives);
+        //drives = GetPartitionSchemes(drives);
+        List<DiskDrive> drives = Data.Methods.VDS.VDSClass.GetDisksInfo();
         drives = GetBitlockerStatus(drives);
 
         try
