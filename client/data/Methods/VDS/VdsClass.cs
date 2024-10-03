@@ -48,55 +48,40 @@ namespace specify_client.Data.Methods.VDS
 
             foreach (var vdsDisk in vdsDisks)
             {
-                DiskDrive disk;
+                DiskDrive disk = new DiskDrive();
+
+                hr = vdsDisk.GetProperties(out VDS_DISK_PROP diskProps);
+                if (hr != 0 && hr != 1 && hr != HR_PROPERTIES_INCOMPLETE)
+                {
+                    Console.WriteLine(Marshal.GetExceptionForHR(hr));
+                    continue;
+                }
+
+                disk = new DiskDrive();
+                disk.DiskCapacity = diskProps.Size;
+                disk.DeviceName = string.Copy(diskProps.FriendlyName ?? string.Empty);
+                disk.SerialNumber = string.Empty; // VDS_DISK_PROP doesnt expose serial number
+                disk.PartitionScheme = Enum.GetName(typeof(VDS_PARTITION_STYLE), diskProps.PartitionStyle);
+                disk.InstanceId = diskProps.DiskGuid.ToString();
+                disk.InterfaceType = Enum.GetName(typeof(VDS_STORAGE_BUS_TYPE), diskProps.BusType);
+                disk.MediaType = Enum.GetName(typeof(VDS_MEDIA_TYPE), diskProps.MediaType);
+                disk.BlockSize = diskProps.BytesPerSector;
+                disk.DiskNumber = (uint)drives.Count;
+
                 if (vdsDisk is IVdsAdvancedDisk3 advDisk3) // May not cast, if disk is a dynamic disk
                 {
                     hr = advDisk3.GetProperties(out VDS_ADVANCEDDISK_PROP advDiskProps); // VDS_ADVANCEDDISK_PROP exposes more data than VDS_DISK_PROP
                     if (hr != 0 && hr != 1 && hr != HR_PROPERTIES_INCOMPLETE)
                     {
                         Console.WriteLine(Marshal.GetExceptionForHR(hr));
-                        continue;
                     }
-
-                    disk = new DiskDrive();
-                    disk.DiskCapacity = advDiskProps.TotalSize;
-                    disk.DeviceName = string.Copy(advDiskProps.FriendlyName ?? string.Empty);
-                    disk.SerialNumber = string.Copy(advDiskProps.SerialNumber ?? string.Empty);
-                    disk.PartitionScheme = Enum.GetName(typeof(VDS_PARTITION_STYLE), advDiskProps.PartitionStyle);
-                    disk.InstanceId = advDiskProps.DiskGuid.ToString();
-                    disk.InterfaceType = Enum.GetName(typeof(VDS_STORAGE_BUS_TYPE),advDiskProps.BusType);
-                    disk.MediaType = Enum.GetName(typeof(VDS_MEDIA_TYPE), advDiskProps.DeviceType);
-                    disk.BlockSize = advDiskProps.LogicalSectorSize;
-                    disk.DiskNumber = (uint)drives.Count;
-
-                    hr = vdsDisk.GetProperties(out VDS_DISK_PROP diskProps);
-                    if (hr != 0 && hr != 1 && hr != HR_PROPERTIES_INCOMPLETE)
+                    else
                     {
-                        Console.WriteLine(Marshal.GetExceptionForHR(hr));
-                        continue;
+                        disk.SerialNumber = string.Copy(advDiskProps.SerialNumber ?? string.Empty);
                     }
-                    disk.MediaType = Enum.GetName(typeof(VDS_MEDIA_TYPE), diskProps.MediaType);
                 }
-                else
-                {
-                    hr = vdsDisk.GetProperties(out VDS_DISK_PROP diskProps);
-                    if (hr != 0 && hr != 1 && hr != HR_PROPERTIES_INCOMPLETE)
-                    {
-                        Console.WriteLine(Marshal.GetExceptionForHR(hr));
-                        continue;
-                    }
 
-                    disk = new DiskDrive();
-                    disk.DiskCapacity = diskProps.Size;
-                    disk.DeviceName = string.Copy(diskProps.FriendlyName ?? string.Empty);
-                    disk.SerialNumber = string.Empty; // VDS_DISK_PROP doesnt expose serial number
-                    disk.PartitionScheme = Enum.GetName(typeof(VDS_PARTITION_STYLE), diskProps.PartitionStyle);
-                    disk.InstanceId = diskProps.DiskGuid.ToString();
-                    disk.InterfaceType = Enum.GetName(typeof(VDS_STORAGE_BUS_TYPE), diskProps.BusType);
-                    disk.MediaType = Enum.GetName(typeof(VDS_MEDIA_TYPE), diskProps.MediaType);
-                    disk.BlockSize = diskProps.BytesPerSector;
-                    disk.DiskNumber = (uint)drives.Count;
-                }
+                drives.Add(disk);
 
                 hr = vdsDisk.QueryExtents(out VDS_DISK_EXTENT[] extents, out _);
                 if (hr != 0 && hr != 1 && hr != HR_PROPERTIES_INCOMPLETE)
@@ -113,8 +98,6 @@ namespace specify_client.Data.Methods.VDS
                     PartitionCapacity = x.Size,
                     ExtentType = Enum.GetName(typeof(VDS_DISK_EXTENT_TYPE), x.type)
                 }).ToList();
-
-                drives.Add(disk);
             }
 
             foreach (var volume in vdsVolumes)
