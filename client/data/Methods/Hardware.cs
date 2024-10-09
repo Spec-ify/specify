@@ -927,14 +927,29 @@ public static partial class Cache
     }
     private static async Task GetDiskDriveData()
     {
+        List<DiskDrive> drives = null;
+        try
+        {
+            // First try getting drive information from VDS service
+            drives = Data.Methods.VDS.VDSClass.GetDisksInfo();
+        }
+        catch (Exception ex)
+        {
+            LogEvent($"Failed to get disk information from VDS service. Error: {ex.Message}", Region.Hardware, EventType.ERROR);
+        }
+
+        // If VDS method fails, get back to old methods
+        if (drives == null)
+        {
         // "Basic" in this context refers to data we can retrieve directly from WMI without much processing. Model names, partition labels, etc.
-        //List<DiskDrive> drives = GetBasicDriveInfo();
-        //drives = GetBasicPartitionInfo(drives);
-        //drives = LinkLogicalPartitions(drives);
-        //drives = LinkNonLogicalPartitions(drives);
-        //drives = GetPartitionSchemes(drives);
-        List<DiskDrive> drives = Data.Methods.VDS.VDSClass.GetDisksInfo();
+            drives = GetBasicDriveInfo();
+            drives = GetBasicPartitionInfo(drives);
+            drives = LinkLogicalPartitions(drives);
+            drives = LinkNonLogicalPartitions(drives);
+            drives = GetPartitionSchemes(drives);
         drives = GetBitlockerStatus(drives);
+            drives = GetDiskFreeSpace(drives);
+        }
 
         try
         {
@@ -971,6 +986,11 @@ public static partial class Cache
             }
         }
 
+        Disks = drives;
+    }
+
+    private static List<DiskDrive> GetDiskFreeSpace(List<DiskDrive> drives)
+    {
         foreach (var d in drives)
         {
             bool complete = true;
@@ -1012,7 +1032,7 @@ public static partial class Cache
                 d.DiskFree = free;
             }
         }
-        Disks = drives;
+        return drives;
     }
 
     private static DiskDrive GetNvmeSmart(DiskDrive drive)
