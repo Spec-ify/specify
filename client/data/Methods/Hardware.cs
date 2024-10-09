@@ -969,14 +969,11 @@ public static partial class Cache
             LogEvent($"{e}", Region.Hardware);
         }
 
-        for (int i = 0; i < drives.Count; i++)
+        foreach (var drive in drives.Where(x => x.SmartData == null))
         {
-            var drive = drives[i];
-            if (drive.SmartData == null)
-            {
                 try
                 {
-                    drive = GetNvmeSmart(drive);
+                GetNvmeSmart(drive);
                 }
                 catch (Exception e)
                 {
@@ -984,7 +981,6 @@ public static partial class Cache
                     LogEvent($"{e}", Region.Hardware);
                 }
             }
-        }
 
         Disks = drives;
     }
@@ -1038,21 +1034,14 @@ public static partial class Cache
     private static DiskDrive GetNvmeSmart(DiskDrive drive)
     {
         // Stop if drive is not an NVME drive. This happens on all external drives.
-        if(drive.InterfaceType != "SCSI" || !drive.MediaType.ToLower().Contains("fixed"))
+        if (!drive.InterfaceType.Equals("NVMe", StringComparison.CurrentCultureIgnoreCase) || //VDS check
+            (drive.InterfaceType != "SCSI" || !drive.MediaType.ToLower().Contains("fixed"))) //Old method check
         {
             LogEvent($"Could not retrieve NVME Smart Data. Drive {drive.DeviceName} is not an NVME drive. Interface: {drive.InterfaceType}. Media type: {drive.MediaType}", Region.Hardware);
             return drive;
         }
-        // Get the drive letter to send to CreateFile()
-        string driveLetter = "";
-        foreach (var partition in drive.Partitions)
-        {
-            if (partition.PartitionLetter != null && partition.PartitionLetter.Length == 2)
-            {
-                driveLetter = partition.PartitionLetter;
-                break;
-            }
-        }
+
+        string driveLetter = drive.Partitions?.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.PartitionLetter))?.PartitionLetter;
 
         // If no drive letter was found, it is impossible to obtain a valid handle.
         if (string.IsNullOrEmpty(driveLetter))
@@ -1060,6 +1049,8 @@ public static partial class Cache
             LogEvent($"Attempted to gather smart data from unlettered drive. {drive.DeviceName}", Region.Hardware, EventType.WARNING);
             return drive;
         }
+        driveLetter = driveLetter.EndsWith(":") ? driveLetter : $"{driveLetter}:";
+
 
         // Find a valid handle.
         driveLetter = $@"\\.\{driveLetter}" + '\0';
