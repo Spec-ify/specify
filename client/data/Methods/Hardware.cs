@@ -859,25 +859,18 @@ public static partial class Cache
         }
         return drives;
     }
+
     private static Partition GetPartitionByDriveLetter(string driveLetter, List<DiskDrive> drives)
     {
-        foreach (var drive in drives)
+        Partition part = drives?.SelectMany(x => x.Partitions).Where(x=> !string.IsNullOrWhiteSpace(x?.PartitionLetter)).FirstOrDefault(x => driveLetter.StartsWith(x.PartitionLetter, StringComparison.CurrentCultureIgnoreCase));
+
+        if (part == null)
         {
-            foreach (var partition in drive.Partitions)
-            {
-                if (string.IsNullOrEmpty(partition.PartitionLetter))
-                {
-                    continue;
-                }
-                if (partition.PartitionLetter.Equals(driveLetter))
-                {
-                    return partition;
-                }
-            }
-        }
         LogEvent($"A matching partition could not be found for drive letter \"{driveLetter}\"", Region.Hardware, EventType.ERROR);
-        return null;
     }
+        return part;
+    }
+
     private static List<DiskDrive> GetPartitionSchemes(List<DiskDrive> drives)
     {
         foreach (var drive in drives)
