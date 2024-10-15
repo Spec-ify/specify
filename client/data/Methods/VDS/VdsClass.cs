@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Media;
+using static specify_client.DebugLog;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 
 namespace specify_client.Data.Methods.VDS
@@ -43,7 +44,7 @@ namespace specify_client.Data.Methods.VDS
             hr = vdsService.QueryDriveLetters('A', 26, driveLetters);
             if (!(hr == 0 || hr == HR_PROPERTIES_INCOMPLETE))
             {
-                Console.WriteLine(Marshal.GetExceptionForHR(hr));
+                LogEvent($"Unable to get drive letters from VDS. Exception: {Marshal.GetExceptionForHR(hr).Message}", Region.Hardware, EventType.ERROR);
             }
 
             foreach (var vdsDisk in vdsDisks)
@@ -53,7 +54,7 @@ namespace specify_client.Data.Methods.VDS
                 hr = vdsDisk.GetProperties(out VDS_DISK_PROP diskProps);
                 if (hr != 0 && hr != 1 && hr != HR_PROPERTIES_INCOMPLETE)
                 {
-                    Console.WriteLine(Marshal.GetExceptionForHR(hr));
+                    LogEvent($"Unable to get drive data from VDS. Exception: {Marshal.GetExceptionForHR(hr).Message}", Region.Hardware, EventType.ERROR);
                     continue;
                 }
 
@@ -74,7 +75,7 @@ namespace specify_client.Data.Methods.VDS
                     hr = advDisk3.GetProperties(out VDS_ADVANCEDDISK_PROP advDiskProps); // VDS_ADVANCEDDISK_PROP exposes more data than VDS_DISK_PROP
                     if (hr != 0 && hr != 1 && hr != HR_PROPERTIES_INCOMPLETE)
                     {
-                        Console.WriteLine(Marshal.GetExceptionForHR(hr));
+                        LogEvent($"Unable to get advanced drive data from VDS. Exception: {Marshal.GetExceptionForHR(hr).Message}", Region.Hardware, EventType.WARNING); // Warning, as it's only needed for serial number. For dynamic drives it's normal
                     }
                     else
                     {
@@ -87,7 +88,7 @@ namespace specify_client.Data.Methods.VDS
                 hr = vdsDisk.QueryExtents(out VDS_DISK_EXTENT[] extents, out _);
                 if (hr != 0 && hr != 1 && hr != HR_PROPERTIES_INCOMPLETE)
                 {
-                    Console.WriteLine(Marshal.GetExceptionForHR(hr));
+                    LogEvent($"Unable to get advanced drive extend data from VDS for disk {disk.DeviceName}. Exception: {Marshal.GetExceptionForHR(hr).Message}", Region.Hardware, EventType.ERROR);
                     continue;
                 }
 
@@ -109,7 +110,7 @@ namespace specify_client.Data.Methods.VDS
                 hr = volume.GetProperties(out VDS_VOLUME_PROP volumeProps);
                 if (hr != 0 && hr != HR_PROPERTIES_INCOMPLETE)
                 {
-                    Console.WriteLine(Marshal.GetExceptionForHR(hr));
+                    LogEvent($"Unable to get volume data from VDS. Exception: {Marshal.GetExceptionForHR(hr).Message}", Region.Hardware, EventType.ERROR);
                     continue;
                 }
 
@@ -120,7 +121,7 @@ namespace specify_client.Data.Methods.VDS
                     hr = plex.QueryExtents(out VDS_DISK_EXTENT[] extents, out _);
                     if (hr != 0)
                     {
-                        Console.WriteLine(Marshal.GetExceptionForHR(hr));
+                        LogEvent($"Unable to get volume plexes from VDS for volume {volumeProps.Name}. Exception: {Marshal.GetExceptionForHR(hr).Message}", Region.Hardware, EventType.ERROR);
                         continue;
                     }
 
@@ -133,7 +134,7 @@ namespace specify_client.Data.Methods.VDS
                     hr = volumeMf.GetFileSystemProperties(out VDS_FILE_SYSTEM_PROP fileSystemProp);
                     if (hr != 0 && hr != HR_PROPERTIES_INCOMPLETE)
                     {
-                        Console.WriteLine(Marshal.GetExceptionForHR(hr));
+                        LogEvent($"Unable to get file system data from VDS. Exception: {Marshal.GetExceptionForHR(hr).Message}", Region.Hardware, EventType.ERROR);
                     }
 
                     vdsFileSystemProp = fileSystemProp;
