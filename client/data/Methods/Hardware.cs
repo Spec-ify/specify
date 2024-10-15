@@ -516,6 +516,14 @@ public static partial class Cache
             {
                 drive.DeviceName = drive.DeviceName.Trim();
             }
+            if (!driveWmi.TryWmiRead("Name", out drive.DeviceId))
+            {
+                LogEvent($"Could not retrieve device id of drive @ index {diskNumber}", Region.Hardware, EventType.ERROR);
+            }
+            else
+            {
+                drive.DeviceId = drive.DeviceId.Trim();
+            }
             if (!driveWmi.TryWmiRead("SerialNumber", out drive.SerialNumber))
             {
                 LogEvent($"Could not retrieve serial number of drive @ index {diskNumber}", Region.Hardware, EventType.ERROR);
@@ -932,6 +940,14 @@ public static partial class Cache
         {
             // First try getting drive information from VDS service
             drives = Data.Methods.VDS.VDSClass.GetDisksInfo();
+
+            // Get device PnP ID from WMI, VDS does not provide them.
+            var wmidrives = GetBasicDriveInfo();
+            
+            foreach (var drive in drives)
+            {
+                drive.InstanceId = wmidrives.FirstOrDefault(x => x.DeviceId.Equals(drive.DeviceId.Replace('?','.'),StringComparison.CurrentCultureIgnoreCase))?.InstanceId;
+        }
         }
         catch (Exception ex)
         {
@@ -947,9 +963,10 @@ public static partial class Cache
             drives = LinkLogicalPartitions(drives);
             drives = LinkNonLogicalPartitions(drives);
             drives = GetPartitionSchemes(drives);
-        drives = GetBitlockerStatus(drives);
             drives = GetDiskFreeSpace(drives);
         }
+
+        drives = GetBitlockerStatus(drives);
 
         try
         {
@@ -1034,32 +1051,20 @@ public static partial class Cache
     private static DiskDrive GetNvmeSmart(DiskDrive drive)
     {
         // Stop if drive is not an NVME drive. This happens on all external drives.
-        if (!drive.InterfaceType.Equals("NVMe", StringComparison.CurrentCultureIgnoreCase) || //VDS check
+        if (!drive.InterfaceType.Equals("NVMe", StringComparison.CurrentCultureIgnoreCase) && //VDS check
             (drive.InterfaceType != "SCSI" || !drive.MediaType.ToLower().Contains("fixed"))) //Old method check
         {
             LogEvent($"Could not retrieve NVME Smart Data. Drive {drive.DeviceName} is not an NVME drive. Interface: {drive.InterfaceType}. Media type: {drive.MediaType}", Region.Hardware);
             return drive;
         }
 
-        string driveLetter = drive.Partitions?.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.PartitionLetter))?.PartitionLetter;
-
-        // If no drive letter was found, it is impossible to obtain a valid handle.
-        if (string.IsNullOrEmpty(driveLetter))
-        {
-            LogEvent($"Attempted to gather smart data from unlettered drive. {drive.DeviceName}", Region.Hardware, EventType.WARNING);
-            return drive;
-        }
-        driveLetter = driveLetter.EndsWith(":") ? driveLetter : $"{driveLetter}:";
-
-
-        // Find a valid handle.
-        driveLetter = $@"\\.\{driveLetter}" + '\0';
-        var handle = CreateFile(driveLetter, 0x40000000, 0x1 | 0x2, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
+        // We can use DeviceId (Name in Windows) as a valid path to CreateFile (ex. \\?\PhysicalDrive0) instead of drive letter
+        var handle = CreateFile(drive.DeviceId, 0x40000000, 0x1 | 0x2, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
 
         // Verify the handle.
         if (handle == new IntPtr(-1))
         {
-            LogEvent($"NVMe Smart Data could not be retrieved. Invalid Handle. {driveLetter}", Region.Hardware, EventType.ERROR);
+            LogEvent($"NVMe Smart Data could not be retrieved. Invalid Handle. {drive.DeviceId}", Region.Hardware, EventType.ERROR);
             LogEvent($"Interop Error: {new Win32Exception(Marshal.GetLastWin32Error()).Message}", Region.Hardware);
             return drive;
         }
@@ -1115,7 +1120,7 @@ public static partial class Cache
             if (!result)
             {
                 string errorMessage = new Win32Exception(Marshal.GetLastWin32Error()).Message;
-                LogEvent($"Interop failure during NVMe SMART data retrieval. {Marshal.GetLastWin32Error()} - {errorMessage} on drive {driveLetter}", Region.Hardware, EventType.ERROR);
+                LogEvent($"Interop failure during NVMe SMART data retrieval. {Marshal.GetLastWin32Error()} - {errorMessage} on drive {drive.DiskNumber}", Region.Hardware, EventType.ERROR);
                 Marshal.FreeHGlobal(buffer);
                 return drive;
             }
@@ -1128,7 +1133,7 @@ public static partial class Cache
             var driveTemperature = ((uint)smartInfo->Temperature[1] << 8 | smartInfo->Temperature[0]) - 273;
             if (driveTemperature > 100)
             {
-                LogEvent($"SMART data retrieval error - Data not valid on drive {driveLetter}", Region.Hardware, EventType.ERROR);
+                LogEvent($"SMART data retrieval error - Data not valid on drive {drive.DiskNumber}", Region.Hardware, EventType.ERROR);
                 Marshal.FreeHGlobal(buffer);
                 return drive;
             }
@@ -1183,6 +1188,7 @@ public static partial class Cache
         Marshal.FreeHGlobal(buffer);
         return drive;
     }
+
     private unsafe static SmartAttribute MakeNvmeAttribute(byte* attr, byte id, string name)
     {
         unsafe

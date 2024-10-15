@@ -67,6 +67,7 @@ namespace specify_client.Data.Methods.VDS
                 disk.MediaType = Enum.GetName(typeof(VDS_MEDIA_TYPE), diskProps.MediaType);
                 disk.BlockSize = diskProps.BytesPerSector;
                 disk.DiskNumber = (uint)drives.Count;
+                disk.DeviceId = string.Copy(diskProps.Name ?? string.Empty);
 
                 if (vdsDisk is IVdsAdvancedDisk3 advDisk3) // May not cast, if disk is a dynamic disk
                 {

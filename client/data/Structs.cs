@@ -83,6 +83,7 @@ public class DiskDrive
     public List<SmartAttribute> SmartData;
     
     [NonSerialized()] public string InstanceId; // Only used to link SmartData, do not serialize. Unless you really want to.
+    [NonSerialized] public string DeviceId; // Used to get device PnP Id from VDS method and get nvme SmartData
 }
 
 public class Partition
