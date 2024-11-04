@@ -155,8 +155,7 @@ namespace specify_client.Data.Methods.VDS
 
             foreach (var driveLetter in driveLetters.Where(x => x.bUsed))
             {
-                var partition = drives.SelectMany(x => x.Partitions).FirstOrDefault(x => x.VolumeId == driveLetter.volumeId.ToString());
-                if (partition != null)
+                foreach (var partition in drives.SelectMany(x => x.Partitions).Where(x => x.VolumeId == driveLetter.volumeId.ToString()))
                 {
                     partition.PartitionLetter = driveLetter.wcLetter.ToString();
                 }
@@ -221,7 +220,7 @@ namespace specify_client.Data.Methods.VDS
 
         private static IEnumerable<IVdsPack> GetPacks(IVdsService vdsService)
         {
-            foreach (IVdsSwProvider swProvider in GetProviders(vdsService,VDS_QUERY_PROVIDER_FLAG.SOFTWARE_PROVIDERS).OfType<IVdsSwProvider>())
+            foreach (IVdsSwProvider swProvider in GetProviders(vdsService, VDS_QUERY_PROVIDER_FLAG.SOFTWARE_PROVIDERS).OfType<IVdsSwProvider>())
             {
                 if (swProvider == null)
                     continue;
