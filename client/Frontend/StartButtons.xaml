@@ -141,7 +141,24 @@
 
                 </Grid>
 
-                <Grid Grid.Column="1" Grid.Row="0">
+                <Grid Grid.Row="0" Grid.Column="1">
+
+                    <Border CornerRadius="8"
+                        BorderThickness="2"
+                        BorderBrush="#576277"
+                        Margin="2"/>
+
+                    <CheckBox Name="SerialNumberCheckbox"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center" Content=" Remove Serial &#x0a;     Number  "
+                          Checked="SerialNumberOn" Unchecked="SerialNumberOff"
+                          Style="{DynamicResource CheckBoxStyle1}"
+                          Width="120" Foreground="White"
+                          FontFamily="Consolas" VerticalContentAlignment="Center"/>
+
+                </Grid>
+
+                <Grid Grid.Column="1" Grid.Row="1">
 
                     <Border CornerRadius="8"
                             BorderThickness="2"
@@ -175,6 +192,8 @@
                               FontFamily="Consolas" VerticalContentAlignment="Center"/>
 
                 </Grid>
+
+                
 
             </Grid>
 

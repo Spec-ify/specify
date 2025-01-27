@@ -68,10 +68,10 @@ public static partial class Cache
         //This is a temporary fix to bring Specify up to standard for privacy concerns
         //Essentially including serial numbers for laptops can be PII. We will need to implement a better way in the future
         //Passes a dummy string into this field to keep the viewer from breaking
-        if (BiosInfo.First().ContainsKey("SerialNumber"))
-            BiosInfo.First()["SerialNumber"] = "OMMITTED";
-        if (Motherboard.ContainsKey("SerialNumber"))
-            Motherboard["SerialNumber"] = "OMMITTED";
+        if (BiosInfo.First().ContainsKey("SerialNumber") && Settings.RedactSerialNumber)
+            BiosInfo.First()["SerialNumber"] = "[REDACTED]";
+        if (Motherboard.ContainsKey("SerialNumber") && Settings.RedactSerialNumber)
+            Motherboard["SerialNumber"] = "[REDACTED]";
     }
     // RAM
     private static async Task GetSMBiosMemoryInfo()

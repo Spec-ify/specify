@@ -51,6 +51,16 @@ public partial class StartButtons : Page
         Settings.RedactOneDriveCommercial = false;
     }
 
+    private void SerialNumberOn(object sender, RoutedEventArgs e)
+    {
+        Settings.RedactSerialNumber = true;
+    }
+
+    private void SerialNumberOff(object sender, RoutedEventArgs e)
+    {
+        Settings.RedactSerialNumber = false;
+    }
+
     private void DebugLogToggleOn(object sender, RoutedEventArgs e)
     {
         Settings.EnableDebug = true;
@@ -60,6 +70,7 @@ public partial class StartButtons : Page
     {
         Settings.EnableDebug = false;
     }
+
     private void UnlockUploadOn(object sender, RoutedEventArgs e)
     {
         DontUploadCheckbox.IsEnabled = true;
