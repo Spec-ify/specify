@@ -64,6 +64,14 @@ public static partial class Cache
         Drivers = GetWmi("Win32_PnpSignedDriver", "FriendlyName,Manufacturer,DeviceID,DeviceName,DriverVersion");
         Devices = GetWmi("Win32_PnpEntity", "DeviceID,Name,Description,Status,ConfigManagerErrorCode");
         BiosInfo = GetWmi("Win32_bios");
+
+        //This is a temporary fix to bring Specify up to standard for privacy concerns
+        //Essentially including serial numbers for laptops can be PII. We will need to implement a better way in the future
+        //Passes a dummy string into this field to keep the viewer from breaking
+        if (BiosInfo.First().ContainsKey("SerialNumber"))
+            BiosInfo.First()["SerialNumber"] = "OMMITTED";
+        if (Motherboard.ContainsKey("SerialNumber"))
+            Motherboard["SerialNumber"] = "OMMITTED";
     }
     // RAM
     private static async Task GetSMBiosMemoryInfo()
