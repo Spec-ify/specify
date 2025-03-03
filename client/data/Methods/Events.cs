@@ -693,9 +693,59 @@ public static partial class Cache
                 {
                     error.DeviceId = dataValue;
                 }
+                if (dataName.Equals("Status"))
+                {
+                    if (dataValue[1] == 'x')
+                    {
+                        var data = dataValue.Substring(2);
+                        uint.TryParse(data, out error.Status);
+                        error.pciStatusRegister = DecodePciStatusRegister(error.Status);
+                    }
+                }
+                if(dataName.Equals("Command"))
+                {
+                    if (dataValue[1] == 'x')
+                    {
+                        var data = dataValue.Substring(2);
+                        uint.TryParse(data, out error.Command);
+                        error.pciCommandRegister = DecodePciCommandRegister(error.Command);
+                    }
+                }
             }
         }
         return error;
+    }
+    public static PciStatusRegister DecodePciStatusRegister(ulong command)
+    {
+        var register = new PciStatusRegister();
+        register.DetectedParityError = CheckBitMask(command, 1 << 15); // Bit 15
+        register.SignaledSystemError = CheckBitMask(command, 1 << 14); // Bit 14
+        register.ReceivedMasterAbort = CheckBitMask(command, 1 << 13); // Bit 13
+        register.ReceivedTargetAbort = CheckBitMask(command, 1 << 12); // Bit 12
+        register.SignaledTargetAbort = CheckBitMask(command, 1 << 11); // Bit 11
+        register.MasterDataParityError = CheckBitMask(command, 1 << 8); // Bit 8
+        register.FastBackToBackCapable = CheckBitMask(command, 1 << 7); // Bit 7
+        register.SixtySixMhzCapable = CheckBitMask(command, 1 << 5); // Bit 5
+        register.CapabilitiesList = CheckBitMask(command, 1 << 4); // Bit 4
+        register.InterruptStatus = CheckBitMask(command, 1 << 3); // Bit 3
+
+        return register;
+    }
+    public static PciCommandRegister DecodePciCommandRegister(ulong command)
+    {
+        var register = new PciCommandRegister();
+        register.InterruptDisable = CheckBitMask(command, 1 << 10); // Bit 10
+        register.FastBackToBackEnable = CheckBitMask(command, 1 << 9); // Bit 9
+        register.SErrEnable = CheckBitMask(command, 1 << 8); // Bit 8
+        register.ParityErrorResponse = CheckBitMask(command, 1 << 6); // Bit 6
+        register.VgaPaletteSnoop = CheckBitMask(command, 1 << 5); // Bit 5
+        register.MemoryWriteAndInvalidateEnable = CheckBitMask(command, 1 << 4); // Bit 4
+        register.SpecialCycles = CheckBitMask(command, 1 << 3); // Bit 3
+        register.BusMaster = CheckBitMask(command, 1 << 2); // Bit 2
+        register.MemorySpace = CheckBitMask(command, 1 << 1); // Bit 1
+        register.IoSpace = CheckBitMask(command, 1 << 0); // Bit 0
+
+        return register;
     }
     public static WheaErrorRecordReadable MakeWheaErrorRecord(XmlNode dataNode)
     {

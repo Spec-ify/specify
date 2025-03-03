@@ -1,4 +1,5 @@
 ﻿#if !NORING
+using HidSharp;
 using LibreHardwareMonitor.Hardware;
 #endif
 using Microsoft.Win32;
@@ -8,9 +9,14 @@ using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Ports;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using System.Security.Cryptography;
+using System.Windows.Documents;
+using System.Windows.Forms;
 
 namespace specify_client.data;
 
@@ -342,6 +348,70 @@ public class PciWheaError
     public DateTime? Timestamp;
     public string VendorId;
     public string DeviceId;
+    public uint Command; // hex string?
+    public uint Status; // hex string?
+    public PciCommandRegister pciCommandRegister;
+    public PciStatusRegister pciStatusRegister;
+
+}
+
+
+public class PciCommandRegister
+{
+    /*
+     *  Interrupt Disable - If set to 1 the assertion of the devices INTx# signal is disabled; otherwise, assertion of the signal is enabled.
+        Fast Back-Back Enable - If set to 1 indicates a device is allowed to generate fast back-to-back transactions; otherwise, fast back-to-back transactions are only allowed to the same agent.
+        SERR# Enable - If set to 1 the SERR# driver is enabled; otherwise, the driver is disabled.
+        Bit 7 - As of revision 3.0 of the PCI local bus specification this bit is hardwired to 0. In earlier versions of the specification this bit was used by devices and may have been hardwired to 0, 1, or implemented as a read/write bit.
+        Parity Error Response - If set to 1 the device will take its normal action when a parity error is detected; otherwise, when an error is detected, the device will set bit 15 of the Status register (Detected Parity Error Status Bit), but will not assert the PERR# (Parity Error) pin and will continue operation as normal.
+        VGA Palette Snoop - If set to 1 the device does not respond to palette register writes and will snoop the data; otherwise, the device will trate palette write accesses like all other accesses.
+        Memory Write and Invalidate Enable - If set to 1 the device can generate the Memory Write and Invalidate command; otherwise, the Memory Write command must be used.
+        Special Cycles - If set to 1 the device can monitor Special Cycle operations; otherwise, the device will ignore them.
+        Bus Master - If set to 1 the device can behave as a bus master; otherwise, the device can not generate PCI accesses.
+        Memory Space - If set to 1 the device can respond to Memory Space accesses; otherwise, the device's response is disabled.
+      * I/O Space - If set to 1 the device can respond to I/O Space accesses; otherwise, the device's response is disabled.
+    */
+
+    public bool InterruptDisable; // Bit 10
+    public bool FastBackToBackEnable; // Bit 9
+    public bool SErrEnable; // Bit 8
+    public bool ParityErrorResponse; // Bit 6
+    public bool VgaPaletteSnoop; // Bit 5
+    public bool MemoryWriteAndInvalidateEnable; // Bit 4
+    public bool SpecialCycles; // Bit 3
+    public bool BusMaster; // Bit 2
+    public bool MemorySpace; // Bit 1
+    public bool IoSpace; // Bit 0
+}
+public class PciStatusRegister
+{
+    /*
+     *  Detected Parity Error - This bit will be set to 1 whenever the device detects a parity error, even if parity error handling is disabled.
+        Signalled System Error - This bit will be set to 1 whenever the device asserts SERR#.
+        Received Master Abort - This bit will be set to 1, by a master device, whenever its transaction (except for Special Cycle transactions) is terminated with Master-Abort.
+        Received Target Abort - This bit will be set to 1, by a master device, whenever its transaction is terminated with Target-Abort.
+        Signalled Target Abort - This bit will be set to 1 whenever a target device terminates a transaction with Target-Abort.
+        DEVSEL Timing - Read only bits that represent the slowest time that a device will assert DEVSEL# for any bus command except Configuration Space read and writes. Where a value of 0x0 represents fast timing, a value of 0x1 represents medium timing, and a value of 0x2 represents slow timing.
+        Master Data Parity Error - This bit is only set when the following conditions are met. The bus agent asserted PERR# on a read or observed an assertion of PERR# on a write, the agent setting the bit acted as the bus master for the operation in which the error occurred, and bit 6 of the Command register (Parity Error Response bit) is set to 1.
+        Fast Back-to-Back Capable - If set to 1 the device can accept fast back-to-back transactions that are not from the same agent; otherwise, transactions can only be accepted from the same agent.
+        Bit 6 - As of revision 3.0 of the PCI Local Bus specification this bit is reserved. In revision 2.1 of the specification this bit was used to indicate whether or not a device supported User Definable Features.
+        66 MHz Capable - If set to 1 the device is capable of running at 66 MHz; otherwise, the device runs at 33 MHz.
+        Capabilities List - If set to 1 the device implements the pointer for a New Capabilities Linked list at offset 0x34; otherwise, the linked list is not available.
+        Interrupt Status - Represents the state of the device's INTx# signal. If set to 1 and bit 10 of the Command register (Interrupt Disable bit) is set to 0 the signal will be asserted; otherwise, the signal will be ignored.
+     *
+     */
+
+    public bool DetectedParityError; // Bit 15
+    public bool SignaledSystemError; // Bit 14
+    public bool ReceivedMasterAbort; // Bit 13
+    public bool ReceivedTargetAbort; // Bit 12
+    public bool SignaledTargetAbort; // Bit 11
+    public ushort DevselTiming; // Bits 9-10
+    public bool MasterDataParityError; // Bit 8
+    public bool FastBackToBackCapable; // Bit 7
+    public bool SixtySixMhzCapable; // Bit 5
+    public bool CapabilitiesList; // Bit 4
+    public bool InterruptStatus; // Bit 3
 }
 public unsafe class WheaErrorRecord
 {
