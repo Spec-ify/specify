@@ -698,7 +698,7 @@ public static partial class Cache
                     if (dataValue[1] == 'x')
                     {
                         var data = dataValue.Substring(2);
-                        uint.TryParse(data, out error.Status);
+                        uint.TryParse(data, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out error.Status);
                         error.pciStatusRegister = DecodePciStatusRegister(error.Status);
                     }
                 }
@@ -707,7 +707,7 @@ public static partial class Cache
                     if (dataValue[1] == 'x')
                     {
                         var data = dataValue.Substring(2);
-                        uint.TryParse(data, out error.Command);
+                        uint.TryParse(data, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out error.Command);
                         error.pciCommandRegister = DecodePciCommandRegister(error.Command);
                     }
                 }
