@@ -585,12 +585,16 @@ public static partial class Cache
             hwNotificationCache.Name = "UnsupportedHardwareNotificationCache\\SV2";
             var prioritySeparation = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\PriorityControl", "Win32PrioritySeparation");
             var coreIsolation = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios", "HypervisorEnforcedCodeIntegrity");
+            var rebootPending = new RegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing", "RebootPending");
+            var rebootRequired = new RegistryValue<int?>(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update", "RebootRequired");
+            var pendingFileRename = new RegistryValue<int?>(Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager", "PendingFileRenameOperation");
 
             ChoiceRegistryValues = new List<IRegistryValue>()
             {
                 tdrLevel, nbFLimit, throttlingIndex, superFetch, disableAv, disableAs, puaProtection, passiveMode, disableAvpolicy, disableAspolicy,
                 puaProtectionpolicy, passiveModepolicy, drii, disableWer,unsupportedTpmOrCpu, hwSchMode, WUServer, noAutoUpdate, fastBoot, auditBoot,
-                previewBuilds, bypassCpuCheck, bypassStorageCheck, bypassRamCheck, bypassTpmCheck, bypassSecureBootCheck, hwNotificationCache, prioritySeparation, coreIsolation
+                previewBuilds, bypassCpuCheck, bypassStorageCheck, bypassRamCheck, bypassTpmCheck, bypassSecureBootCheck, hwNotificationCache, prioritySeparation, 
+                coreIsolation, rebootPending, rebootRequired, pendingFileRename
             };
         }
         catch (Exception ex)
