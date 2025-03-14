@@ -350,6 +350,9 @@ public class PciWheaError
     public string DeviceId;
     public uint Command; // hex string?
     public uint Status; // hex string?
+    public uint Bus;
+    public uint Device;
+    public uint Function;
     public PciCommandRegister pciCommandRegister;
     public PciStatusRegister pciStatusRegister;
 

@@ -132,6 +132,8 @@ public static partial class Cache
             PciWheaErrors = new();
             WheaErrorRecords = new();
 
+            List<string> PciDeviceLocationPaths = new();
+
             for (EventRecord eventInstance = logReader.ReadEvent(); eventInstance != null; eventInstance = logReader.ReadEvent())
             {
                 XmlNode eventDataNode = GetDataNode(eventInstance);
@@ -157,6 +159,10 @@ public static partial class Cache
                             }
                             if (dataName.Contains("PrimaryDeviceName"))
                             {
+                                if(PciDeviceLocationPaths.Count == 0)
+                                {
+                                    PciDeviceLocationPaths = await GetPciLocationPaths();
+                                }
                                 // PCIe Error
                                 PciWheaErrorCount++;
                                 if(PciWheaErrorCount > maxEvents)
@@ -164,6 +170,8 @@ public static partial class Cache
                                     continue;
                                 }
                                 PciWheaErrors.Add(MakePcieError(eventInstance, eventDataNode));
+                                var faultingDevice = await IdentifyDevice(PciWheaErrors[PciWheaErrors.Count - 1], PciDeviceLocationPaths);
+                                PciWheaErrors[PciWheaErrorCount - 1].FaultingDevice = faultingDevice;
                             }
                             if (dataName.Contains("RawData"))
                             {
@@ -695,22 +703,32 @@ public static partial class Cache
                 }
                 if (dataName.Equals("Status"))
                 {
-                    if (dataValue[1] == 'x')
-                    {
-                        var data = dataValue.Substring(2);
-                        uint.TryParse(data, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out error.Status);
-                        error.pciStatusRegister = DecodePciStatusRegister(error.Status);
-                    }
+                    var data = dataValue.Substring(2);
+                    uint.TryParse(data, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out error.Status);
+                    error.pciStatusRegister = DecodePciStatusRegister(error.Status);
                 }
                 if(dataName.Equals("Command"))
                 {
-                    if (dataValue[1] == 'x')
-                    {
-                        var data = dataValue.Substring(2);
-                        uint.TryParse(data, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out error.Command);
-                        error.pciCommandRegister = DecodePciCommandRegister(error.Command);
-                    }
+                    var data = dataValue.Substring(2);
+                    uint.TryParse(data, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out error.Command);
+                    error.pciCommandRegister = DecodePciCommandRegister(error.Command);
                 }
+                if (dataName.Equals("Bus"))
+                {
+                    var data = dataValue.Substring(2);
+                    uint.TryParse(data, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out error.Bus);
+                }
+                if (dataName.Equals("Device"))
+                {
+                    var data = dataValue.Substring(2);
+                    uint.TryParse(data, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out error.Device);
+                }
+                if (dataName.Equals("Function"))
+                {
+                    var data = dataValue.Substring(2);
+                    uint.TryParse(data, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out error.Function);
+                }
+                
             }
         }
         return error;
@@ -1127,5 +1145,68 @@ public static partial class Cache
     public static bool CheckBitMask(ulong value, ulong mask)
     {
         return (value & mask) == mask;
+    }
+    public static async Task<List<string>> GetPciLocationPaths()
+    {
+        List<string> paths = new();
+        var entities = GetWmiObj("Win32_PnPEntity where DeviceID LIKE '%PCI%'");
+        foreach (var entity in entities)
+        {
+            if (((string)entity["Caption"]).Contains("Root Port"))
+            {
+                continue;
+            }
+            var inParams = ((System.Management.ManagementObject)entity).GetMethodParameters("GetDeviceProperties");
+            var deviceProperties = ((System.Management.ManagementObject)entity).InvokeMethod("GetDeviceProperties", inParams, null);
+            foreach(var property in (System.Management.ManagementBaseObject[])deviceProperties["deviceProperties"])
+            {
+                try
+                {
+                    if ((string)property["keyName"] == "DEVPKEY_Device_LocationPaths")
+                    {
+                        
+                        foreach (var str in (string[])property["Data"])
+                        {
+                            if(!str.Contains("PCIROOT(0)#PCI("))
+                            {
+                                continue;
+                            }
+                            var substr = str.Split('#');
+                            if(substr.Count() != 3)
+                            {
+                                continue;
+                            }
+                            paths.Add((string)entity["Caption"]);
+                            paths.Add(substr[1]);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await LogEventAsync($"Failure iterating PnP Device Properties {ex}", Region.Events, EventType.ERROR);
+                }
+            }
+        }
+        return paths;
+    }
+    public static async Task<string> IdentifyDevice(PciWheaError error, List<string> paths)
+    {
+        string PciPort = error.Device.ToString("X2") + error.Function.ToString("X2");
+        try
+        {
+            for (int i = 0; i < paths.Count; i += 2)
+            {
+                if (paths[i + 1].Contains(PciPort))
+                {
+                    return paths[i];
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            await LogEventAsync($"Unexpected exception during PCIe Whea Error Device Identification: {e}", Region.Events, EventType.ERROR);
+            return "Error - Check Debug Log";
+        }
+        return "UNKNOWN";
     }
 }
