@@ -348,6 +348,7 @@ public class PciWheaError
     public DateTime? Timestamp;
     public string VendorId;
     public string DeviceId;
+    public string FaultingDevice;
     public uint Command; // hex string?
     public uint Status; // hex string?
     public uint Bus;
