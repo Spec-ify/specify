@@ -159,9 +159,16 @@ public static partial class Cache
                     stick.PartNumber = smbStringsList[data[0x1A] - 1].Trim();
                 }
 
-                if (0x15 + 1 < data.Length)
+                if (0x20 + 1 < data.Length && data[0x12] == 0x22)
+                {
+                    stick.ConfiguredSpeed = (uint?)(data[0x20 + 1] << 8) | data[0x20];
+                    await LogEventAsync("DDR5!", Region.Hardware, EventType.INFORMATION);
+                }
+
+                if (0x15 + 1 < data.Length && data[0x12] != 0x22)
                 {
                     stick.ConfiguredSpeed = (uint?)(data[0x15 + 1] << 8) | data[0x15];
+                    await LogEventAsync("Not DDR5!", Region.Hardware, EventType.INFORMATION);
                 }
 
                 if (0xC + 1 < data.Length)
