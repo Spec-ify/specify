@@ -13,7 +13,6 @@ using System.Xml;
 using System.Text;
 using System.ComponentModel;
 using static specify_client.Interop;
-using HidSharp.Utility;
 
 namespace specify_client.data;
 
