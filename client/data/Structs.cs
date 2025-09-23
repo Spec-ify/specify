@@ -1,6 +1,5 @@
 ﻿#if !NORING
 using HidSharp;
-using LibreHardwareMonitor.Hardware;
 #endif
 using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
