@@ -357,7 +357,7 @@ public static partial class Cache
                 return;
             }
         } else
-        { 
+        {
             /* Future K9, figure out how to display this when the entire log is printed to console
              * should we add an option for silent runs, this is not a problem lol
               
@@ -368,6 +368,7 @@ public static partial class Cache
                 return;
             }
             */
+            return;
         }
 
             await LogEventAsync("Dump Upload Request Approved.", Region.System);
