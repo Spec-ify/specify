@@ -62,7 +62,6 @@ public static partial class Cache
     public static Dictionary<string, object> Tpm { get; private set; }
     public static List<Dictionary<string, object>> Drivers { get; private set; }
     public static List<Dictionary<string, object>> Devices { get; private set; }
-    public static List<TempMeasurement> Temperatures { get; private set; }
     public static List<BatteryData> Batteries { get; private set; }
     public static bool? SecureBootEnabled { get; private set; }
     public static List<IRegistryValue> ChoiceRegistryValues { get; private set; }

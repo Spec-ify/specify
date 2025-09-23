@@ -1,6 +1,3 @@
-#if !NORING
-using LibreHardwareMonitor.Hardware;
-#endif
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -16,7 +13,6 @@ using System.Xml;
 using System.Text;
 using System.ComponentModel;
 using static specify_client.Interop;
-using HidSharp.Utility;
 
 namespace specify_client.data;
 
@@ -34,7 +30,6 @@ public static partial class Cache
 
             List<Task> hardwareTaskList = new()
             {
-                DoTask(region, "GetTemps", GetTemps),
                 DoTask(region, "GetHardwareWmiData", GetHardwareWmiData),
                 DoTask(region, "GetMonitorInfo", GetMonitorInfo),
                 DoTask(region, "GetSMBiosMemoryInfo", GetSMBiosMemoryInfo),
@@ -1318,61 +1313,6 @@ public static partial class Cache
             _ => "Vendor Specific"
         };
         ;
-    }
-
-    // TEMPERATURES
-    private static async Task GetTemps()
-    {
-        #if NORING
-            await LogEventAsync($"Specify No Ring 0 version running. Temperatures will not be collected.", Region.Hardware, EventType.WARNING);
-        #else
-        //Any temp sensor reading below 24 will be filtered out
-        //These sensors are either not reading in celsius, are in error, or we cannot interpret them properly here
-        var Temps = new List<TempMeasurement>();
-        var computer = new Computer
-        {
-            IsCpuEnabled = true,
-            IsGpuEnabled = true,
-            IsMotherboardEnabled = true
-        };
-
-        try
-        {
-            computer.Open();
-            computer.Accept(new SensorUpdateVisitor());
-
-            foreach (var hardware in computer.Hardware)
-            {
-                Temps.AddRange(
-                    from subhardware in hardware.SubHardware
-                    from sensor in subhardware.Sensors
-                    where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24 || sensor.Name.ToLower().Contains("tjmax")
-                    select new TempMeasurement
-                    { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
-                    );
-
-                Temps.AddRange(
-                    from sensor in hardware.Sensors
-                    where sensor.SensorType.Equals(SensorType.Temperature) && sensor.Value > 24 || sensor.Name.ToLower().Contains("tjmax")
-                    select new TempMeasurement
-                    { Hardware = hardware.Name, SensorName = sensor.Name, SensorValue = sensor.Value.Value }
-                    );
-            }
-        }
-        catch (OverflowException)
-        {
-            await LogEventAsync("Absolute value overflow occurred when fetching temperature data", Region.Hardware, EventType.ERROR);
-        }
-        catch (Exception ex)
-        {
-            await LogEventAsync($"Exception during temperature measurement: " + ex, Region.Hardware, EventType.ERROR);
-        }
-        finally
-        {
-            computer.Close();
-        }
-        Temperatures = Temps;
-#endif
     }
 
     // BATTERIES
