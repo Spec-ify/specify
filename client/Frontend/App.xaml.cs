@@ -81,8 +81,6 @@ public partial class App : Application
             catch (Exception ex)
             {
                 System.IO.File.WriteAllText(@"specify_hardfail.log", $"{ex}");
-                Console.ReadKey();
-
             }
 
             Console.ReadKey();

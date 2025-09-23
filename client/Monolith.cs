@@ -275,9 +275,6 @@ public class Monolith
                 }
                 break;
         }
-
-        Console.WriteLine("Press any key to exit.");
-        Console.ReadKey();
     }
 
     public struct MonolithMeta
