@@ -1,6 +1,5 @@
 ﻿#if !NORING
 using HidSharp;
-using LibreHardwareMonitor.Hardware;
 #endif
 using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
@@ -118,13 +117,6 @@ public class SmartAttribute
     }
 }
 
-public class TempMeasurement
-{
-    public string Hardware;
-    public string SensorName;
-    public float SensorValue;
-}
-
 public class TCPConnection
 {
     public string LocalIPAddress;
@@ -171,28 +163,6 @@ public class EdidData
     public string NumberOfExtensions; // Byte 126
     public string Checksum; // Byte 127
 }
-
-#if !NORING
-public class SensorUpdateVisitor : IVisitor
-{
-    public void VisitComputer(IComputer computer)
-    {
-        computer.Traverse(this);
-    }
-
-    public void VisitHardware(IHardware hardware)
-    {
-        hardware.Update();
-        foreach (var subHardware in hardware.SubHardware) subHardware.Accept(this);
-    }
-
-    public void VisitSensor(ISensor sensor)
-    { }
-
-    public void VisitParameter(IParameter parameter)
-    { }
-}
-#endif
 
 public interface IRegistryValue
 { }

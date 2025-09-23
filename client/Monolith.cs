@@ -381,7 +381,6 @@ public class Monolith
         public List<Dictionary<string, object>> Devices;
         public List<Dictionary<string, object>> BiosInfo;
         public List<DiskDrive> Storage;
-        public List<TempMeasurement> Temperatures;
         public List<BatteryData> Batteries;
         public bool WriteSuccess;
         public int ErrorCount;
@@ -398,7 +397,6 @@ public class Monolith
             Devices = Cache.Devices;
             BiosInfo = Cache.BiosInfo;
             Storage = Cache.Disks;
-            Temperatures = Cache.Temperatures;
             Batteries = Cache.Batteries;
             WriteSuccess = Cache.HardwareWriteSuccess;
             ErrorCount = DebugLog.ErrorCount[(int)DebugLog.Region.Hardware];
