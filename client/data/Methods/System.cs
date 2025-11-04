@@ -348,13 +348,30 @@ public static partial class Cache
         }
 
         await LogEventAsync("Dump Upload Requested.", Region.System);
-        if (MessageBox.Show("Would you like to upload your BSOD minidumps with your specs report?", "Minidumps detected", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
+
+        if (!Settings.Headless)
         {
-            await LogEventAsync("Dump Upload Request Refused.", Region.System);
+            if (MessageBox.Show("Would you like to upload your BSOD minidumps with your specs report?", "Minidumps detected", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
+            {
+                await LogEventAsync("Dump Upload Request Refused.", Region.System);
+                return;
+            }
+        } else
+        {
+            /* Future K9, figure out how to display this when the entire log is printed to console
+             * should we add an option for silent runs, this is not a problem lol
+              
+            Console.WriteLine("Would you like to upload your BSOD minidumps with your specs report? (y, n)");
+            if (Console.Read() == 'n')
+            {
+                await LogEventAsync("Dump Upload Request Refused.", Region.System);
+                return;
+            }
+            */
             return;
         }
 
-        await LogEventAsync("Dump Upload Request Approved.", Region.System);
+            await LogEventAsync("Dump Upload Request Approved.", Region.System);
 
         Directory.CreateDirectory(TempFolder);
 
