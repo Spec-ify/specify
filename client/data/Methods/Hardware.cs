@@ -519,6 +519,14 @@ public static partial class Cache
             {
                 drive.DeviceName = drive.DeviceName.Trim();
             }
+            if (!driveWmi.TryWmiRead("Name", out drive.DeviceId))
+            {
+                LogEvent($"Could not retrieve device id of drive @ index {diskNumber}", Region.Hardware, EventType.ERROR);
+            }
+            else
+            {
+                drive.DeviceId = drive.DeviceId.Trim();
+            }
             if (!driveWmi.TryWmiRead("SerialNumber", out drive.SerialNumber))
             {
                 LogEvent($"Could not retrieve serial number of drive @ index {diskNumber}", Region.Hardware, EventType.ERROR);
@@ -862,25 +870,18 @@ public static partial class Cache
         }
         return drives;
     }
+
     private static Partition GetPartitionByDriveLetter(string driveLetter, List<DiskDrive> drives)
     {
-        foreach (var drive in drives)
+        Partition part = drives?.SelectMany(x => x.Partitions).Where(x=> !string.IsNullOrWhiteSpace(x?.PartitionLetter)).FirstOrDefault(x => driveLetter.StartsWith(x.PartitionLetter, StringComparison.CurrentCultureIgnoreCase));
+
+        if (part == null)
         {
-            foreach (var partition in drive.Partitions)
-            {
-                if (string.IsNullOrEmpty(partition.PartitionLetter))
-                {
-                    continue;
-                }
-                if (partition.PartitionLetter.Equals(driveLetter))
-                {
-                    return partition;
-                }
-            }
-        }
         LogEvent($"A matching partition could not be found for drive letter \"{driveLetter}\"", Region.Hardware, EventType.ERROR);
-        return null;
     }
+        return part;
+    }
+
     private static List<DiskDrive> GetPartitionSchemes(List<DiskDrive> drives)
     {
         foreach (var drive in drives)
@@ -937,12 +938,37 @@ public static partial class Cache
     }
     private static async Task GetDiskDriveData()
     {
+        List<DiskDrive> drives = null;
+        try
+        {
+            // First try getting drive information from VDS service
+            drives = Data.Methods.VDS.VDSClass.GetDisksInfo();
+
+            // Get device PnP ID from WMI, VDS does not provide them.
+            var wmidrives = GetBasicDriveInfo();
+            
+            foreach (var drive in drives)
+            {
+                drive.InstanceId = wmidrives.FirstOrDefault(x => x.DeviceId.Equals(drive.DeviceId.Replace('?','.'),StringComparison.CurrentCultureIgnoreCase))?.InstanceId;
+        }
+        }
+        catch (Exception ex)
+        {
+            LogEvent($"Failed to get disk information from VDS service. Error: {ex.Message}", Region.Hardware, EventType.ERROR);
+        }
+
+        // If VDS method fails, get back to old methods
+        if (drives == null)
+        {
         // "Basic" in this context refers to data we can retrieve directly from WMI without much processing. Model names, partition labels, etc.
-        List<DiskDrive> drives = GetBasicDriveInfo();
-        drives = GetBasicPartitionInfo(drives);
-        drives = LinkLogicalPartitions(drives);
-        drives = LinkNonLogicalPartitions(drives);
-        drives = GetPartitionSchemes(drives);
+            drives = GetBasicDriveInfo();
+            drives = GetBasicPartitionInfo(drives);
+            drives = LinkLogicalPartitions(drives);
+            drives = LinkNonLogicalPartitions(drives);
+            drives = GetPartitionSchemes(drives);
+            drives = GetDiskFreeSpace(drives);
+        }
+
         drives = GetBitlockerStatus(drives);
 
         try
@@ -963,14 +989,11 @@ public static partial class Cache
             LogEvent($"{e}", Region.Hardware);
         }
 
-        for (int i = 0; i < drives.Count; i++)
+        foreach (var drive in drives.Where(x => x.SmartData == null))
         {
-            var drive = drives[i];
-            if (drive.SmartData == null)
-            {
                 try
                 {
-                    drive = GetNvmeSmart(drive);
+                GetNvmeSmart(drive);
                 }
                 catch (Exception e)
                 {
@@ -978,8 +1001,12 @@ public static partial class Cache
                     LogEvent($"{e}", Region.Hardware);
                 }
             }
-        }
 
+        Disks = drives;
+    }
+
+    private static List<DiskDrive> GetDiskFreeSpace(List<DiskDrive> drives)
+    {
         foreach (var d in drives)
         {
             bool complete = true;
@@ -1021,43 +1048,26 @@ public static partial class Cache
                 d.DiskFree = free;
             }
         }
-        Disks = drives;
+        return drives;
     }
 
     private static DiskDrive GetNvmeSmart(DiskDrive drive)
     {
         // Stop if drive is not an NVME drive. This happens on all external drives.
-        if(drive.InterfaceType != "SCSI" || !drive.MediaType.ToLower().Contains("fixed"))
+        if (!drive.InterfaceType.Equals("NVMe", StringComparison.CurrentCultureIgnoreCase) && //VDS check
+            (drive.InterfaceType != "SCSI" || !drive.MediaType.ToLower().Contains("fixed"))) //Old method check
         {
             LogEvent($"Could not retrieve NVME Smart Data. Drive {drive.DeviceName} is not an NVME drive. Interface: {drive.InterfaceType}. Media type: {drive.MediaType}", Region.Hardware);
             return drive;
         }
-        // Get the drive letter to send to CreateFile()
-        string driveLetter = "";
-        foreach (var partition in drive.Partitions)
-        {
-            if (partition.PartitionLetter != null && partition.PartitionLetter.Length == 2)
-            {
-                driveLetter = partition.PartitionLetter;
-                break;
-            }
-        }
 
-        // If no drive letter was found, it is impossible to obtain a valid handle.
-        if (string.IsNullOrEmpty(driveLetter))
-        {
-            LogEvent($"Attempted to gather smart data from unlettered drive. {drive.DeviceName}", Region.Hardware, EventType.WARNING);
-            return drive;
-        }
-
-        // Find a valid handle.
-        driveLetter = $@"\\.\{driveLetter}" + '\0';
-        var handle = CreateFile(driveLetter, 0x40000000, 0x1 | 0x2, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
+        // We can use DeviceId (Name in Windows) as a valid path to CreateFile (ex. \\?\PhysicalDrive0) instead of drive letter
+        var handle = CreateFile(drive.DeviceId, 0x40000000, 0x1 | 0x2, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
 
         // Verify the handle.
         if (handle == new IntPtr(-1))
         {
-            LogEvent($"NVMe Smart Data could not be retrieved. Invalid Handle. {driveLetter}", Region.Hardware, EventType.ERROR);
+            LogEvent($"NVMe Smart Data could not be retrieved. Invalid Handle. {drive.DeviceId}", Region.Hardware, EventType.ERROR);
             LogEvent($"Interop Error: {new Win32Exception(Marshal.GetLastWin32Error()).Message}", Region.Hardware);
             return drive;
         }
@@ -1113,7 +1123,7 @@ public static partial class Cache
             if (!result)
             {
                 string errorMessage = new Win32Exception(Marshal.GetLastWin32Error()).Message;
-                LogEvent($"Interop failure during NVMe SMART data retrieval. {Marshal.GetLastWin32Error()} - {errorMessage} on drive {driveLetter}", Region.Hardware, EventType.ERROR);
+                LogEvent($"Interop failure during NVMe SMART data retrieval. {Marshal.GetLastWin32Error()} - {errorMessage} on drive {drive.DiskNumber}", Region.Hardware, EventType.ERROR);
                 Marshal.FreeHGlobal(buffer);
                 return drive;
             }
@@ -1126,7 +1136,7 @@ public static partial class Cache
             var driveTemperature = ((uint)smartInfo->Temperature[1] << 8 | smartInfo->Temperature[0]) - 273;
             if (driveTemperature > 100)
             {
-                LogEvent($"SMART data retrieval error - Data not valid on drive {driveLetter}", Region.Hardware, EventType.ERROR);
+                LogEvent($"SMART data retrieval error - Data not valid on drive {drive.DiskNumber}", Region.Hardware, EventType.ERROR);
                 Marshal.FreeHGlobal(buffer);
                 return drive;
             }
@@ -1181,6 +1191,7 @@ public static partial class Cache
         Marshal.FreeHGlobal(buffer);
         return drive;
     }
+
     private unsafe static SmartAttribute MakeNvmeAttribute(byte* attr, byte id, string name)
     {
         unsafe

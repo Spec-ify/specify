@@ -122,6 +122,10 @@
     <Compile Include="Data\Methods\Network.cs" />
     <Compile Include="Data\Methods\Security.cs" />
     <Compile Include="Data\Methods\System.cs" />
+    <Compile Include="Data\Methods\VDS\Enums.cs" />
+    <Compile Include="Data\Methods\VDS\Interfaces.cs" />
+    <Compile Include="Data\Methods\VDS\VdsClass.cs" />
+    <Compile Include="Data\Methods\VDS\Structs.cs" />
     <Compile Include="Data\Utils.cs" />
     <Compile Include="Data\Structs.cs" />
     <Compile Include="DebugLog.cs" />
