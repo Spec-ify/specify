@@ -64,6 +64,10 @@ public partial class App : Application
                         Settings.RedactOneDriveCommercial = true;
                         break;
 
+                    case "-redact-networking":
+                        Settings.RedactNetworking = true;
+                        break;
+
                     case "-dont-upload":
                         Settings.DontUpload = true;
                         break;
