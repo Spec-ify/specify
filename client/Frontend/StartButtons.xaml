@@ -118,6 +118,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="1*" />
                     <RowDefinition Height="1*" />
+                    <RowDefinition Height="1*" />
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
@@ -187,6 +188,23 @@
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center" Content=" Don't Upload  "
                               Checked="UploadOff" Unchecked="UploadOn"
+                              Style="{DynamicResource CheckBoxStyle1}"
+                              Width="120" Foreground="White"
+                              FontFamily="Consolas" VerticalContentAlignment="Center"/>
+
+                </Grid>
+
+                <Grid Grid.Row="2" Grid.Column="0">
+
+                    <Border CornerRadius="8"
+                            BorderThickness="2"
+                            BorderBrush="#576277"
+                            Margin="2"/>
+
+                    <CheckBox Name="RedactNetworkingCheckbox"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" Content=" Redact Network"
+                              Checked="RedactNetworkingOn" Unchecked="RedactNetworkingOff"
                               Style="{DynamicResource CheckBoxStyle1}"
                               Width="120" Foreground="White"
                               FontFamily="Consolas" VerticalContentAlignment="Center"/>
