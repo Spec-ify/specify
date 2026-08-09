@@ -194,8 +194,6 @@ public class Monolith
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("\nCould not upload. The file has been saved to specify_specs.json.");
                 Console.WriteLine($"Please go to {specifiedUploadDomain} to upload the file manually.");
-                Console.WriteLine("Press any key to exit.");
-                Console.ReadKey();
                 return null;
             }
             var location = response.Headers.Location.ToString();
@@ -220,19 +218,35 @@ public class Monolith
         switch (state)
         {
             case ProgramDoneState.Normal:
-                App.Current.Dispatcher.BeginInvoke(new Action(() =>
+                if (!Settings.Headless)
                 {
-                    var main = App.Current.MainWindow as Landing;
-                    main.ProgramFinalize();
-                }));
-                break;
+                    App.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        var main = App.Current.MainWindow as Landing;
+                        main.ProgramFinalize();
+                    }));
+                } else
+                {
+                    Console.WriteLine("Specify is done.");
+                    Console.WriteLine("Specify has uploaded the result to spec-ify.com, the link should be in your clipboard.");
+                }
+                    break;
 
             case ProgramDoneState.NoUpload:
-                App.Current.Dispatcher.BeginInvoke(new Action(() =>
+                if (!Settings.Headless)
                 {
-                    var main = App.Current.MainWindow as Landing;
-                    main.ProgramFinalizeNoUpload();
-                }));
+                    App.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        var main = App.Current.MainWindow as Landing;
+                        main.ProgramFinalizeNoUpload();
+                    }));
+                }
+                else
+                {
+                    Console.WriteLine("Specify is done.");
+                    Console.WriteLine("The result which is specify-specs.json is outputted into the same folder as the program.");
+                    Console.WriteLine("Please upload it manually to spec-ify.com or send over the file.");
+                }
                 break;
 
             case ProgramDoneState.UploadFailed:
@@ -244,11 +258,21 @@ public class Monolith
                 break;
 
             case ProgramDoneState.ProgramFailed:
-                App.Current.Dispatcher.BeginInvoke(new Action(() =>
+                if (!Settings.Headless)
                 {
-                    var main = App.Current.MainWindow as Landing;
-                    main.ProgramFailed();
-                }));
+                    App.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        var main = App.Current.MainWindow as Landing;
+                        main.ProgramFailed();
+                    }));
+                }
+                else
+                {
+                    Console.WriteLine("Something went wrong...");
+                    Console.WriteLine("Specify ran into an error. It will try to continue, but the data may be incomplete.");
+                    Console.WriteLine("An error log named specify-debug.log has been created in the same folder as the program.");
+                    Console.WriteLine("Please make an issue on https://github.com/Spec-ify/specify/issues/new, or send over the file to us. Thanks!");
+                }
                 break;
         }
     }

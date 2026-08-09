@@ -236,6 +236,10 @@ public static class DebugLog
             }
             logSemaphore.Release();
         }
+        
+        if (Settings.Headless)
+            Console.WriteLine(debugString);
+        
         LogText += debugString;
     }
 
@@ -278,6 +282,10 @@ public static class DebugLog
             }
             logSemaphore.Release();
         }
+
+        if (Settings.Headless)
+            Console.WriteLine(debugString);
+
         LogText += debugString;
     }
 
