@@ -80,20 +80,25 @@ public class DiskDrive
     public List<SmartAttribute> SmartData;
     
     [NonSerialized()] public string InstanceId; // Only used to link SmartData, do not serialize. Unless you really want to.
+    [NonSerialized] public string DeviceId; // Used to get device PnP Id from VDS method and get nvme SmartData
 }
 
 public class Partition
 {
+    public ulong PartitionOffset;
     public ulong PartitionCapacity;
     public ulong PartitionFree;
     public string PartitionLabel;
     public string PartitionLetter;
+    public string VolumeType;
+    public string ExtentType;
     public string Filesystem;
     public uint CfgMgrErrorCode;
     public uint LastErrorCode;
     public bool DirtyBitSet;
     public bool BitlockerEncryptionStatus = false;
     [NonSerialized()] public string DeviceId; // Only used to link partitions, do not serialize.
+    [NonSerialized()] public string VolumeId;
 }
 
 public class SmartAttribute
