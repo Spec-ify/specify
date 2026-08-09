@@ -133,7 +133,8 @@
                             BorderBrush="#576277"
                             Margin="2"/>
 
-                    <CheckBox HorizontalAlignment="Center"
+                    <CheckBox Name="UsernamesCheckbox"
+                              HorizontalAlignment="Center"
                               VerticalAlignment="Center" Content="Remove Usernames"
                               Checked="UsernameOn" Unchecked="UsernameOff"
                               Style="{DynamicResource CheckBoxStyle1}"
@@ -167,13 +168,13 @@
                             Margin="2"/>
 
                     <CheckBox Name="DebugLogCheckbox"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center" Content=" Enable Debug  &#x0a;    Logging"
-                    Checked="DebugLogToggleOn" Unchecked="DebugLogToggleOff"
-                    Style="{DynamicResource CheckBoxStyle1}"
-                    Grid.Row="2" Grid.Column="3"
-                    Width="120" Foreground="White"
-                    FontFamily="Consolas"/>
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" Content=" Enable Debug  &#x0a;    Logging"
+                            Checked="DebugLogToggleOn" Unchecked="DebugLogToggleOff"
+                            Style="{DynamicResource CheckBoxStyle1}"
+                            Grid.Row="2" Grid.Column="3"
+                            Width="120" Foreground="White"
+                            FontFamily="Consolas"/>
 
                 </Grid>
 
@@ -201,9 +202,9 @@
                             BorderBrush="#576277"
                             Margin="2"/>
 
-                    <CheckBox Name="RedactNetworkingCheckbox"
+                    <CheckBox Name="NetworkingCheckbox"
                               HorizontalAlignment="Center"
-                              VerticalAlignment="Center" Content=" Redact Network"
+                              VerticalAlignment="Center" Content=" Remove Networking"
                               Checked="RedactNetworkingOn" Unchecked="RedactNetworkingOff"
                               Style="{DynamicResource CheckBoxStyle1}"
                               Width="120" Foreground="White"
