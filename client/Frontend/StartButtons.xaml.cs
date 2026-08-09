@@ -61,16 +61,6 @@ public partial class StartButtons : Page
         Settings.RedactSerialNumber = false;
     }
 
-    private void RedactNetworkingOn(object sender, RoutedEventArgs e)
-    {
-        Settings.RedactNetworking = true;
-    }
-
-    private void RedactNetworkingOff(object sender, RoutedEventArgs e)
-    {
-        Settings.RedactNetworking = false;
-    }
-
     private void DebugLogToggleOn(object sender, RoutedEventArgs e)
     {
         Settings.EnableDebug = true;

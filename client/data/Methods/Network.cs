@@ -20,36 +20,21 @@ public static partial class Cache
         {
             DebugLog.Region region = DebugLog.Region.Networking;
             await DebugLog.StartRegion(region);
-            if (Settings.RedactNetworking)
-            {
-                NetAdapters = new List<Dictionary<string, object>>();
-                NetAdapters2 = new List<Dictionary<string, object>>();
-                IPRoutes = new List<Dictionary<string, object>>();
-                TCPConnections = new List<TCPConnection>();
-                UDPEndpoints = new List<Dictionary<string, object>>();
-                HostsFile = "";
-                HostsFileHash = "";
+            NetAdapters = Utils.GetWmi("Win32_NetworkAdapterConfiguration",
+                "Description, DHCPEnabled, DHCPServer, DNSDomain, DNSDomainSuffixSearchOrder, DNSHostName, "
+                + "DNSServerSearchOrder, IPEnabled, IPAddress, IPSubnet, DHCPLeaseObtained, DHCPLeaseExpires, "
+                + "DefaultIPGateway, MACAddress, InterfaceIndex");
 
-                await DebugLog.LogEventAsync("Networking redaction enabled. NICs, routes, hosts file, and network connections were skipped.", region);
-            }
-            else
-            {
-                NetAdapters = Utils.GetWmi("Win32_NetworkAdapterConfiguration",
-                    "Description, DHCPEnabled, DHCPServer, DNSDomain, DNSDomainSuffixSearchOrder, DNSHostName, "
-                    + "DNSServerSearchOrder, IPEnabled, IPAddress, IPSubnet, DHCPLeaseObtained, DHCPLeaseExpires, "
-                    + "DefaultIPGateway, MACAddress, InterfaceIndex");
+            NetAdapters2 = Utils.GetWmi("MSFT_NetAdapter",
+                "*",
+                @"root\standardcimv2");
+            IPRoutes = Utils.GetWmi("Win32_IP4RouteTable",
+                "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
 
-                NetAdapters2 = Utils.GetWmi("MSFT_NetAdapter",
-                    "*",
-                    @"root\standardcimv2");
-                IPRoutes = Utils.GetWmi("Win32_IP4RouteTable",
-                    "Description, Destination, Mask, NextHop, Metric1, InterfaceIndex");
+            await DebugLog.LogEventAsync("Networking WMI Information Retrieved.", region);
 
-                await DebugLog.LogEventAsync("Networking WMI Information Retrieved.", region);
-
-                GetAdapterProperties();
-                CombineAdapterInformation();
-            }
+            GetAdapterProperties();
+            CombineAdapterInformation();
 
             var rssWmi = Utils.GetWmi("MSFT_NetOffloadGlobalSetting", "ReceiveSideScaling", "root\\standardcimv2").FirstOrDefault();
             rssWmi.TryWmiRead("ReceiveSideScaling", out byte? rcvSideScaling);
@@ -60,17 +45,14 @@ public static partial class Cache
 
             AutoTuningLevelLocal = GetAutoTuningLevels();
 
-            if (!Settings.RedactNetworking)
-            {
-                HostsFile = GetHostsFile();
-                HostsFileHash = GetHostsFileHash();
-                await DebugLog.LogEventAsync("Hosts file retrieved.", region);
+            HostsFile = GetHostsFile();
+            HostsFileHash = GetHostsFileHash();
+            await DebugLog.LogEventAsync("Hosts file retrieved.", region);
 
-                TCPConnections = GetTCPConnections();
-                UDPEndpoints = Utils.GetWmi("MSFT_NetUDPEndpoint", "LocalAddress,LocalPort,OwningProcess",
-                    @"root\standardcimv2");
-                await DebugLog.LogEventAsync("Network Connections Information retrieved.", region);
-            }
+            TCPConnections = GetTCPConnections();
+            UDPEndpoints = Utils.GetWmi("MSFT_NetUDPEndpoint", "LocalAddress,LocalPort,OwningProcess",
+                @"root\standardcimv2");
+            await DebugLog.LogEventAsync("Network Connections Information retrieved.", region);
 
             await DebugLog.EndRegion(DebugLog.Region.Networking);
         }
