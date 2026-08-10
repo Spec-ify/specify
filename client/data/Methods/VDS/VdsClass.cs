@@ -13,6 +13,7 @@ namespace specify_client.Data.Methods.VDS
     {
         //COM HResults
         public const uint HR_PROPERTIES_INCOMPLETE = 0x00042715u;
+        public const uint VDS_E_NO_MEDIA = 0x80042412u;
 
         private const int DRIVE_LETTER_COUNT = 26;
         public static IVdsService Create()
@@ -128,8 +129,8 @@ namespace specify_client.Data.Methods.VDS
                     vdsExtents.AddRange(extents);
                 }
 
-
-                if (volume is IVdsVolumeMF volumeMf)
+               
+                if (volumeProps.Status == VDS_VOLUME_STATUS.ONLINE && volume is IVdsVolumeMF volumeMf)
                 {
                     hr = volumeMf.GetFileSystemProperties(out VDS_FILE_SYSTEM_PROP fileSystemProp);
                     if (hr != 0 && hr != HR_PROPERTIES_INCOMPLETE)
