@@ -13,7 +13,6 @@ namespace specify_client.Data.Methods.VDS
     {
         //COM HResults
         public const uint HR_PROPERTIES_INCOMPLETE = 0x00042715u;
-        public const uint VDS_E_NO_MEDIA = 0x80042412u;
 
         private const int DRIVE_LETTER_COUNT = 26;
         public static IVdsService Create()
