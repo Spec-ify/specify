@@ -1013,7 +1013,7 @@ public static partial class Cache
 
             try
             {
-                GetStorageAdapterSerialNumner(drive);
+                GetStorageAdapterSerialNumber(drive);
         }
             catch (Exception e)
             {
@@ -1205,7 +1205,7 @@ public static partial class Cache
         return drive;
     }
 
-    public static DiskDrive GetStorageAdapterSerialNumner(DiskDrive drive)
+    public static DiskDrive GetStorageAdapterSerialNumber(DiskDrive drive)
     {
         var handle = CreateFile(drive.DeviceId, 0x40000000, 0x1 | 0x2, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
 
