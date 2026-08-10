@@ -996,8 +996,10 @@ public static partial class Cache
             LogEvent($"{e}", Region.Hardware);
         }
 
-        foreach (var drive in drives.Where(x => x.SmartData == null))
+        foreach (var drive in drives.Where(x => x.IsNVMe))
         {
+            if (drive.SmartData == null)
+            {
                 try
                 {
                 GetNvmeSmart(drive);
@@ -1008,6 +1010,8 @@ public static partial class Cache
                     LogEvent($"{e}", Region.Hardware);
                 }
             }
+
+        }
 
         Disks = drives;
     }
@@ -1060,14 +1064,6 @@ public static partial class Cache
 
     private static DiskDrive GetNvmeSmart(DiskDrive drive)
     {
-        // Stop if drive is not an NVME drive. This happens on all external drives.
-        if (!drive.InterfaceType.Equals("NVMe", StringComparison.CurrentCultureIgnoreCase) && //VDS check
-            (drive.InterfaceType != "SCSI" || !drive.MediaType.ToLower().Contains("fixed"))) //Old method check
-        {
-            LogEvent($"Could not retrieve NVME Smart Data. Drive {drive.DeviceName} is not an NVME drive. Interface: {drive.InterfaceType}. Media type: {drive.MediaType}", Region.Hardware);
-            return drive;
-        }
-
         // We can use DeviceId (Name in Windows) as a valid path to CreateFile (ex. \\?\PhysicalDrive0) instead of drive letter
         var handle = CreateFile(drive.DeviceId, 0x40000000, 0x1 | 0x2, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
 
