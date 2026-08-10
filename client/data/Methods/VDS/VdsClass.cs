@@ -128,8 +128,8 @@ namespace specify_client.Data.Methods.VDS
                     vdsExtents.AddRange(extents);
                 }
 
-
-                if (volume is IVdsVolumeMF volumeMf)
+               
+                if (volumeProps.Status == VDS_VOLUME_STATUS.ONLINE && volume is IVdsVolumeMF volumeMf)
                 {
                     hr = volumeMf.GetFileSystemProperties(out VDS_FILE_SYSTEM_PROP fileSystemProp);
                     if (hr != 0 && hr != HR_PROPERTIES_INCOMPLETE)
