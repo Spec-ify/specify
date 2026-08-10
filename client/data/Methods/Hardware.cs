@@ -1212,7 +1212,7 @@ public static partial class Cache
             byte[] attrReversedArray = attrSpan.ToArray();
 
             // byte[].Reverse() returns and IEnumerable which must be further casted into an array, leaving us with a big endian byte array.
-            var attrArray = attrReversedArray.Reverse().ToArray();
+            var attrArray = Enumerable.Reverse(attrReversedArray).ToArray();
 
             // Convert the byte array to a string and remove the extraneous dashes.
             var attrString = BitConverter.ToString(attrArray).Replace("-", string.Empty);
