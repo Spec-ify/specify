@@ -996,8 +996,10 @@ public static partial class Cache
             LogEvent($"{e}", Region.Hardware);
         }
 
-        foreach (var drive in drives.Where(x => x.SmartData == null))
+        foreach (var drive in drives.Where(x => x.IsNVMe))
         {
+            if (drive.SmartData == null)
+            {
                 try
                 {
                 GetNvmeSmart(drive);
@@ -1008,6 +1010,18 @@ public static partial class Cache
                     LogEvent($"{e}", Region.Hardware);
                 }
             }
+
+            try
+            {
+                GetStorageAdapterSerialNumber(drive);
+        }
+            catch (Exception e)
+            {
+                LogEvent($"Exception during storage adapter serial number retrieval on drive {drive.DeviceName}", Region.Hardware, EventType.ERROR);
+                LogEvent($"{e}", Region.Hardware);
+            }
+
+        }
 
         Disks = drives;
     }
@@ -1060,14 +1074,6 @@ public static partial class Cache
 
     private static DiskDrive GetNvmeSmart(DiskDrive drive)
     {
-        // Stop if drive is not an NVME drive. This happens on all external drives.
-        if (!drive.InterfaceType.Equals("NVMe", StringComparison.CurrentCultureIgnoreCase) && //VDS check
-            (drive.InterfaceType != "SCSI" || !drive.MediaType.ToLower().Contains("fixed"))) //Old method check
-        {
-            LogEvent($"Could not retrieve NVME Smart Data. Drive {drive.DeviceName} is not an NVME drive. Interface: {drive.InterfaceType}. Media type: {drive.MediaType}", Region.Hardware);
-            return drive;
-        }
-
         // We can use DeviceId (Name in Windows) as a valid path to CreateFile (ex. \\?\PhysicalDrive0) instead of drive letter
         var handle = CreateFile(drive.DeviceId, 0x40000000, 0x1 | 0x2, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
 
@@ -1196,6 +1202,66 @@ public static partial class Cache
             };
         }
         Marshal.FreeHGlobal(buffer);
+        return drive;
+    }
+
+    public static DiskDrive GetStorageAdapterSerialNumber(DiskDrive drive)
+    {
+        var handle = CreateFile(drive.DeviceId, 0x40000000, 0x1 | 0x2, IntPtr.Zero, 0x3, 0, IntPtr.Zero);
+
+        // Verify the handle.
+        if (handle == new IntPtr(-1))
+        {
+            LogEvent($"Storage adapter serial number could not be retrieved. Invalid Handle. {drive.DeviceId}", Region.Hardware, EventType.ERROR);
+            LogEvent($"Interop Error: {new Win32Exception(Marshal.GetLastWin32Error()).Message}", Region.Hardware);
+            return drive;
+        }
+
+        unsafe
+        {
+            STORAGE_PROPERTY_QUERY* query = null;
+            STORAGE_ADAPTER_SERIAL_NUMBER* adapterSn = null;
+
+            var bufferInLength = (uint)sizeof(STORAGE_PROPERTY_QUERY);
+            var bufferOutLength = (uint)sizeof(STORAGE_ADAPTER_SERIAL_NUMBER);
+            var bufferIn = Marshal.AllocHGlobal((int)bufferInLength);
+            var bufferOut = Marshal.AllocHGlobal((int)bufferOutLength);
+            try
+            {
+                query = (STORAGE_PROPERTY_QUERY*)bufferIn;
+                adapterSn = (STORAGE_ADAPTER_SERIAL_NUMBER*)bufferOut;
+
+                // Set up the Smart log query
+                query->PropertyId = STORAGE_PROPERTY_ID.StorageAdapterSerialNumberProperty;
+                query->QueryType = STORAGE_QUERY_TYPE.PropertyStandardQuery;
+
+                var result = DeviceIoControl(handle,
+                                     IOCTL_STORAGE_QUERY_PROPERTY,
+                                     bufferIn,
+                                     bufferInLength,
+                                     bufferOut,
+                                     bufferOutLength,
+                                     out _,
+                                     IntPtr.Zero
+                                     );
+                if (result)
+                {
+                    var sn = Marshal.PtrToStringUni((IntPtr)adapterSn->SerialNumber);
+                    drive.SerialNumber = sn.Split(' ').FirstOrDefault() ?? sn;
+                }
+                else
+                {
+                    string errorMessage = new Win32Exception(Marshal.GetLastWin32Error()).Message;
+                    LogEvent($"Interop failure during storage adapter serial number retrieval. {Marshal.GetLastWin32Error()} - {errorMessage} on drive {drive.DiskNumber}", Region.Hardware, EventType.ERROR);
+                    return drive;
+                }
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(bufferIn);
+                Marshal.FreeHGlobal(bufferOut);
+            }
+        }
         return drive;
     }
 

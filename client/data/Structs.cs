@@ -81,6 +81,9 @@ public class DiskDrive
     
     [NonSerialized()] public string InstanceId; // Only used to link SmartData, do not serialize. Unless you really want to.
     [NonSerialized] public string DeviceId; // Used to get device PnP Id from VDS method and get nvme SmartData
+
+    [JsonIgnore] public bool IsNVMe => InterfaceType.Equals("NVMe", StringComparison.CurrentCultureIgnoreCase) //VDS check
+               || (InterfaceType == "SCSI" && MediaType.ToLower().Contains("fixed")); //Old method check            
 }
 
 public class Partition
