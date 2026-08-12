@@ -1,6 +1,5 @@
 # Specify!
 ![](./docs/screenshot-main.png)
-![](./docs/screenshot-main.png)
 # What is it good for
 
 ***Absolutely (Almost) Everything***
