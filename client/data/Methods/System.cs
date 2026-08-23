@@ -2,9 +2,11 @@ using Microsoft.Win32;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -12,23 +14,16 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows;
 using System.Threading.Tasks;
-using System.Threading;
-using System.Diagnostics.Eventing.Reader;
-using System.Xml.Serialization;
-using System.Xml;
-using System.Runtime.CompilerServices;
-using System.Globalization;
+using System.Windows;
 
 namespace specify_client.data;
 
 using static specify_client.DebugLog;
-using static Utils;
 using static specify_client.Interop;
-
-using Win32Task = Microsoft.Win32.TaskScheduler.Task;
+using static Utils;
 using TaskFolder = Microsoft.Win32.TaskScheduler.TaskFolder;
+using Win32Task = Microsoft.Win32.TaskScheduler.Task;
 
 
 public static partial class Cache
@@ -37,7 +32,7 @@ public static partial class Cache
     {
         try
         {
-            
+
             Region region = Region.System;
             await StartRegion(region);
 
@@ -309,7 +304,7 @@ public static partial class Cache
     public static long DirectorySize(string[] filePaths)
     {
         long sum = 0;
-        foreach(var path in filePaths)
+        foreach (var path in filePaths)
         {
             FileInfo fileInfo = new(path);
             sum += fileInfo.Length;
@@ -356,7 +351,8 @@ public static partial class Cache
                 await LogEventAsync("Dump Upload Request Refused.", Region.System);
                 return;
             }
-        } else
+        }
+        else
         {
             /* Future K9, figure out how to display this when the entire log is printed to console
              * should we add an option for silent runs, this is not a problem lol
@@ -371,7 +367,7 @@ public static partial class Cache
             return;
         }
 
-            await LogEventAsync("Dump Upload Request Approved.", Region.System);
+        await LogEventAsync("Dump Upload Request Approved.", Region.System);
 
         Directory.CreateDirectory(TempFolder);
 
@@ -383,7 +379,7 @@ public static partial class Cache
 
         FileInfo fileInfo = new(TempZip);
 
-        if(fileInfo.Length >= 0x8000000) // 128 MiB
+        if (fileInfo.Length >= 0x8000000) // 128 MiB
         {
             await LogEventAsync($"Dump zip too large: {fileInfo.Length / 1024 / 1024} MB", Region.System, EventType.WARNING);
             File.Delete(TempZip);
@@ -413,7 +409,7 @@ public static partial class Cache
             foreach (string dump in dumps)
             {
                 // Skip any non-dump files, if any.
-                if (!dump.ToLower().Contains(".dmp")) 
+                if (!dump.ToLower().Contains(".dmp"))
                 {
                     await LogEventAsync($"{dump} is not a dump file.", Region.System, EventType.WARNING);
                     continue;
@@ -610,7 +606,7 @@ public static partial class Cache
             {
                 tdrLevel, nbFLimit, throttlingIndex, superFetch, disableAv, disableAs, puaProtection, passiveMode, disableAvpolicy, disableAspolicy,
                 puaProtectionpolicy, passiveModepolicy, drii, disableWer,unsupportedTpmOrCpu, hwSchMode, WUServer, noAutoUpdate, fastBoot, auditBoot,
-                previewBuilds, bypassCpuCheck, bypassStorageCheck, bypassRamCheck, bypassTpmCheck, bypassSecureBootCheck, hwNotificationCache, prioritySeparation, 
+                previewBuilds, bypassCpuCheck, bypassStorageCheck, bypassRamCheck, bypassTpmCheck, bypassSecureBootCheck, hwNotificationCache, prioritySeparation,
                 coreIsolation, rebootPending, rebootRequired, pendingFileRename
             };
         }
@@ -667,7 +663,7 @@ public static partial class Cache
 
                         browser.Profiles.Add(profile);
                     }
-                    catch (Exception e) 
+                    catch (Exception e)
                     {
                         await LogEventAsync($"Exception occurred in GetBrowserExtension() during Firefox profile gathering.",
                             Region.System, EventType.ERROR);
@@ -693,15 +689,15 @@ public static partial class Cache
                     "ompjkhnkeoicimmaehlcmgmpghobbjoj"
                 };
 
-                foreach (KeyValuePair<Browser.BrowserProfile, string> profile in GetOperaGXProfiles(browserPath.Value)) 
+                foreach (KeyValuePair<Browser.BrowserProfile, string> profile in GetOperaGXProfiles(browserPath.Value))
                 {
                     if (!Directory.Exists(profile.Value))
                     {
                         browser.Profiles.Add(profile.Key); //Still add the profile so we know a profile is there.
                         continue; //When a side profile is created but not initialized
                     }
-                        
-                    foreach (string eDir in Directory.GetDirectories(profile.Value)) 
+
+                    foreach (string eDir in Directory.GetDirectories(profile.Value))
                     {
                         DirectoryInfo di = new DirectoryInfo(eDir);
                         if (!defaultExtensions.Contains(di.Name) && !di.Name.Equals("Temp"))
@@ -813,7 +809,7 @@ public static partial class Cache
                 name = new DirectoryInfo(pDir).Name,
                 Extensions = new List<Browser.Extension>()
             });
-        
+
         return Profiles;
     }
 
@@ -916,6 +912,50 @@ public static partial class Cache
     {
         SystemVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Machine);
         UserVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.User);
+        // Attempt to censor any API keys or login tokens
+        string[] censoredSnippets = { "TOKEN", "KEY", "SECRET", "OAUTH", "WEBHOOK" };
+        List<string> toCensor = [];
+
+        // Go through the user variables and find tokens to censor, adding them to `toCensor`
+        foreach (DictionaryEntry entry in UserVariables)
+        {
+            foreach (string snippet in censoredSnippets)
+            {
+                if (entry.Key.ToString().ToUpper().Contains(snippet))
+                {
+                    toCensor.Add(entry.Key.ToString());
+                }
+            }
+        }
+
+        // Now censor all flagged 
+        foreach (string key in toCensor)
+        {
+            LogEvent("Censoring user variable: " + key, Region.System, EventType.INFORMATION);
+            int valueLength = UserVariables[key].ToString().Length;
+            UserVariables[key] = string.Concat(Enumerable.Repeat('*', valueLength));
+        }
+
+        // Repeat with `SystemVariables`
+        toCensor.Clear();
+        foreach (DictionaryEntry entry in SystemVariables)
+        {
+            foreach (string snippet in censoredSnippets)
+            {
+                if (entry.Key.ToString().ToUpper().Contains(snippet))
+                {
+                    toCensor.Add(snippet);
+                }
+
+            }
+        }
+
+        foreach (string key in toCensor)
+        {
+            LogEvent("Censoring system variable: " + key, Region.System, EventType.INFORMATION);
+            int valueLength = SystemVariables[key].ToString().Length;
+            SystemVariables[key] = string.Concat(Enumerable.Repeat('*', valueLength));
+        }
     }
 
     private static void GetSystemWMIInfo()
