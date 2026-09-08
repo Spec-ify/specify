@@ -920,9 +920,9 @@ public static partial class Cache
         foreach (DictionaryEntry entry in UserVariables)
         {
             string upperKey = entry.Key.ToString().ToUpper();
-            foreach (string snippet in censoredSnippets.Where(snip => upperKey.Contains(snip)))
+            if (censoredSnippets.Any(snip => upperKey.Contains(snip)))
             {
-                    toCensor.Add(entry.Key.ToString());
+                toCensor.Add(entry.Key.ToString());
             }
         }
 
