@@ -919,12 +919,10 @@ public static partial class Cache
         // Go through the user variables and find tokens to censor, adding them to `toCensor`
         foreach (DictionaryEntry entry in UserVariables)
         {
-            foreach (string snippet in censoredSnippets)
+            string upperKey = entry.Key.ToString().ToUpper();
+            foreach (string snippet in censoredSnippets.Where(snip => upperKey.Contains(snip)))
             {
-                if (entry.Key.ToString().ToUpper().Contains(snippet))
-                {
                     toCensor.Add(entry.Key.ToString());
-                }
             }
         }
 
@@ -940,13 +938,10 @@ public static partial class Cache
         toCensor.Clear();
         foreach (DictionaryEntry entry in SystemVariables)
         {
-            foreach (string snippet in censoredSnippets)
+            string upperKey = entry.Key.ToString().ToUpper();
+            foreach (string snippet in censoredSnippets.Where(snip => upperKey.Contains(snip)))
             {
-                if (entry.Key.ToString().ToUpper().Contains(snippet))
-                {
-                    toCensor.Add(snippet);
-                }
-
+                toCensor.Add(snippet);
             }
         }
 
