@@ -4,10 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace specify_client.data;
@@ -58,6 +55,7 @@ public static partial class Cache
             // This statement will avoid errors if the WMI value is not valid.
             ReceiveSideScaling = rcvSideScaling is not null && rcvSideScaling != 0;
 
+            await GetNetworkAdapterAdvancedConfig();
             AutoTuningLevelLocal = GetAutoTuningLevels();
 
             if (!Settings.RedactNetworking)
@@ -343,6 +341,81 @@ public static partial class Cache
             // If this catch happens, the error has already been reported in GetHostsFile() and does not need to be reported again.
             return "";
         }
-        
+
+    }
+
+    private const string RegKeyNetworkAdapterAdvancedConfig = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}";
+
+    /// <summary>
+    /// Retrive network adapters configuration, set in "Advanced" tab in adapter's options.
+    /// </summary>
+    /// <returns></returns>
+    public static async Task GetNetworkAdapterAdvancedConfig()
+    {
+        using RegistryKey subkey = Registry.LocalMachine.OpenSubKey(RegKeyNetworkAdapterAdvancedConfig);
+        foreach (var adapter in NetAdapters)
+        {
+            Dictionary<string,NetAdapterAdvancedParameter> netAdapterConfig = new();
+            try
+            {
+                using RegistryKey adapterKey = subkey.OpenSubKey(((uint)adapter["InterfaceIndex"]).ToString("0000"));
+                if (adapterKey == null)
+                {
+                    DebugLog.LogEvent($"Could not find advanced configuration for {adapter["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
+                    continue;
+                }
+
+                using RegistryKey adapterParamsKey = adapterKey.OpenSubKey("NDI\\Params");
+                if (adapterParamsKey == null)
+                {
+                    //No advanced configuration options are available for the interface.
+                    continue;
+                }
+
+                var parameterNames = adapterParamsKey.GetSubKeyNames();
+
+                foreach (string parameterName in parameterNames)
+                {
+                    NetAdapterAdvancedParameter netAdapterParameter = new NetAdapterAdvancedParameter();
+                    netAdapterParameter.CurrentValue = adapterKey.GetValue(parameterName)?.ToString();
+
+                    using RegistryKey parameterKey = adapterParamsKey.OpenSubKey($"{parameterName}");
+
+                    if (parameterKey == null)
+                    {
+                        DebugLog.LogEvent($"Missing parameter definitions for {parameterName} for {adapter["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
+                        continue;
+                    }
+
+                    netAdapterParameter.Description = parameterKey.GetValue("ParamDesc")?.ToString();
+                    netAdapterParameter.DefaultValue = parameterKey.GetValue("default")?.ToString();
+                    netAdapterParameter.Type = parameterKey.GetValue("Type").ToString();
+
+                    if (netAdapterParameter.Type.Equals("enum", StringComparison.OrdinalIgnoreCase))
+                    {
+                        using RegistryKey parameterEnumsKey = parameterKey.OpenSubKey("Enum");
+
+                        if (parameterEnumsKey == null)
+                        {
+                            DebugLog.LogEvent($"Missing enum definitions for {parameterName} for {adapter["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
+                            continue;
+                        }
+
+                        netAdapterParameter.PossibleEnumValues = parameterEnumsKey.GetValueNames()
+                            .ToDictionary(x => x, x => parameterEnumsKey.GetValue(x)?.ToString());
+                        netAdapterParameter.CurrentValueName = netAdapterParameter.PossibleEnumValues[netAdapterParameter.CurrentValue];
+
+                    }
+                    netAdapterConfig.Add(parameterName, netAdapterParameter);
+                }
+
+                adapter.Add("AdvancedConfiguration", netAdapterConfig);
+            }
+            catch (Exception e)
+            {
+                DebugLog.LogEvent($"Failed to read advanced configuration for {adapter["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
+                DebugLog.LogEvent($"{e}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
+            }
+        }
     }
 }
