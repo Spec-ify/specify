@@ -71,6 +71,16 @@ public partial class StartButtons : Page
         Settings.RedactNetworking = false;
     }
 
+    private void RedactHostsFileOn(object sender, RoutedEventArgs e)
+    {
+        Settings.RedactHostsFile = true;
+    }
+
+    private void RedactHostsFileOff(object sender, RoutedEventArgs e)
+    {
+        Settings.RedactHostsFile = false;
+    }
+
     private void DebugLogToggleOn(object sender, RoutedEventArgs e)
     {
         Settings.EnableDebug = true;

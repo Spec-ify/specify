@@ -118,7 +118,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="1*" />
                     <RowDefinition Height="1*" />
-                    <RowDefinition Height="1*" />
+					<RowDefinition Height="1*" />
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
@@ -177,6 +177,23 @@
                             FontFamily="Consolas"/>
 
                 </Grid>
+
+				<Grid Grid.Row="2" Grid.Column="1">
+
+					<Border CornerRadius="8"
+                            BorderThickness="2"
+                            BorderBrush="#576277"
+                            Margin="2"/>
+
+					<CheckBox Name="RedactHostsCheckbox"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" Content=" Remove hosts file"
+                              Checked="RedactHostsFileOn" Unchecked="RedactHostsFileOff"
+                              Style="{DynamicResource CheckBoxStyle1}"
+                              Width="120" Foreground="White"
+                              FontFamily="Consolas" VerticalContentAlignment="Center"/>
+
+				</Grid>
 
                 <Grid Grid.Row="1" Grid.Column="0">
 

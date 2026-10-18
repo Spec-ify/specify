@@ -27,10 +27,8 @@ public static partial class Cache
                 IPRoutes = new List<Dictionary<string, object>>();
                 TCPConnections = new List<TCPConnection>();
                 UDPEndpoints = new List<Dictionary<string, object>>();
-                HostsFile = "";
-                HostsFileHash = "";
 
-                await DebugLog.LogEventAsync("Networking redaction enabled. NICs, routes, hosts file, and network connections were skipped.", region);
+                await DebugLog.LogEventAsync("Networking redaction enabled. NICs, routes, and network connections were skipped.", region);
             }
             else
             {
@@ -60,12 +58,21 @@ public static partial class Cache
 
             AutoTuningLevelLocal = GetAutoTuningLevels();
 
-            if (!Settings.RedactNetworking)
+            if (Settings.RedactHostsFile)
+            {
+                HostsFile = "";
+                HostsFileHash = "";
+                await DebugLog.LogEventAsync("Hosts file redaction enabled.", region);
+            }
+            else
             {
                 HostsFile = GetHostsFile();
                 HostsFileHash = GetHostsFileHash();
                 await DebugLog.LogEventAsync("Hosts file retrieved.", region);
+            }
 
+            if (!Settings.RedactNetworking)
+            {
                 TCPConnections = GetTCPConnections();
                 UDPEndpoints = Utils.GetWmi("MSFT_NetUDPEndpoint", "LocalAddress,LocalPort,OwningProcess",
                     @"root\standardcimv2");

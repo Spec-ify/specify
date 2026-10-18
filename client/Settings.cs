@@ -6,6 +6,7 @@ public static class Settings
     public static bool RedactSerialNumber { get; set; } = false;
     public static bool RedactOneDriveCommercial { get; set; } = false;
     public static bool RedactNetworking { get; set; } = false;
+    public static bool RedactHostsFile { get; set; } = false;
     public static bool DontUpload { get; set; } = false;
     public static bool Headless { get; set; } = false;
     public static bool LocalCulture { get; set; } = false;
