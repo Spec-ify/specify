@@ -34,7 +34,7 @@ public static partial class Cache
                 NetAdapters = Utils.GetWmi("Win32_NetworkAdapterConfiguration",
                     "Description, DHCPEnabled, DHCPServer, DNSDomain, DNSDomainSuffixSearchOrder, DNSHostName, "
                     + "DNSServerSearchOrder, IPEnabled, IPAddress, IPSubnet, DHCPLeaseObtained, DHCPLeaseExpires, "
-                    + "DefaultIPGateway, MACAddress, InterfaceIndex");
+                    + "DefaultIPGateway, MACAddress, InterfaceIndex, Index");
 
                 NetAdapters2 = Utils.GetWmi("MSFT_NetAdapter",
                     "*",
@@ -358,7 +358,7 @@ public static partial class Cache
             Dictionary<string,NetAdapterAdvancedParameter> netAdapterConfig = new();
             try
             {
-                using RegistryKey adapterKey = subkey.OpenSubKey(((uint)adapter["InterfaceIndex"]).ToString("0000"));
+                using RegistryKey adapterKey = subkey.OpenSubKey(((uint)adapter["Index"]).ToString("0000"));
                 if (adapterKey == null)
                 {
                     DebugLog.LogEvent($"Could not find advanced configuration for {adapter["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
