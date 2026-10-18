@@ -133,7 +133,7 @@
                             BorderBrush="#576277"
                             Margin="2"/>
 
-                    <CheckBox Name="UsernamesCheckbox"
+                    <CheckBox Name="UsernamesCheckbox" IsChecked="true"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center" Content="Remove Usernames"
                               Checked="UsernameOn" Unchecked="UsernameOff"
