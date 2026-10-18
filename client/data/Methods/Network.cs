@@ -353,6 +353,11 @@ public static partial class Cache
     public static async Task GetNetworkAdapterAdvancedConfig()
     {
         using RegistryKey subkey = Registry.LocalMachine.OpenSubKey(RegKeyNetworkAdapterAdvancedConfig);
+        if (subkey == null)
+        {
+            DebugLog.LogEvent($"Registry key for storing network adapters advanced configuration is missing!", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
+            return;
+        }
         foreach (var adapter in NetAdapters)
         {
             Dictionary<string,NetAdapterAdvancedParameter> netAdapterConfig = new();
@@ -368,7 +373,7 @@ public static partial class Cache
                 using RegistryKey adapterParamsKey = adapterKey.OpenSubKey("NDI\\Params");
                 if (adapterParamsKey == null)
                 {
-                    //No advanced configuration options are available for the interface.
+                    //No advanced configuration options are available for the adapter.
                     continue;
                 }
 
@@ -383,7 +388,7 @@ public static partial class Cache
 
                     if (parameterKey == null)
                     {
-                        DebugLog.LogEvent($"Missing parameter definitions for {parameterName} for {adapter["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
+                        DebugLog.LogEvent($"Missing parameter definitions for {parameterName} for network adapter: {adapter["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
                         continue;
                     }
 
@@ -397,7 +402,7 @@ public static partial class Cache
 
                         if (parameterEnumsKey == null)
                         {
-                            DebugLog.LogEvent($"Missing enum definitions for {parameterName} for {adapter["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
+                            DebugLog.LogEvent($"Missing enum definitions for {parameterName} for network adapter: {adapter["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
                             continue;
                         }
 
@@ -413,7 +418,7 @@ public static partial class Cache
             }
             catch (Exception e)
             {
-                DebugLog.LogEvent($"Failed to read advanced configuration for {adapter["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
+                DebugLog.LogEvent($"Failed to read advanced configuration for network adapter: {adapter["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
                 DebugLog.LogEvent($"{e}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
             }
         }
