@@ -4,14 +4,17 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:specify_client"
+        xmlns:frontend="clr-namespace:specify_client.Frontend"
         mc:Ignorable="d"
         Title="Specify"
         Width="800" Height="400"
         MinWidth="800" MinHeight="400"
         d:Height="400" d:Width="800">
 
+    <Page.Resources>
+        <frontend:BoolToVisibilityConverter x:Key="boolToVisConverter"/>
+    </Page.Resources>
     <!-- Define the Grids -->
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="1*" />
@@ -109,112 +112,8 @@
                     Background="#3b4252" Margin="5,5,5,5"  />
 
             <!-- Settings -->
-
-            <Grid Margin="20" 
-                  Name="SettingsToggles" 
-                  Visibility="Hidden" 
-                  Grid.ColumnSpan="2">
-
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="1*" />
-                    <RowDefinition Height="1*" />
-                    <RowDefinition Height="1*" />
-                </Grid.RowDefinitions>
-
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <Grid Grid.Column="0" Grid.Row="0">
-
-                    <Border CornerRadius="8"
-                            BorderThickness="2"
-                            BorderBrush="#576277"
-                            Margin="2"/>
-
-                    <CheckBox Name="UsernamesCheckbox"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center" Content="Remove Usernames"
-                              Checked="UsernameOn" Unchecked="UsernameOff"
-                              Style="{DynamicResource CheckBoxStyle1}"
-                              Width="120" Foreground="White"
-                              FontFamily="Consolas" />
-
-                </Grid>
-
-                <Grid Grid.Row="0" Grid.Column="1">
-
-                    <Border CornerRadius="8"
-                        BorderThickness="2"
-                        BorderBrush="#576277"
-                        Margin="2"/>
-
-                    <CheckBox Name="SerialNumberCheckbox"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center" Content=" Remove Serial &#x0a;     Number  "
-                          Checked="SerialNumberOn" Unchecked="SerialNumberOff"
-                          Style="{DynamicResource CheckBoxStyle1}"
-                          Width="120" Foreground="White"
-                          FontFamily="Consolas" VerticalContentAlignment="Center"/>
-
-                </Grid>
-
-                <Grid Grid.Column="1" Grid.Row="1">
-
-                    <Border CornerRadius="8"
-                            BorderThickness="2"
-                            BorderBrush="#576277"
-                            Margin="2"/>
-
-                    <CheckBox Name="DebugLogCheckbox"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center" Content=" Enable Debug  &#x0a;    Logging"
-                            Checked="DebugLogToggleOn" Unchecked="DebugLogToggleOff"
-                            Style="{DynamicResource CheckBoxStyle1}"
-                            Grid.Row="2" Grid.Column="3"
-                            Width="120" Foreground="White"
-                            FontFamily="Consolas"/>
-
-                </Grid>
-
-                <Grid Grid.Row="1" Grid.Column="0">
-
-                    <Border CornerRadius="8"
-                            BorderThickness="2"
-                            BorderBrush="#576277"
-                            Margin="2"/>
-
-                    <CheckBox Name="DontUploadCheckbox"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center" Content=" Don't Upload  "
-                              Checked="UploadOff" Unchecked="UploadOn"
-                              Style="{DynamicResource CheckBoxStyle1}"
-                              Width="120" Foreground="White"
-                              FontFamily="Consolas" VerticalContentAlignment="Center"/>
-
-                </Grid>
-
-                <Grid Grid.Row="2" Grid.Column="0">
-
-                    <Border CornerRadius="8"
-                            BorderThickness="2"
-                            BorderBrush="#576277"
-                            Margin="2"/>
-
-                    <CheckBox Name="NetworkingCheckbox"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center" Content=" Remove Networking"
-                              Checked="RedactNetworkingOn" Unchecked="RedactNetworkingOff"
-                              Style="{DynamicResource CheckBoxStyle1}"
-                              Width="120" Foreground="White"
-                              FontFamily="Consolas" VerticalContentAlignment="Center"/>
-
-                </Grid>
-
-                
-
-            </Grid>
+            <frontend:SettingsUserControl x:Name="SettingsToggles"
+                                   Visibility="{Binding IsChecked, ElementName=SettingsButton, Converter={StaticResource boolToVisConverter}}"/>
 
             <Grid Margin="20" Name="MainText" Visibility="Visible">
                 <TextBlock Foreground="White"
@@ -254,7 +153,7 @@
                    TextWrapping="Wrap"
                    VerticalAlignment="Top"
                    HorizontalAlignment="Center"
-                   Visibility="Hidden" Margin="0,4,0,8">
+                   Visibility="{Binding DontUpload, Converter={StaticResource boolToVisConverter}, ElementName=SettingsToggles}" Margin="0,4,0,8">
             Careful! Disabling upload will prevent helpers from seeing the report.
         </TextBlock>
     </Grid>

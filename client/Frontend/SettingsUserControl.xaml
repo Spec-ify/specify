@@ -1,0 +1,113 @@
+﻿<UserControl x:Class="specify_client.Frontend.SettingsUserControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:specify_client.Frontend"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+
+
+    <Grid Margin="20" 
+                  Name="SettingsToggles"
+                  Grid.ColumnSpan="2">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="1*" />
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0" Grid.Row="0">
+
+            <Border CornerRadius="8"
+                            BorderThickness="2"
+                            BorderBrush="#576277"
+                            Margin="2"/>
+
+            <CheckBox Name="UsernamesCheckbox"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" Content="Remove Usernames"
+                              Checked="UsernameOn" Unchecked="UsernameOff"
+                              Style="{DynamicResource CheckBoxStyle1}"
+                              Width="120" Foreground="White"
+                              FontFamily="Consolas" />
+
+        </Grid>
+
+        <Grid Grid.Row="0" Grid.Column="1">
+
+            <Border CornerRadius="8"
+                        BorderThickness="2"
+                        BorderBrush="#576277"
+                        Margin="2"/>
+
+            <CheckBox Name="SerialNumberCheckbox"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center" Content=" Remove Serial &#x0a;     Number  "
+                          Checked="SerialNumberOn" Unchecked="SerialNumberOff"
+                          Style="{DynamicResource CheckBoxStyle1}"
+                          Width="120" Foreground="White"
+                          FontFamily="Consolas" VerticalContentAlignment="Center"/>
+
+        </Grid>
+
+        <Grid Grid.Column="1" Grid.Row="1">
+
+            <Border CornerRadius="8"
+                            BorderThickness="2"
+                            BorderBrush="#576277"
+                            Margin="2"/>
+
+            <CheckBox Name="DebugLogCheckbox"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" Content=" Enable Debug  &#x0a;    Logging"
+                            Checked="DebugLogToggleOn" Unchecked="DebugLogToggleOff"
+                            Style="{DynamicResource CheckBoxStyle1}"
+                            Grid.Row="2" Grid.Column="3"
+                            Width="120" Foreground="White"
+                            FontFamily="Consolas"/>
+
+        </Grid>
+
+        <Grid Grid.Row="1" Grid.Column="0">
+
+            <Border CornerRadius="8"
+                            BorderThickness="2"
+                            BorderBrush="#576277"
+                            Margin="2"/>
+
+            <CheckBox Name="DontUploadCheckbox"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" Content=" Don't Upload  "
+                              IsChecked="{Binding DontUpload, RelativeSource={RelativeSource AncestorType=local:SettingsUserControl}}"
+                              Style="{DynamicResource CheckBoxStyle1}"
+                              Width="120" Foreground="White"
+                              FontFamily="Consolas" VerticalContentAlignment="Center"/>
+
+        </Grid>
+
+        <Grid Grid.Row="2" Grid.Column="0">
+
+            <Border CornerRadius="8"
+                            BorderThickness="2"
+                            BorderBrush="#576277"
+                            Margin="2"/>
+
+            <CheckBox Name="NetworkingCheckbox"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" Content=" Remove Networking"
+                              Checked="RedactNetworkingOn" Unchecked="RedactNetworkingOff"
+                              Style="{DynamicResource CheckBoxStyle1}"
+                              Width="120" Foreground="White"
+                              FontFamily="Consolas" VerticalContentAlignment="Center"/>
+
+        </Grid>
+
+    </Grid>
+</UserControl>
