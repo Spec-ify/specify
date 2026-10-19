@@ -153,7 +153,7 @@
                    TextWrapping="Wrap"
                    VerticalAlignment="Top"
                    HorizontalAlignment="Center"
-                   Visibility="{Binding DontUpload, Converter={StaticResource boolToVisConverter}, ElementName=SettingsToggles}" Margin="0,4,0,8">
+                   Visibility="{Binding DontUpload, Source={x:Static local:Settings.Instance}, Converter={StaticResource boolToVisConverter}}" Margin="0,4,0,8">
             Careful! Disabling upload will prevent helpers from seeing the report.
         </TextBlock>
     </Grid>

@@ -1,15 +1,17 @@
 ﻿namespace specify_client;
 
-public static class Settings
+public class Settings
 {
+    public static Settings Instance { get; set; } = new Settings();
+
     /// <summary>
     /// Redacts Windows username and OneDrive commercial account name
     /// </summary>
-    public static bool RedactUsername { get; set; } = false;
-    public static bool RedactSerialNumber { get; set; } = false;
-    public static bool RedactNetworking { get; set; } = false;
-    public static bool DontUpload { get; set; } = false;
-    public static bool Headless { get; set; } = false;
-    public static bool LocalCulture { get; set; } = false;
-    public static bool EnableDebug { get; set; } = false;
+    public bool RedactUsername { get; set; } = false;
+    public bool RedactSerialNumber { get; set; } = false;
+    public bool RedactNetworking { get; set; } = false;
+    public bool DontUpload { get; set; } = false;
+    public bool Headless { get; set; } = false;
+    public bool LocalCulture { get; set; } = false;
+    public bool EnableDebug { get; set; } = false;
 }

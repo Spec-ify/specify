@@ -25,6 +25,7 @@ namespace specify_client;
 [Serializable]
 public class Monolith
 {
+    private static Settings Settings => Settings.Instance;
     // it will say these are never used, but they are serialized
     public string Version;
 

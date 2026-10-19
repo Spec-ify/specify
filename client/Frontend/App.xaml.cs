@@ -11,6 +11,7 @@ namespace specify_client;
 /// </summary>
 public partial class App : Application
 {
+    private static Settings Settings => Settings.Instance;
 
     [DllImport("Kernel32.dll")]
     public static extern bool AllocConsole();

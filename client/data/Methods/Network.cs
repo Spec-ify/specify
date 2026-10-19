@@ -14,6 +14,8 @@ namespace specify_client.data;
 
 public static partial class Cache
 {
+    private static Settings Settings => Settings.Instance;
+
     public static async Task MakeNetworkData()
     {
         try
