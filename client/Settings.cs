@@ -12,7 +12,7 @@ public static class Settings
     public static bool Headless { get; set; } = false;
     public static bool EnableDebug = false; // Deliberately not a property.
 
-    /** We cannot directly serialize a static class */
+    /** We cannot directly serialize a static class for the JSON, so we make it a dictionary */
     public static Dictionary<string, bool> Serialize()
     {
         var res = new Dictionary<string, bool>();
