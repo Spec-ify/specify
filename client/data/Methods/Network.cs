@@ -60,8 +60,8 @@ public static partial class Cache
 
             if (Settings.RedactHostsFile)
             {
-                HostsFile = "";
-                HostsFileHash = "";
+                HostsFile = "[REDACTED]";
+                HostsFileHash = "[REDACTED]";
                 await DebugLog.LogEventAsync("Hosts file redaction enabled.", region);
             }
             else
