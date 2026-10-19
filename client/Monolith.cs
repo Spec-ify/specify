@@ -84,11 +84,11 @@ public class Monolith
         var serialized = m.Serialize();
         await DebugLog.LogEventAsync("Monolith serialized");
 
-        if (Settings.RedactOneDriveCommercial && Cache.UserVariables.Contains("OneDriveCommercial"))
-            {
-                var stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
-                stringToRedact = stringToRedact.Replace(@"\", @"\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
-                serialized = serialized.Replace(stringToRedact, "[REDACTED]");
+        if (Settings.RedactUsername && Cache.UserVariables.Contains("OneDriveCommercial"))
+        {
+            var stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
+            stringToRedact = stringToRedact.Replace(@"\", @"\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
+            serialized = serialized.Replace(stringToRedact, "[REDACTED]");
 
             await DebugLog.LogEventAsync("Commercial OneDrive label redacted from report");
         }
@@ -221,7 +221,7 @@ public class Monolith
                     Console.WriteLine("Specify is done.");
                     Console.WriteLine("Specify has uploaded the result to spec-ify.com, the link should be in your clipboard.");
                 }
-                    break;
+                break;
 
             case ProgramDoneState.NoUpload:
                 if (!Settings.Headless)

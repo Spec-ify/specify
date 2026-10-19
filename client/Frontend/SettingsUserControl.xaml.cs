@@ -38,13 +38,11 @@ namespace specify_client.Frontend
         private void UsernameOn(object sender, RoutedEventArgs e)
         {
             Settings.RedactUsername = true;
-            Settings.RedactOneDriveCommercial = true;
         }
 
         private void UsernameOff(object sender, RoutedEventArgs e)
         {
             Settings.RedactUsername = false;
-            Settings.RedactOneDriveCommercial = false;
         }
 
         private void SerialNumberOn(object sender, RoutedEventArgs e)

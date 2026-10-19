@@ -2,9 +2,11 @@
 
 public static class Settings
 {
+    /// <summary>
+    /// Redacts Windows username and OneDrive commercial account name
+    /// </summary>
     public static bool RedactUsername { get; set; } = false;
     public static bool RedactSerialNumber { get; set; } = false;
-    public static bool RedactOneDriveCommercial { get; set; } = false;
     public static bool RedactNetworking { get; set; } = false;
     public static bool DontUpload { get; set; } = false;
     public static bool Headless { get; set; } = false;

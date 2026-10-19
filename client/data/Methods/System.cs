@@ -837,18 +837,10 @@ public static partial class Cache
         {
             if (!ODFound)
             {
-                if (Settings.RedactOneDriveCommercial)
-                {
-                    Settings.RedactOneDriveCommercial = false;
-                    await LogEventAsync("OneDriveCommercial variable not found. Corresponding internal setting disabled.", Region.System);
-                }
-                else
-                {
                     await LogEventAsync("OneDriveCommercial variable not found.", Region.System);
                 }
             }
         }
-    }
 
     private static void GetScheduledTasks()
     {

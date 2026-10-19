@@ -60,10 +60,6 @@ public partial class App : Application
                         Settings.RedactSerialNumber = true;
                         break;
 
-                    case "-redact-odc":
-                        Settings.RedactOneDriveCommercial = true;
-                        break;
-
                     case "-redact-networking":
                         Settings.RedactNetworking = true;
                         break;
