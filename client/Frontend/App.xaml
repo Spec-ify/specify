@@ -108,14 +108,19 @@
                                 </Storyboard>
                             </ControlTemplate.Resources>
 
-                            <Viewbox StretchDirection="Both" Stretch="Uniform">
-                                <DockPanel x:Name="dockPanel">
-                                    <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                            <ContentControl>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter Grid.Column="0"
+                                        SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
                                                       Content="{TemplateBinding Content}" ContentStringFormat="{TemplateBinding ContentStringFormat}"
                                                       ContentTemplate="{TemplateBinding ContentTemplate}" RecognizesAccessKey="True"
                                                       VerticalAlignment="Center" />
 
-                                    <Viewbox StretchDirection="Both" Stretch="Uniform" Height="14">
+                                    <Viewbox Grid.Column="1" StretchDirection="Both" Stretch="Uniform" >
                                         <Grid Margin="5,5,0,5" Background="#3b4252" Height="20">
 
                                             <Border x:Name="bg" BorderBrush="#525c70" HorizontalAlignment="Center"
@@ -136,8 +141,8 @@
                                             </Border>
                                         </Grid>
                                     </Viewbox>
-                                </DockPanel>
-                            </Viewbox>
+                                </Grid>
+                            </ContentControl>
 
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsChecked" Value="True">

@@ -17,18 +17,18 @@
     <!-- Define the Grids -->
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="1*" />
+            <RowDefinition Height="0.8*" />
             <RowDefinition Height="2*" />
             <RowDefinition Height="2*" />
-            <RowDefinition Height="1*" />
+            <RowDefinition Height="0.8*" />
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0.8*" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="0.8*" />
         </Grid.ColumnDefinitions>
 
         <Frame x:Name="Buttons"
@@ -62,7 +62,7 @@
                 Background="#3b4252" Margin="5,5" />
 
 
-            <Grid Margin="20">
+            <Grid Margin="15,15">
 
                 <Grid.RowDefinitions>
                     <RowDefinition Height="1*" />
@@ -115,7 +115,7 @@
             <frontend:SettingsUserControl x:Name="SettingsToggles"
                                    Visibility="{Binding IsChecked, ElementName=SettingsButton, Converter={StaticResource boolToVisConverter}}"/>
 
-            <Grid Margin="20" Name="MainText" Visibility="Visible">
+            <Grid Margin="15" Name="MainText" Visibility="Visible">
                 <TextBlock Foreground="White"
                             FontSize="12"
                             FontFamily="Consolas"
