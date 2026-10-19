@@ -21,7 +21,7 @@ public static class Settings
 
         foreach (var property in typeof(Settings).GetProperties(flags))
             res[property.Name] = (bool)property.GetValue(null);
-        foreach (var field in typeof(Settings).GetProperties(flags))
+        foreach (var field in typeof(Settings).GetFields(flags))
             res[field.Name] = (bool)field.GetValue(null);
 
         return res;
