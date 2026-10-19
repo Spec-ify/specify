@@ -344,7 +344,7 @@ public static class DebugLog
     private static async Task LogSettings()
     {
         var properties = typeof(Settings).GetProperties();
-        foreach (PropertyInfo property in properties)
+        foreach (PropertyInfo property in properties.Where(x => x.Name != "EnableDebug"))
         {
             await LogEventAsync($"{property.Name}: {property.GetValue(null)}");
         }

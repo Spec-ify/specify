@@ -11,5 +11,5 @@ public static class Settings
     public static bool DontUpload { get; set; } = false;
     public static bool Headless { get; set; } = false;
     public static bool LocalCulture { get; set; } = false;
-    public static bool EnableDebug = false; // Deliberately not a property.
+    public static bool EnableDebug { get; set; } = false;
 }
