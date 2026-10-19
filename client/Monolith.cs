@@ -84,21 +84,12 @@ public class Monolith
         var serialized = m.Serialize();
         await DebugLog.LogEventAsync("Monolith serialized");
 
-        if (Settings.RedactOneDriveCommercial)
-        {
-            try
+        if (Settings.RedactOneDriveCommercial && Cache.UserVariables.Contains("OneDriveCommercial"))
             {
                 var stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
                 stringToRedact = stringToRedact.Replace(@"\", @"\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
                 serialized = serialized.Replace(stringToRedact, "[REDACTED]");
-            }
-            catch (Exception e)
-            {
-                await DebugLog.LogEventAsync("Commercial OneDrive redaction failed. Serialization restarts." + e, DebugLog.Region.Misc, DebugLog.EventType.ERROR);
-                Settings.RedactOneDriveCommercial = false;
-                await Specificialize();
-                return;
-            }
+
             await DebugLog.LogEventAsync("Commercial OneDrive label redacted from report");
         }
 
