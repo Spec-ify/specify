@@ -276,7 +276,7 @@
       <Version>4.6.2</Version>
     </PackageReference>
     <PackageReference Include="TaskScheduler">
-      <Version>2.11.0</Version>
+      <Version>2.12.2</Version>
     </PackageReference>
     <PackageReference Include="XamlAnimatedGif">
       <Version>2.3.0</Version>
