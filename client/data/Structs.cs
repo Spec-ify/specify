@@ -18,6 +18,16 @@ public class NetworkRoute
     public List<double> PacketLoss = new List<double>();
 }
 
+public class NetAdapterAdvancedParameter
+{
+    public string Description { get; set; }
+    public string Type { get; set; }
+    public string DefaultValue { get; set; }
+    public string CurrentValue { get; set; }
+    public string CurrentValueName { get; set; }
+    public Dictionary<string, string> PossibleEnumValues { get; set; }
+}
+
 public class InstalledApp
 {
     public string Name;

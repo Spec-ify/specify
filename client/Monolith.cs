@@ -47,7 +47,8 @@ public class Monolith
         Version = Program.SpecifyVersion;
         Meta = new MonolithMeta
         {
-            ElapsedTime = Program.Time.ElapsedMilliseconds
+            ElapsedTime = Program.Time.ElapsedMilliseconds,
+            Settings = Settings.Instance
         };
         BasicInfo = new MonolithBasicInfo();
         System = new MonolithSystem();
@@ -273,6 +274,7 @@ public class Monolith
     {
         public long ElapsedTime;
         public DateTime GenerationDate;
+        public Settings Settings;
     }
 
     [Serializable]

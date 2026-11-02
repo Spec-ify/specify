@@ -35,17 +35,21 @@
                 Content="Remove Serial Number"
                 IsChecked="{Binding EnableDebug}" />
 
+        <local:CheckboxUserControl Grid.Row="1" Grid.Column="0"
+                Content="Remove Networking"
+                IsChecked="{Binding RedactNetworking}" />
+        
         <local:CheckboxUserControl Grid.Row="1" Grid.Column="1"
+                Content="Remove Hosts file"
+                IsChecked="{Binding RedactHostsFile}" />
+
+        <local:CheckboxUserControl Grid.Row="2" Grid.Column="1"
                 Content="Enable Debug Logging"
                 IsChecked="{Binding EnableDebug}" />
 
-        <local:CheckboxUserControl Grid.Row="1" Grid.Column="0"
+        <local:CheckboxUserControl Grid.Row="2" Grid.Column="0"
                 Content="Dont upload"
                 IsChecked="{Binding DontUpload}" />
-
-        <local:CheckboxUserControl  Grid.Row="2" Grid.Column="0"
-                Content="Remove Networking"
-                IsChecked="{Binding RedactNetworking}" />
 
     </Grid>
 </UserControl>

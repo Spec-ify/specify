@@ -1,4 +1,7 @@
 ﻿namespace specify_client;
+using System.Reflection;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 public class Settings
 {
@@ -10,8 +13,11 @@ public class Settings
     public bool RedactUsername { get; set; } = false;
     public bool RedactSerialNumber { get; set; } = false;
     public bool RedactNetworking { get; set; } = false;
+    public bool RedactHostsFile { get; set; } = false;
     public bool DontUpload { get; set; } = false;
     public bool Headless { get; set; } = false;
     public bool LocalCulture { get; set; } = false;
+
+    [JsonIgnore]
     public bool EnableDebug { get; set; } = false;
 }
