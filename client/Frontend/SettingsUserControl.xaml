@@ -1,0 +1,55 @@
+﻿<UserControl x:Class="specify_client.Frontend.SettingsUserControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:specify_client.Frontend"
+             xmlns:sfy="clr-namespace:specify_client"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+
+    <UserControl.DataContext>
+        <Binding Source="{x:Static sfy:Settings.Instance}" />
+    </UserControl.DataContext>
+
+    <Grid Margin="15" 
+          Name="SettingsToggles"
+          Grid.ColumnSpan="2">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="1*" />
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <local:CheckboxUserControl Grid.Row="0" Grid.Column="0"
+                 Content="Remove Usernames"
+                 IsChecked="{Binding RedactUsername}" />
+
+        <local:CheckboxUserControl Grid.Row="0" Grid.Column="1"
+                Content="Remove Serial Number"
+                IsChecked="{Binding EnableDebug}" />
+
+        <local:CheckboxUserControl Grid.Row="1" Grid.Column="0"
+                Content="Remove Networking"
+                IsChecked="{Binding RedactNetworking}" />
+        
+        <local:CheckboxUserControl Grid.Row="1" Grid.Column="1"
+                Content="Remove Hosts file"
+                IsChecked="{Binding RedactHostsFile}" />
+
+        <local:CheckboxUserControl Grid.Row="2" Grid.Column="1"
+                Content="Enable Debug Logging"
+                IsChecked="{Binding EnableDebug}" />
+
+        <local:CheckboxUserControl Grid.Row="2" Grid.Column="0"
+                Content="Dont upload"
+                IsChecked="{Binding DontUpload}" />
+
+    </Grid>
+</UserControl>

@@ -12,7 +12,8 @@ namespace specify_client;
 
 public static class DebugLog
 {
-    
+    private static Settings Settings => Settings.Instance;
+
     public static string LogText;
     public static readonly int[] ErrorCount = new int[7];
     private static bool Started = false;
@@ -344,9 +345,9 @@ public static class DebugLog
     private static async Task LogSettings()
     {
         var properties = typeof(Settings).GetProperties();
-        foreach (PropertyInfo property in properties)
+        foreach (PropertyInfo property in properties.Where(x => x.Name != "EnableDebug"))
         {
-            await LogEventAsync($"{property.Name}: {property.GetValue(null)}");
+            await LogEventAsync($"{property.Name}: {property.GetValue(Settings.Instance)}");
         }
     }
 

@@ -1,29 +1,23 @@
 ﻿namespace specify_client;
 using System.Reflection;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
-public static class Settings
+public class Settings
 {
-    public static bool RedactUsername { get; set; } = true;
-    public static bool RedactSerialNumber { get; set; } = false;
-    public static bool RedactOneDriveCommercial { get; set; } = false;
-    public static bool RedactNetworking { get; set; } = false;
-    public static bool RedactHostsFile { get; set; } = false;
-    public static bool DontUpload { get; set; } = false;
-    public static bool Headless { get; set; } = false;
-    public static bool EnableDebug = false; // Deliberately not a property.
+    public static Settings Instance { get; set; } = new Settings();
 
-    /** We cannot directly serialize a static class for the JSON, so we make it a dictionary */
-    public static Dictionary<string, bool> Serialize()
-    {
-        var res = new Dictionary<string, bool>();
-        BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
+    /// <summary>
+    /// Redacts Windows username and OneDrive commercial account name
+    /// </summary>
+    public bool RedactUsername { get; set; } = false;
+    public bool RedactSerialNumber { get; set; } = false;
+    public bool RedactNetworking { get; set; } = false;
+    public bool RedactHostsFile { get; set; } = false;
+    public bool DontUpload { get; set; } = false;
+    public bool Headless { get; set; } = false;
+    public bool LocalCulture { get; set; } = false;
 
-        foreach (var property in typeof(Settings).GetProperties(flags))
-            res[property.Name] = (bool)property.GetValue(null);
-        foreach (var field in typeof(Settings).GetFields(flags))
-            res[field.Name] = (bool)field.GetValue(null);
-
-        return res;
-    }
+    [JsonIgnore]
+    public bool EnableDebug { get; set; } = false;
 }
