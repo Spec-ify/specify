@@ -11,6 +11,7 @@ namespace specify_client;
 /// </summary>
 public partial class App : Application
 {
+    private static Settings Settings => Settings.Instance;
 
     [DllImport("Kernel32.dll")]
     public static extern bool AllocConsole();
@@ -58,10 +59,6 @@ public partial class App : Application
 
                     case "-redact-sn":
                         Settings.RedactSerialNumber = true;
-                        break;
-
-                    case "-redact-odc":
-                        Settings.RedactOneDriveCommercial = true;
                         break;
 
                     case "-redact-networking":

@@ -1,13 +1,23 @@
 ﻿namespace specify_client;
+using System.Reflection;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
-public static class Settings
+public class Settings
 {
-    public static bool RedactUsername { get; set; } = false;
-    public static bool RedactSerialNumber { get; set; } = false;
-    public static bool RedactOneDriveCommercial { get; set; } = false;
-    public static bool RedactNetworking { get; set; } = false;
-    public static bool DontUpload { get; set; } = false;
-    public static bool Headless { get; set; } = false;
-    public static bool LocalCulture { get; set; } = false;
-    public static bool EnableDebug = false; // Deliberately not a property.
+    public static Settings Instance { get; set; } = new Settings();
+
+    /// <summary>
+    /// Redacts Windows username and OneDrive commercial account name
+    /// </summary>
+    public bool RedactUsername { get; set; } = false;
+    public bool RedactSerialNumber { get; set; } = false;
+    public bool RedactNetworking { get; set; } = false;
+    public bool RedactHostsFile { get; set; } = false;
+    public bool DontUpload { get; set; } = false;
+    public bool Headless { get; set; } = false;
+    public bool LocalCulture { get; set; } = false;
+
+    [JsonIgnore]
+    public bool EnableDebug { get; set; } = false;
 }

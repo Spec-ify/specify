@@ -117,6 +117,7 @@ public static class Interop
     }
 
     public const int ERROR_SUCCESS = 0;
+    public const uint IOCTL_STORAGE_QUERY_PROPERTY = 0x2D1400u;
 
     public enum QUERY_DEVICE_CONFIG_FLAGS : uint
     {
@@ -428,6 +429,13 @@ public static class Interop
         public uint ProtocolDataRequestSubValue2;
         public uint ProtocolDataRequestSubValue3;
         public uint ProtocolDataRequestSubValue4;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct STORAGE_ADAPTER_SERIAL_NUMBER
+    {
+        public uint Version;
+        public uint Size;
+        public fixed ushort SerialNumber[128];
     }
     [StructLayout(LayoutKind.Sequential)]
     public struct STORAGE_PROTOCOL_DATA_DESCRIPTOR

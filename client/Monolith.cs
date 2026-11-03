@@ -25,6 +25,7 @@ namespace specify_client;
 [Serializable]
 public class Monolith
 {
+    private static Settings Settings => Settings.Instance;
     // it will say these are never used, but they are serialized
     public string Version;
 
@@ -46,7 +47,8 @@ public class Monolith
         Version = Program.SpecifyVersion;
         Meta = new MonolithMeta
         {
-            ElapsedTime = Program.Time.ElapsedMilliseconds
+            ElapsedTime = Program.Time.ElapsedMilliseconds,
+            Settings = Settings.Instance
         };
         BasicInfo = new MonolithBasicInfo();
         System = new MonolithSystem();
@@ -84,21 +86,12 @@ public class Monolith
         var serialized = m.Serialize();
         await DebugLog.LogEventAsync("Monolith serialized");
 
-        if (Settings.RedactOneDriveCommercial)
+        if (Settings.RedactUsername && Cache.UserVariables.Contains("OneDriveCommercial"))
         {
-            try
-            {
-                var stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
-                stringToRedact = stringToRedact.Replace(@"\", @"\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
-                serialized = serialized.Replace(stringToRedact, "[REDACTED]");
-            }
-            catch (Exception e)
-            {
-                await DebugLog.LogEventAsync("Commercial OneDrive redaction failed. Serialization restarts." + e, DebugLog.Region.Misc, DebugLog.EventType.ERROR);
-                Settings.RedactOneDriveCommercial = false;
-                await Specificialize();
-                return;
-            }
+            var stringToRedact = (string)Cache.UserVariables["OneDriveCommercial"]; // The path containing the Commercial OneDrive
+            stringToRedact = stringToRedact.Replace(@"\", @"\\"); // Changing a single \ to two \\ as that is how it shows up in the generated json
+            serialized = serialized.Replace(stringToRedact, "[REDACTED]");
+
             await DebugLog.LogEventAsync("Commercial OneDrive label redacted from report");
         }
 
@@ -230,7 +223,7 @@ public class Monolith
                     Console.WriteLine("Specify is done.");
                     Console.WriteLine("Specify has uploaded the result to spec-ify.com, the link should be in your clipboard.");
                 }
-                    break;
+                break;
 
             case ProgramDoneState.NoUpload:
                 if (!Settings.Headless)
@@ -281,6 +274,7 @@ public class Monolith
     {
         public long ElapsedTime;
         public DateTime GenerationDate;
+        public Settings Settings;
     }
 
     [Serializable]

@@ -18,6 +18,16 @@ public class NetworkRoute
     public List<double> PacketLoss = new List<double>();
 }
 
+public class NetAdapterAdvancedParameter
+{
+    public string Description { get; set; }
+    public string Type { get; set; }
+    public string DefaultValue { get; set; }
+    public string CurrentValue { get; set; }
+    public string CurrentValueName { get; set; }
+    public Dictionary<string, string> PossibleEnumValues { get; set; }
+}
+
 public class InstalledApp
 {
     public string Name;
@@ -81,6 +91,9 @@ public class DiskDrive
     
     [NonSerialized()] public string InstanceId; // Only used to link SmartData, do not serialize. Unless you really want to.
     [NonSerialized] public string DeviceId; // Used to get device PnP Id from VDS method and get nvme SmartData
+
+    [JsonIgnore] public bool IsNVMe => InterfaceType.Equals("NVMe", StringComparison.CurrentCultureIgnoreCase) //VDS check
+               || (InterfaceType == "SCSI" && MediaType.ToLower().Contains("fixed")); //Old method check            
 }
 
 public class Partition
