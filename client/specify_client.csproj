@@ -299,13 +299,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Target Name="ILRepack" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
-    <PropertyGroup>
-      <WorkingDirectory>$(MSBuildThisFileDirectory)bin\$(Configuration)\$(TargetFramework)</WorkingDirectory>
-    </PropertyGroup>
     <ItemGroup>
-      <InputAssemblies Include="*.dll" />
+      <InputAssemblies Include="$(OutputPath)*.dll" />
     </ItemGroup>
     <Message Text="MERGING: @(InputAssemblies->'%(Filename)') into $(OutputAssembly)" Importance="High" />
-    <ILRepack OutputFile="$(AssemblyName).exe" InputAssemblies="@(InputAssemblies)" WorkingDirectory="$(WorkingDirectory)" />
+    <ILRepack OutputFile="$(AssemblyName).exe" InputAssemblies="@(InputAssemblies)" />
   </Target>
 </Project>
