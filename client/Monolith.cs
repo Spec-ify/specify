@@ -177,9 +177,8 @@ public class Monolith
         /*
          * Simulates a POST reqeust to the upload endpoint for every domain
          */
-        
-        var client = new HttpClient();
 
+        using var client = new HttpClient();
         foreach (var domain in Domains)
         {
             // If request fails...
@@ -198,12 +197,12 @@ public class Monolith
             }
 
             catch {
-                DebugLog.LogEventAsync($"{domain}'s upload endpoint is not up.", DebugLog.Region.Misc, DebugLog.EventType.WARNING);
+                await DebugLog.LogEventAsync($"{domain}'s upload endpoint is not up.", DebugLog.Region.Misc, DebugLog.EventType.WARNING);
             }
         }
 
         // Only reaches if no endpoint works
-        DebugLog.LogEventAsync("Upload endpoints of all default viewers are unavailable.", DebugLog.Region.Misc, DebugLog.EventType.ERROR);
+        await DebugLog.LogEventAsync("Upload endpoints of all default viewers are unavailable.", DebugLog.Region.Misc, DebugLog.EventType.ERROR);
         return null;
     }
 
