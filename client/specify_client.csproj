@@ -303,6 +303,6 @@
       <InputAssemblies Include="$(OutputPath)*.dll" />
     </ItemGroup>
     <Message Text="MERGING: @(InputAssemblies->'%(Filename)') into $(OutputAssembly)" Importance="High" />
-    <ILRepack OutputFile="$(AssemblyName).exe" InputAssemblies="@(InputAssemblies)" />
+    <ILRepack OutputFile="$(OutputPath)\$(AssemblyName).exe" InputAssemblies="@(InputAssemblies)" />
   </Target>
 </Project>
