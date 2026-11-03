@@ -300,9 +300,10 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Target Name="ILRepack" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
     <ItemGroup>
-      <InputAssemblies Include="$(OutputPath)*.dll" />
+      <InputAssemblies Include="$(OutputPath)$(AssemblyName).exe" />
+      <InputAssemblies Include="$(OutputPath)\*.dll" />
     </ItemGroup>
     <Message Text="MERGING: @(InputAssemblies->'%(Filename)') into $(OutputAssembly)" Importance="High" />
-    <ILRepack OutputFile="$(OutputPath)\$(AssemblyName).exe" InputAssemblies="@(InputAssemblies)" />
+    <ILRepack OutputFile="$(OutputPath)\$(AssemblyName).exe" InputAssemblies="@(InputAssemblies)" TargetKind="WinExe"/>
   </Target>
 </Project>
