@@ -41,6 +41,13 @@ public class Monolith
     public MonolithNetwork Network;
     public MonolithEvents Events;
     public string DebugLogText;
+    // Only entered the three domains I know exist :3
+    // Sorted and ran through by priority - K97i
+    private static readonly string[] Domains = { 
+        "https://spec-ify.com",
+        "https://specify.k97i.com",
+        "https://sfy.itz.sh"
+    };
 
     public Monolith()
     {
@@ -165,14 +172,51 @@ public class Monolith
         await DebugLog.StopDebugLog();
     }
 
+    private static async Task<string> GetViewer()
+    {
+        /*
+         * Simulates a POST reqeust to the upload endpoint for every domain
+         */
+
+        using var client = new HttpClient();
+        foreach (var domain in Domains)
+        {
+            // If request fails...
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{domain}/upload.php");
+                var response = await client.SendAsync(request);
+
+                // We expect an HTTP 400 error from the endpoint complaining about the request not being `application/json`
+                // https://github.com/Spec-ify/specified/blob/main/upload.php#L12-L16
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    // Immediately return first working domain
+                    return domain;
+                }
+
+                // Edge case wherein it does not report 400
+                await DebugLog.LogEventAsync($"{domain}'s upload endpoint does not have validity checks, assume it is not a viewer, or it is not safe.", DebugLog.Region.Misc, DebugLog.EventType.WARNING);
+            }
+
+            catch {
+                await DebugLog.LogEventAsync($"{domain}'s upload endpoint is not up.", DebugLog.Region.Misc, DebugLog.EventType.WARNING);
+            }
+        }
+
+        // Only reaches if no endpoint works
+        await DebugLog.LogEventAsync("Upload endpoints of all default viewers are unavailable.", DebugLog.Region.Misc, DebugLog.EventType.ERROR);
+        return null;
+    }
+
     private static async Task<string> DoRequest(string str)
     {
-        // const string specifiedUploadDomain = "http://localhost";
-        // const string specifiedUploadEndpoint = "specified/upload.php";
-        const string specifiedUploadDomain = "https://spec-ify.com";
-        const string specifiedUploadEndpoint = "upload.php";
+        var specifiedUploadDomain = await GetViewer();
+        // Default to file output when no viewers are available
+        if (specifiedUploadDomain == null) return null;
+
         using var client = new HttpClient();
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{specifiedUploadDomain}/{specifiedUploadEndpoint}");
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{specifiedUploadDomain}/upload.php");
         request.Content = new StringContent(str);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
@@ -186,7 +230,7 @@ public class Monolith
                 await DebugLog.LogEventAsync($"Unsuccessful HTTP Response: {response.StatusCode}", DebugLog.Region.Misc, DebugLog.EventType.ERROR);
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("\nCould not upload. The file has been saved to specify_specs.json.");
-                Console.WriteLine($"Please go to {specifiedUploadDomain} to upload the file manually.");
+                Console.WriteLine("Please visit a Specify JSON viewer (like https://spec-ify.com) and upload the file manually.");
                 return null;
             }
             var location = response.Headers.Location.ToString();
