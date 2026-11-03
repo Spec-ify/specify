@@ -194,6 +194,9 @@ public class Monolith
                     // Immediately return first working domain
                     return domain;
                 }
+
+                // Edge case wherein it does not report 400
+                await DebugLog.LogEventAsync($"{domain}'s upload endpoint does not have validity checks, assume it is not a viewer, or it is not safe.", DebugLog.Region.Misc, DebugLog.EventType.WARNING);
             }
 
             catch {
