@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using specify_client.Data.Methods.NLM;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -45,6 +46,8 @@ public static partial class Cache
                 await DebugLog.LogEventAsync("Networking WMI Information Retrieved.", region);
 
                 GetAdapterProperties();
+
+                GetNetworkProfiles();
                 CombineAdapterInformation();
             }
 
@@ -133,7 +136,7 @@ public static partial class Cache
 
             int rport = 0;
             rport += connection.remotePort[0] << 8;
-            rport += connection.remotePort[1];            
+            rport += connection.remotePort[1];
 
             IPAddress localIpAddress = new(connection.localAddr);
             IPAddress remoteIpAddress = new(connection.remoteAddr);
@@ -175,6 +178,10 @@ public static partial class Cache
             if (matchingAdapter.TryWmiRead("PhysicalAdapter", out bool physicalAdapter))
             {
                 adapter.Add("PhysicalAdapter", physicalAdapter);
+            }
+            if (matchingAdapter.TryWmiRead("GUID", out string adapterGuidStr) && Guid.TryParse(adapterGuidStr, out Guid adapterGuid))
+            {
+                adapter.Add("GUID", adapterGuid);
             }
         }
     }
@@ -257,10 +264,10 @@ public static partial class Cache
     {
         var autotuningLevels = new Dictionary<string, string>();
         var autotuningLevelsWmi = Utils.GetWmi("MSFT_NetTCPSetting", "AutoTuningLevelLocal, PolicyRuleName", "root\\standardcimv2");
-        foreach(var levelDict in autotuningLevelsWmi)
+        foreach (var levelDict in autotuningLevelsWmi)
         {
             string policyName = (string)levelDict["PolicyRuleName"];
-            if(!levelDict.TryWmiRead("AutoTuningLevelLocal", out byte level))
+            if (!levelDict.TryWmiRead("AutoTuningLevelLocal", out byte level))
             {
                 autotuningLevels.Add(policyName, "");
                 continue;
@@ -344,7 +351,7 @@ public static partial class Cache
             using var stream = File.OpenRead(@"C:\Windows\System32\drivers\etc\hosts");
             var hash = sha256.ComputeHash(stream);
             return BitConverter.ToString(hash).Replace("-", "");
-        } 
+        }
         catch (FileNotFoundException)
         {
             // If this catch happens, the error has already been reported in GetHostsFile() and does not need to be reported again.
@@ -369,7 +376,7 @@ public static partial class Cache
         }
         foreach (var adapter in NetAdapters)
         {
-            Dictionary<string,NetAdapterAdvancedParameter> netAdapterConfig = new();
+            Dictionary<string, NetAdapterAdvancedParameter> netAdapterConfig = new();
             try
             {
                 using RegistryKey adapterKey = subkey.OpenSubKey(((uint)adapter["Index"]).ToString("0000"));
@@ -430,6 +437,30 @@ public static partial class Cache
                 DebugLog.LogEvent($"Failed to read advanced configuration for network adapter: {adapter["Description"]}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
                 DebugLog.LogEvent($"{e}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
             }
+        }
+    }
+
+    private static void GetNetworkProfiles()
+    {
+        try
+        {
+            List<NlmConnectionStatus> connectionStatuses = new NlmClass().GetNlmConnectionStatus();
+            foreach (NlmConnectionStatus status in connectionStatuses)
+            {
+                Guid networkAdapterId = status.NetworkAdapterId;
+                var netAdapter = NetAdapters.FirstOrDefault(x => x.TryGetValue("GUID", out object guid) && networkAdapterId.Equals((Guid)guid));
+                if (netAdapter == null)
+                {
+                    DebugLog.LogEvent($"Failed to find guid for NLM network status in NetAdapter dictionary: {networkAdapterId}", DebugLog.Region.Networking, DebugLog.EventType.WARNING);
+                    continue;
+                }
+                netAdapter.Add("NetworkStatus", status);
+            }
+        }
+        catch (Exception e)
+        {
+            DebugLog.LogEvent($"Failed to read network status from NLM service.", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
+            DebugLog.LogEvent($"{e}", DebugLog.Region.Networking, DebugLog.EventType.ERROR);
         }
     }
 }
