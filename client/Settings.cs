@@ -10,7 +10,7 @@ public class Settings
     /// <summary>
     /// Redacts Windows username and OneDrive commercial account name
     /// </summary>
-    public bool RedactUsername { get; set; } = false;
+    public bool RedactUsername { get; set; } = true;
     public bool RedactSerialNumber { get; set; } = false;
     public bool RedactNetworking { get; set; } = false;
     public bool RedactHostsFile { get; set; } = false;
